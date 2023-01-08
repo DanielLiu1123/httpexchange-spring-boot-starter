@@ -1,0 +1,46 @@
+plugins {
+    id 'java-library'
+    id 'com.diffplug.spotless' version "${spotlessVersion}"
+    id 'com.github.spotbugs' version "${spotbugsVersion}"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
+
+    api("org.springframework.boot:spring-boot-starter")
+    api("org.springframework:spring-webflux")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+spotless {
+    encoding 'UTF-8'
+    java {
+        toggleOffOn()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+        palantirJavaFormat()
+    }
+}
+
+spotbugs {
+    spotbugsTest.enabled = false
+    omitVisitors = ['FindReturnRef', 'MethodReturnCheck']
+}
+
+apply from: './deploy.gradle'
