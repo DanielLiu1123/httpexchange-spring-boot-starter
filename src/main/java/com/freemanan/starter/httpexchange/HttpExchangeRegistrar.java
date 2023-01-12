@@ -5,10 +5,13 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
@@ -30,6 +33,7 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
  * @author Freeman
  */
 class HttpExchangeRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, EnvironmentAware {
+    private static final Logger log = LoggerFactory.getLogger(HttpExchangeRegistrar.class);
 
     private ResourceLoader resourceLoader;
 
@@ -56,7 +60,7 @@ class HttpExchangeRegistrar implements ImportBeanDefinitionRegistrar, ResourceLo
         ClassPathScanningCandidateComponentProvider scanner = getScanner();
 
         Map<String, Object> attrs = Optional.ofNullable(
-                        metadata.getAnnotationAttributes(EnableHttpExchange.class.getName()))
+                        metadata.getAnnotationAttributes(EnableHttpExchanges.class.getName()))
                 .orElse(Collections.emptyMap());
 
         Optional.ofNullable(attrs.get("clients"))
@@ -98,7 +102,14 @@ class HttpExchangeRegistrar implements ImportBeanDefinitionRegistrar, ResourceLo
                     .getBeanDefinition();
             abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
 
-            registry.registerBeanDefinition(className, abd);
+            try {
+                registry.registerBeanDefinition(className, abd);
+            } catch (BeanDefinitionOverrideException ignore) {
+                // clients are included in base packages
+                log.warn(
+                        "Your @HttpExchanges client '{}' is included in base packages, you can remove it from 'clients' property.",
+                        className);
+            }
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }

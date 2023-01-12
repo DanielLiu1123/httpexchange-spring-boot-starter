@@ -11,10 +11,13 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -22,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
+@ExtendWith(OutputCaptureExtension.class)
 class HttpExchangeTests {
 
     @Test
@@ -107,7 +111,7 @@ class HttpExchangeTests {
     }
 
     @Test
-    void testClientsProperty() {
+    void testClientsProperty(CapturedOutput output) {
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(ClientsProperty.class)
                 .web(WebApplicationType.NONE)
                 .run();
@@ -116,6 +120,9 @@ class HttpExchangeTests {
         assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
 
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(OrderApi.class));
+
+        // specific client is included in base packages
+        assertThat(output).contains("you can remove it from 'clients' property.");
 
         ctx.close();
     }
@@ -141,29 +148,29 @@ class HttpExchangeTests {
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchange
+    @EnableHttpExchanges
     static class DefaultConfig {}
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchange({
+    @EnableHttpExchanges({
         "com.freemanan.starter",
     })
     static class ParentPackage {}
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchange({"com.freemanan.**.api"})
+    @EnableHttpExchanges({"com.freemanan.**.api"})
     static class Wildcard {}
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchange({"com.freemanan.starter.order.api"})
+    @EnableHttpExchanges({"com.freemanan.starter.order.api"})
     static class SpecificPackage {}
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchange(clients = UserApi.class)
+    @EnableHttpExchanges(clients = {UserApi.class, PostApi.class})
     static class ClientsProperty {}
 
     @HttpExchange("https://my-json-server.typicode.com/")
