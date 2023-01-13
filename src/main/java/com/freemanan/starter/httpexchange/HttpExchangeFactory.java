@@ -31,6 +31,12 @@ public class HttpExchangeFactory {
      */
     @SuppressWarnings("unchecked")
     public <T> T create() {
+        HttpServiceProxyFactory.Builder builder = beanFactory
+                .getBeanProvider(HttpServiceProxyFactory.Builder.class)
+                .getIfUnique();
+        if (builder != null) {
+            return (T) builder.build().createClient(type);
+        }
         HttpServiceProxyFactory factory =
                 beanFactory.getBeanProvider(HttpServiceProxyFactory.class).getIfUnique();
         if (factory == null) {
