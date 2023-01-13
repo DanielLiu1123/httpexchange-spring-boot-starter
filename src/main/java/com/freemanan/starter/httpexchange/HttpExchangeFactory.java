@@ -5,6 +5,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
+import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 /**
@@ -22,7 +23,14 @@ public class HttpExchangeFactory {
         this.type = type;
     }
 
-    public Object create() {
+    /**
+     * Create a proxy {@link HttpExchange} interface instance.
+     *
+     * @param <T> type of the {@link HttpExchange} interface
+     * @return the proxy instance
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T create() {
         HttpServiceProxyFactory factory = beanFactory
                 .getBeanProvider(HttpServiceProxyFactory.class)
                 .getIfUnique(() -> {
@@ -34,6 +42,6 @@ public class HttpExchangeFactory {
                                             ::resolvePlaceholders) // support url placeholder '${}'
                             .build();
                 });
-        return factory.createClient(type);
+        return (T) factory.createClient(type);
     }
 }
