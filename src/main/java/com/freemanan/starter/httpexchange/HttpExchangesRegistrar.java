@@ -78,7 +78,6 @@ class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceL
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void registerHttpExchange(BeanDefinitionRegistry registry, String className) {
         Class<?> clz;
         try {
@@ -98,8 +97,7 @@ class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceL
         assert registry instanceof ConfigurableBeanFactory;
         HttpExchangeFactory httpExchangeFactory = new HttpExchangeFactory((ConfigurableBeanFactory) registry, clz);
 
-        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(
-                        (Class<Object>) clz, httpExchangeFactory::create)
+        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, httpExchangeFactory::create)
                 .getBeanDefinition();
         abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
         abd.setLazyInit(true);
