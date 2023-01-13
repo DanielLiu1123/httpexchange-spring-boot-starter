@@ -1,6 +1,5 @@
 package com.freemanan.starter.httpexchange;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
@@ -14,10 +13,10 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
  */
 public class HttpExchangeFactory {
 
-    private final BeanFactory beanFactory;
+    private final ConfigurableBeanFactory beanFactory;
     private final Class<?> type;
 
-    public HttpExchangeFactory(BeanFactory beanFactory, Class<?> type) {
+    public HttpExchangeFactory(ConfigurableBeanFactory beanFactory, Class<?> type) {
         Assert.notNull(beanFactory, "beanFactory must not be null");
         Assert.notNull(type, "type must not be null");
         this.beanFactory = beanFactory;
@@ -42,7 +41,7 @@ public class HttpExchangeFactory {
                     // support url placeholder '${}'
                     .embeddedValueResolver(beanFactory.getBean(Environment.class)::resolvePlaceholders)
                     .build();
-            ((ConfigurableBeanFactory) beanFactory).registerSingleton(HttpServiceProxyFactory.class.getName(), factory);
+            beanFactory.registerSingleton(HttpServiceProxyFactory.class.getName(), factory);
         }
         return (T) factory.createClient(type);
     }
