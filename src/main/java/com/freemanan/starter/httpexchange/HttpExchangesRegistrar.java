@@ -78,7 +78,7 @@ class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceL
         }
     }
 
-    private void registerHttpExchange(BeanDefinitionRegistry registry, String className) {
+    private static void registerHttpExchange(BeanDefinitionRegistry registry, String className) {
         Class<?> clz;
         try {
             clz = Class.forName(className);
@@ -149,7 +149,7 @@ class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceL
         return mr.getClassMetadata().isInterface();
     }
 
-    private void registerClassesAsHttpExchange(BeanDefinitionRegistry registry, Class<?>[] classes) {
+    private static void registerClassesAsHttpExchange(BeanDefinitionRegistry registry, Class<?>[] classes) {
         for (Class<?> clz : classes) {
             registerHttpExchange(registry, clz.getName());
         }
