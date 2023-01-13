@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
@@ -24,22 +25,17 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.annotation.HttpExchange;
-import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 /**
  * @author Freeman
  */
-class HttpExchangeRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, EnvironmentAware {
-    private static final Logger log = LoggerFactory.getLogger(HttpExchangeRegistrar.class);
+class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, EnvironmentAware {
+    private static final Logger log = LoggerFactory.getLogger(HttpExchangesRegistrar.class);
 
     private ResourceLoader resourceLoader;
 
     private Environment environment;
-
-    private HttpServiceProxyFactory factory;
 
     @Override
     public void setEnvironment(Environment environment) {
@@ -68,7 +64,7 @@ class HttpExchangeRegistrar implements ImportBeanDefinitionRegistrar, ResourceLo
                 .ifPresent(classes -> registerClassesAsHttpExchange(registry, classes));
 
         String[] packages = (String[]) attrs.get("value");
-        if (packages.length == 0) {
+        if (packages == null || packages.length == 0) {
             packages = new String[] {ClassUtils.getPackageName(metadata.getClassName())};
         }
 
@@ -84,34 +80,37 @@ class HttpExchangeRegistrar implements ImportBeanDefinitionRegistrar, ResourceLo
 
     @SuppressWarnings("unchecked")
     private void registerHttpExchange(BeanDefinitionRegistry registry, String className) {
-        HttpServiceProxyFactory factory = getHttpServiceProxyFactory();
+        Class<?> clz;
         try {
-            Class<?> clz = Class.forName(className);
-
-            if (!clz.isInterface()) {
-                throw new IllegalArgumentException(className + " is not an interface");
-            }
-
-            if (isPureInterface(clz)) {
-                return;
-            }
-
-            Object client = factory.createClient(clz);
-
-            AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition((Class<Object>) clz, () -> client)
-                    .getBeanDefinition();
-            abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
-
-            try {
-                registry.registerBeanDefinition(className, abd);
-            } catch (BeanDefinitionOverrideException ignore) {
-                // clients are included in base packages
-                log.warn(
-                        "Your @HttpExchanges client '{}' is included in base packages, you can remove it from 'clients' property.",
-                        className);
-            }
+            clz = Class.forName(className);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
+        }
+
+        if (!clz.isInterface()) {
+            throw new IllegalArgumentException(className + " is not an interface");
+        }
+
+        if (isPureInterface(clz)) {
+            return;
+        }
+
+        assert registry instanceof ConfigurableBeanFactory;
+        HttpExchangeFactory httpExchangeFactory = new HttpExchangeFactory((ConfigurableBeanFactory) registry, clz);
+
+        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(
+                        (Class<Object>) clz, httpExchangeFactory::create)
+                .getBeanDefinition();
+        abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+        abd.setLazyInit(true);
+
+        try {
+            registry.registerBeanDefinition(className, abd);
+        } catch (BeanDefinitionOverrideException ignore) {
+            // clients are included in base packages
+            log.warn(
+                    "Your @HttpExchanges client '{}' is included in base packages, you can remove it from 'clients' property.",
+                    className);
         }
     }
 
@@ -127,18 +126,6 @@ class HttpExchangeRegistrar implements ImportBeanDefinitionRegistrar, ResourceLo
             }
         }
         return true;
-    }
-
-    private HttpServiceProxyFactory getHttpServiceProxyFactory() {
-        return this.factory != null
-                ? this.factory
-                : (this.factory = HttpServiceProxyFactory.builder(WebClientAdapter.forClient(buildWebClient()))
-                        .embeddedValueResolver(this.environment::resolvePlaceholders) // support url placeholder '${}'
-                        .build());
-    }
-
-    private static WebClient buildWebClient() {
-        return WebClient.create();
     }
 
     private ClassPathScanningCandidateComponentProvider getScanner() {

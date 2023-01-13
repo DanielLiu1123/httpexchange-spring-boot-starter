@@ -15,7 +15,7 @@ import org.springframework.web.service.annotation.HttpExchange;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-@Import(HttpExchangeRegistrar.class)
+@Import(HttpExchangesRegistrar.class)
 public @interface EnableHttpExchanges {
     /**
      * Scan base packages.
