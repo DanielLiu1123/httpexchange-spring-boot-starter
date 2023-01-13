@@ -1,6 +1,7 @@
 package com.freemanan.starter.httpexchange;
 
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -31,17 +32,18 @@ public class HttpExchangeFactory {
      */
     @SuppressWarnings("unchecked")
     public <T> T create() {
-        HttpServiceProxyFactory factory = beanFactory
-                .getBeanProvider(HttpServiceProxyFactory.class)
-                .getIfUnique(() -> {
-                    WebClient.Builder builder =
-                            beanFactory.getBeanProvider(WebClient.Builder.class).getIfUnique(WebClient::builder);
-                    return HttpServiceProxyFactory.builder(WebClientAdapter.forClient(builder.build()))
-                            .embeddedValueResolver(
-                                    beanFactory.getBean(Environment.class)
-                                            ::resolvePlaceholders) // support url placeholder '${}'
-                            .build();
-                });
+        HttpServiceProxyFactory factory =
+                beanFactory.getBeanProvider(HttpServiceProxyFactory.class).getIfUnique();
+        if (factory == null) {
+            factory = HttpServiceProxyFactory.builder(WebClientAdapter.forClient(beanFactory
+                            .getBeanProvider(WebClient.Builder.class)
+                            .getIfUnique(WebClient::builder)
+                            .build()))
+                    // support url placeholder '${}'
+                    .embeddedValueResolver(beanFactory.getBean(Environment.class)::resolvePlaceholders)
+                    .build();
+            ((ConfigurableBeanFactory) beanFactory).registerSingleton(HttpServiceProxyFactory.class.getName(), factory);
+        }
         return (T) factory.createClient(type);
     }
 }
