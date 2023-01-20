@@ -12,7 +12,6 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
@@ -59,9 +58,13 @@ class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceL
                         metadata.getAnnotationAttributes(EnableHttpExchanges.class.getName()))
                 .orElse(Collections.emptyMap());
 
-        Optional.ofNullable(attrs.get("clients"))
-                .map(it -> (Class<?>[]) it)
-                .ifPresent(classes -> registerClassesAsHttpExchange(registry, classes));
+        // Shouldn't scan base packages when using clients property
+        // see https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/1
+        Class<?>[] clientClasses = (Class<?>[]) attrs.get("clients");
+        if (clientClasses != null && clientClasses.length > 0) {
+            registerClassesAsHttpExchange(registry, clientClasses);
+            return;
+        }
 
         String[] packages = (String[]) attrs.get("value");
         if (packages == null || packages.length == 0) {
@@ -102,14 +105,7 @@ class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceL
         abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
         abd.setLazyInit(true);
 
-        try {
-            registry.registerBeanDefinition(className, abd);
-        } catch (BeanDefinitionOverrideException ignore) {
-            // clients are included in base packages
-            log.warn(
-                    "Your @HttpExchanges client '{}' is included in base packages, you can remove it from 'clients' property.",
-                    className);
-        }
+        registry.registerBeanDefinition(className, abd);
     }
 
     private static boolean isPureInterface(Class<?> clz) {
