@@ -35,20 +35,27 @@ public class HttpExchangeFactory {
                 .getBeanProvider(HttpServiceProxyFactory.Builder.class)
                 .getIfUnique();
         if (builder != null) {
-            return (T) builder.build().createClient(type);
+            return (T) builder
+                    // support url placeholder '${}'
+                    .embeddedValueResolver(beanFactory.getBean(Environment.class)::resolvePlaceholders)
+                    .build()
+                    .createClient(type);
         }
         HttpServiceProxyFactory factory =
                 beanFactory.getBeanProvider(HttpServiceProxyFactory.class).getIfUnique();
-        if (factory == null) {
-            factory = HttpServiceProxyFactory.builder(WebClientAdapter.forClient(beanFactory
-                            .getBeanProvider(WebClient.Builder.class)
-                            .getIfUnique(WebClient::builder)
-                            .build()))
-                    // support url placeholder '${}'
-                    .embeddedValueResolver(beanFactory.getBean(Environment.class)::resolvePlaceholders)
-                    .build();
-            beanFactory.registerSingleton(HttpServiceProxyFactory.class.getName(), factory);
+        if (factory != null) {
+            // If HttpServiceProxyFactory is created by user
+            // may not support url placeholder '${}'
+            return (T) factory.createClient(type);
         }
-        return (T) factory.createClient(type);
+        HttpServiceProxyFactory newFactory = HttpServiceProxyFactory.builder(WebClientAdapter.forClient(beanFactory
+                        .getBeanProvider(WebClient.Builder.class)
+                        .getIfUnique(WebClient::builder)
+                        .build()))
+                // support url placeholder '${}'
+                .embeddedValueResolver(beanFactory.getBean(Environment.class)::resolvePlaceholders)
+                .build();
+        beanFactory.registerSingleton(HttpServiceProxyFactory.class.getName(), newFactory);
+        return (T) newFactory.createClient(type);
     }
 }
