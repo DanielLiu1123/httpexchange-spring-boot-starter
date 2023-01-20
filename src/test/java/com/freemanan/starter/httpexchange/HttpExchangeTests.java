@@ -11,10 +11,13 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -22,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
+@ExtendWith(OutputCaptureExtension.class)
 class HttpExchangeTests {
 
     @Test
@@ -107,7 +111,7 @@ class HttpExchangeTests {
     }
 
     @Test
-    void testBasePackage_whenSpecificPackageAndClients_thenBasePackageShouldNotWorking() {
+    void testBasePackage_whenSpecificPackageAndClients_thenBasePackageShouldNotWorking(CapturedOutput output) {
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(SpecificPackageAndClients.class)
                 .web(WebApplicationType.NONE)
                 .run();
@@ -116,6 +120,10 @@ class HttpExchangeTests {
 
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(OrderApi.class));
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
+
+        assertThat(output)
+                .contains(
+                        "The basePackages attribute will be ignored when using clients attribute, you should remove basePackages attribute.");
 
         ctx.close();
     }

@@ -60,18 +60,22 @@ class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceL
 
         // Shouldn't scan base packages when using clients property
         // see https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/1
-        Class<?>[] clientClasses = (Class<?>[]) attrs.get("clients");
-        if (clientClasses != null && clientClasses.length > 0) {
+        Class<?>[] clientClasses = (Class<?>[]) attrs.getOrDefault("clients", new Class<?>[0]);
+        String[] basepPackages = (String[]) attrs.getOrDefault("value", new String[0]);
+        if (clientClasses.length > 0) {
             registerClassesAsHttpExchange(registry, clientClasses);
+            if (basepPackages.length > 0) {
+                log.warn(
+                        "The basePackages attribute will be ignored when using clients attribute, you should remove basePackages attribute.");
+            }
             return;
         }
 
-        String[] packages = (String[]) attrs.get("value");
-        if (packages == null || packages.length == 0) {
-            packages = new String[] {ClassUtils.getPackageName(metadata.getClassName())};
+        if (basepPackages.length == 0) {
+            basepPackages = new String[] {ClassUtils.getPackageName(metadata.getClassName())};
         }
 
-        for (String pkg : packages) {
+        for (String pkg : basepPackages) {
             Set<BeanDefinition> beanDefinitions = scanner.findCandidateComponents(pkg);
             for (BeanDefinition beanDefinition : beanDefinitions) {
                 if (beanDefinition instanceof AnnotatedBeanDefinition bd) {

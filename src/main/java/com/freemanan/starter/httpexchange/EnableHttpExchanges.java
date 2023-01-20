@@ -48,6 +48,8 @@ public @interface EnableHttpExchanges {
     /**
      * The classes to register as HttpExchange client beans.
      *
+     * <p> NOTE: when the clients attribute is present, the {@link #basePackages} attribute will be ignored.
+     *
      * @return the classes to register as HttpExchange client beans.
      */
     Class<?>[] clients() default {};
