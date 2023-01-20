@@ -11,13 +11,10 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.test.system.CapturedOutput;
-import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -25,7 +22,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
-@ExtendWith(OutputCaptureExtension.class)
 class HttpExchangeTests {
 
     @Test
@@ -111,7 +107,21 @@ class HttpExchangeTests {
     }
 
     @Test
-    void testClientsProperty(CapturedOutput output) {
+    void testBasePackage_whenSpecificPackageAndClients_thenBasePackageShouldNotWorking() {
+        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(SpecificPackageAndClients.class)
+                .web(WebApplicationType.NONE)
+                .run();
+
+        assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
+
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(OrderApi.class));
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
+
+        ctx.close();
+    }
+
+    @Test
+    void testClientsProperty() {
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(ClientsProperty.class)
                 .web(WebApplicationType.NONE)
                 .run();
@@ -120,9 +130,6 @@ class HttpExchangeTests {
         assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
 
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(OrderApi.class));
-
-        // specific client is included in base packages
-        assertThat(output).contains("you can remove it from 'clients' property.");
 
         ctx.close();
     }
@@ -167,6 +174,13 @@ class HttpExchangeTests {
     @EnableAutoConfiguration
     @EnableHttpExchanges({"com.freemanan.starter.order.api"})
     static class SpecificPackage {}
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableAutoConfiguration
+    @EnableHttpExchanges(
+            value = {"com.freemanan.starter.order.api"},
+            clients = UserApi.class)
+    static class SpecificPackageAndClients {}
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
