@@ -23,7 +23,7 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
 
       - name: Decrypt secring.gpg
-        uses: openssl enc -des-cbc -d -in secring.gpg.bin -out secring.gpg -pass pass:${{ secrets.privateKeyPassword }}
+        run: openssl enc -des-cbc -d -in secring.gpg.bin -out secring.gpg -pass pass:${{ secrets.privateKeyPassword }}
 
       - name: Release
         uses: gradle/gradle-build-action@v2
