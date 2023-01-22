@@ -23,13 +23,13 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
 
       - name: Decrypt secring.gpg
-        run: openssl des-cbc -d -in secring.gpg.bin -out secring.gpg -pass pass:${{ secrets.privateKeyPassword }}
-
-      - name: Release
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: publish -Psigning.secretKeyRingFile=${pwd}/secring.gpg -Psigning.keyId=${{ secrets.signKeyId }} -Psigning.password=${{ secrets.signPassword }}
-        env:
-          RELEASE: true
-          OSSRH_USER: ${{ secrets.OSSRH_USER }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+#        run: openssl enc des-cbc -d -in secring.gpg.bin -out secring.gpg -pass pass:${{ secrets.privateKeyPassword }}
+        run: uname -a && openssl version
+#      - name: Release
+#        uses: gradle/gradle-build-action@v2
+#        with:
+#          arguments: publish -Psigning.secretKeyRingFile=${pwd}/secring.gpg -Psigning.keyId=${{ secrets.signKeyId }} -Psigning.password=${{ secrets.signPassword }}
+#        env:
+#          RELEASE: true
+#          OSSRH_USER: ${{ secrets.OSSRH_USER }}
+#          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
