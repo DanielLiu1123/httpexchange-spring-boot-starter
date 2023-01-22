@@ -3,7 +3,7 @@ apply plugin: 'signing'
 
 version = System.getenv('RELEASE') ? version.substring(0, version.lastIndexOf('-SNAPSHOT')) : version
 
-def isRelease = !version.endsWith('-SNAPSHOT') && System.getProperty('signing.gnupg.keyName')
+def isRelease = !version.endsWith('-SNAPSHOT')
 
 task sourcesJar(type: Jar) {
     from sourceSets.main.allJava
