@@ -11,7 +11,7 @@ The missing starter for Spring 6.x HttpExchange client.
 Gradle users:
 
 ```groovy
-implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.2'
+implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.3'
 ```
 
 Maven users:
@@ -21,7 +21,7 @@ Maven users:
 <dependency>
     <groupId>com.freemanan</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.0.2</version>
+    <version>3.0.3</version>
 </dependency>
 ```
 
