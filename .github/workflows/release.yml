@@ -26,7 +26,7 @@ jobs:
       - name: Release
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: publish -Psigning.secretKeyRingFile=${pwd}/secring.gpg -Psigning.keyId=${{ secrets.signKeyId }} -Psigning.password=${{ secrets.signPassword }}
+          arguments: publish -Psigning.secretKeyRingFile=secring.gpg -Psigning.keyId=${{ secrets.signKeyId }} -Psigning.password=${{ secrets.signPassword }}
         env:
           RELEASE: true
           OSSRH_USER: ${{ secrets.OSSRH_USER }}
