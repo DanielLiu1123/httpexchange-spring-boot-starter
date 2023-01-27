@@ -4,7 +4,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.freemanan/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/com.freemanan/httpexchange-spring-boot-starter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The missing starter for Spring 6.x HttpExchange client.
+The missing starter for Spring 6.x declarative http client.
 
 ## How to use
 
