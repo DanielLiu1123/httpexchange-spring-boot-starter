@@ -53,9 +53,9 @@ public class App {
     }
 
     @Bean
-    HttpServiceProxyFactory httpServiceProxyFactory() {
+    HttpServiceProxyFactory httpServiceProxyFactory(WebClient.Builder builder) {
         return HttpServiceProxyFactory
-                .builder(WebClientAdapter.forClient(WebClient.create()))
+                .builder(WebClientAdapter.forClient(builder.build()))
                 .build();
     }
 
