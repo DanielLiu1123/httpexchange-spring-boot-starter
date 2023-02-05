@@ -73,7 +73,7 @@ You can simplify with `httpexhange-spring-boot-starter`:
 ```java
 
 @SpringBootApplication
-@EnableHttpExchanges
+@EnableExchangeClients
 public class App {
 
     public static void main(String[] args) {

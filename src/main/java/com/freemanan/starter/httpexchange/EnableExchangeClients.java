@@ -11,24 +11,23 @@ import org.springframework.web.service.annotation.HttpExchange;
 /**
  * Enable auto scan {@link HttpExchange} interfaces, and register them as {@link HttpExchange} client beans.
  *
+ * <p> Basic usage:
+ * <pre>{@code
+ * @SpringBootApplication
+ * @EnableExchangeClients("org.my.pkg")
+ * public class App {}
+ * }</pre>
+ *
  * @author Freeman
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-@Import(HttpExchangesRegistrar.class)
-public @interface EnableHttpExchanges {
+@Import(ExchangeClientsRegistrar.class)
+public @interface EnableExchangeClients {
     /**
      * Scan base packages.
      *
      * <p> Scan the package of the annotated class by default.
-     *
-     * <p> Basic usage:
-     * <pre>{@code
-     * @SpringBootApplication
-     * @EnableHttpExchanges("org.my.pkg")
-     * public class App {}
-     * }</pre>
-     *
      * <p> Alias for the {@link #basePackages()} attribute.
      *
      * @return the base packages to scan

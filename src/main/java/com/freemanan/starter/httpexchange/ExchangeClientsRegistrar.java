@@ -12,6 +12,7 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
@@ -29,8 +30,8 @@ import org.springframework.web.service.annotation.HttpExchange;
 /**
  * @author Freeman
  */
-class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, EnvironmentAware {
-    private static final Logger log = LoggerFactory.getLogger(HttpExchangesRegistrar.class);
+class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, EnvironmentAware {
+    private static final Logger log = LoggerFactory.getLogger(ExchangeClientsRegistrar.class);
 
     private ResourceLoader resourceLoader;
 
@@ -55,27 +56,37 @@ class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceL
         ClassPathScanningCandidateComponentProvider scanner = getScanner();
 
         Map<String, Object> attrs = Optional.ofNullable(
-                        metadata.getAnnotationAttributes(EnableHttpExchanges.class.getName()))
+                        metadata.getAnnotationAttributes(EnableExchangeClients.class.getName()))
                 .orElse(Collections.emptyMap());
 
         // Shouldn't scan base packages when using clients property
         // see https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/1
         Class<?>[] clientClasses = (Class<?>[]) attrs.getOrDefault("clients", new Class<?>[0]);
-        String[] basepPackages = (String[]) attrs.getOrDefault("value", new String[0]);
+        String[] basePackages = (String[]) attrs.getOrDefault("value", new String[0]);
         if (clientClasses.length > 0) {
             registerClassesAsHttpExchange(registry, clientClasses);
-            if (basepPackages.length > 0) {
-                log.warn(
-                        "The basePackages attribute will be ignored when using clients attribute, you should remove basePackages attribute.");
+            if (basePackages.length > 0) {
+                // @EnableExchangeClients(basePackages = "com.example.api", clients = {UserHobbyApi.class})
+                // should scan basePackages and register specified clients
+                registerBeansForBasePackages(registry, scanner, basePackages);
             }
             return;
         }
 
-        if (basepPackages.length == 0) {
-            basepPackages = new String[] {ClassUtils.getPackageName(metadata.getClassName())};
+        if (basePackages.length == 0) {
+            // @EnableExchangeClients
+            // should scan the package of the annotated class
+            basePackages = new String[] {ClassUtils.getPackageName(metadata.getClassName())};
         }
 
-        for (String pkg : basepPackages) {
+        registerBeansForBasePackages(registry, scanner, basePackages);
+    }
+
+    private static void registerBeansForBasePackages(
+            BeanDefinitionRegistry registry,
+            ClassPathScanningCandidateComponentProvider scanner,
+            String[] basePackages) {
+        for (String pkg : basePackages) {
             Set<BeanDefinition> beanDefinitions = scanner.findCandidateComponents(pkg);
             for (BeanDefinition beanDefinition : beanDefinitions) {
                 if (beanDefinition instanceof AnnotatedBeanDefinition bd) {
@@ -102,14 +113,21 @@ class HttpExchangesRegistrar implements ImportBeanDefinitionRegistrar, ResourceL
         }
 
         assert registry instanceof ConfigurableBeanFactory;
-        HttpExchangeFactory httpExchangeFactory = new HttpExchangeFactory((ConfigurableBeanFactory) registry, clz);
+        ExchangeClientsFactory factory = new ExchangeClientsFactory((ConfigurableBeanFactory) registry, clz);
 
-        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, httpExchangeFactory::create)
+        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, factory::create)
                 .getBeanDefinition();
         abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
         abd.setLazyInit(true);
 
-        registry.registerBeanDefinition(className, abd);
+        try {
+            registry.registerBeanDefinition(className, abd);
+        } catch (BeanDefinitionOverrideException ignore) {
+            // clients are included in base packages
+            log.warn(
+                    "Your @HttpExchanges client '{}' is included in base packages, you can remove it from 'clients' property.",
+                    className);
+        }
     }
 
     private static boolean isPureInterface(Class<?> clz) {

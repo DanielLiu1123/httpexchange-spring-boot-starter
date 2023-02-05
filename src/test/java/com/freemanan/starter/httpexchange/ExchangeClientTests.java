@@ -25,8 +25,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
+/**
+ * Core tests.
+ *
+ * @author Freeman
+ */
 @ExtendWith(OutputCaptureExtension.class)
-class HttpExchangeTests {
+class ExchangeClientTests {
 
     @Test
     void testNotEnableHttpExchange() {
@@ -111,19 +116,17 @@ class HttpExchangeTests {
     }
 
     @Test
-    void testBasePackage_whenSpecificPackageAndClients_thenBasePackageShouldNotWorking(CapturedOutput output) {
+    void testBasePackage_whenSpecificPackageAndClients_thenBasePackageShouldWork(CapturedOutput output) {
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(SpecificPackageAndClients.class)
                 .web(WebApplicationType.NONE)
                 .run();
 
         assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
+        assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
 
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(OrderApi.class));
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
 
-        assertThat(output)
-                .contains(
-                        "The basePackages attribute will be ignored when using clients attribute, you should remove basePackages attribute.");
+        assertThat(output).contains("you can remove it from 'clients' property.");
 
         ctx.close();
     }
@@ -163,36 +166,36 @@ class HttpExchangeTests {
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchanges
+    @EnableExchangeClients
     static class DefaultConfig {}
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchanges({
+    @EnableExchangeClients({
         "com.freemanan.starter",
     })
     static class ParentPackage {}
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchanges({"com.freemanan.**.api"})
+    @EnableExchangeClients({"com.freemanan.**.api"})
     static class Wildcard {}
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchanges({"com.freemanan.starter.order.api"})
+    @EnableExchangeClients({"com.freemanan.starter.order.api"})
     static class SpecificPackage {}
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchanges(
+    @EnableExchangeClients(
             value = {"com.freemanan.starter.order.api"},
-            clients = UserApi.class)
+            clients = {UserApi.class, OrderApi.class})
     static class SpecificPackageAndClients {}
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableHttpExchanges(clients = {UserApi.class, PostApi.class})
+    @EnableExchangeClients(clients = {UserApi.class, PostApi.class})
     static class ClientsProperty {}
 
     @HttpExchange("https://my-json-server.typicode.com/")

@@ -11,12 +11,12 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 /**
  * @author Freeman
  */
-public class HttpExchangeFactory {
+public class ExchangeClientsFactory {
 
     private final ConfigurableBeanFactory beanFactory;
     private final Class<?> type;
 
-    public HttpExchangeFactory(ConfigurableBeanFactory beanFactory, Class<?> type) {
+    public ExchangeClientsFactory(ConfigurableBeanFactory beanFactory, Class<?> type) {
         Assert.notNull(beanFactory, "beanFactory must not be null");
         Assert.notNull(type, "type must not be null");
         this.beanFactory = beanFactory;
