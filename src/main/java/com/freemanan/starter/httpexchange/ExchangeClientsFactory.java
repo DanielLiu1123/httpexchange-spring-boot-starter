@@ -1,5 +1,7 @@
 package com.freemanan.starter.httpexchange;
 
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
@@ -34,6 +36,8 @@ public class ExchangeClientsFactory {
         HttpServiceProxyFactory.Builder builder = beanFactory
                 .getBeanProvider(HttpServiceProxyFactory.Builder.class)
                 .getIfUnique();
+        // look up from beanFactory
+        // 1. look up HttpServiceProxyFactory.Builder first
         if (builder != null) {
             return (T) builder
                     // support url placeholder '${}'
@@ -41,6 +45,7 @@ public class ExchangeClientsFactory {
                     .build()
                     .createClient(type);
         }
+        // 2. look up HttpServiceProxyFactory
         HttpServiceProxyFactory factory =
                 beanFactory.getBeanProvider(HttpServiceProxyFactory.class).getIfUnique();
         if (factory != null) {
@@ -48,14 +53,27 @@ public class ExchangeClientsFactory {
             // may not support url placeholder '${}'
             return (T) factory.createClient(type);
         }
-        HttpServiceProxyFactory newFactory = HttpServiceProxyFactory.builder(WebClientAdapter.forClient(beanFactory
-                        .getBeanProvider(WebClient.Builder.class)
-                        .getIfUnique(WebClient::builder)
-                        .build()))
-                // support url placeholder '${}'
-                .embeddedValueResolver(beanFactory.getBean(Environment.class)::resolvePlaceholders)
-                .build();
-        beanFactory.registerSingleton(HttpServiceProxyFactory.class.getName(), newFactory);
-        return (T) newFactory.createClient(type);
+
+        // look up from holder, don't add to beanFactory
+        HttpServiceProxyFactory cachedFactory =
+                Holder.getOrSupply(() -> HttpServiceProxyFactory.builder(WebClientAdapter.forClient(beanFactory
+                                .getBeanProvider(WebClient.Builder.class)
+                                .getIfUnique(WebClient::builder)
+                                .build()))
+                        // support url placeholder '${}'
+                        .embeddedValueResolver(beanFactory.getBean(Environment.class)::resolvePlaceholders)
+                        .build());
+        return (T) cachedFactory.createClient(type);
+    }
+
+    private static class Holder {
+        private static final AtomicReference<HttpServiceProxyFactory> INSTANCE = new AtomicReference<>();
+
+        public static synchronized HttpServiceProxyFactory getOrSupply(Supplier<HttpServiceProxyFactory> supplier) {
+            if (INSTANCE.get() == null) {
+                INSTANCE.set(supplier.get());
+            }
+            return INSTANCE.get();
+        }
     }
 }
