@@ -22,6 +22,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
@@ -160,6 +161,39 @@ class ExchangeClientTests {
         ctx.close();
     }
 
+    @Test
+    void testUrlVariable() {
+        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(UrlVariable.class)
+                .web(WebApplicationType.NONE)
+                .properties("api.url=https://my-json-server.typicode.com")
+                .run();
+
+        assertThatCode(() -> ctx.getBean(UrlVariableApi.class)).doesNotThrowAnyException();
+
+        UrlVariableApi api = ctx.getBean(UrlVariableApi.class);
+        List<Post> posts = api.getPosts();
+
+        assertThat(posts).isNotEmpty();
+
+        ctx.close();
+    }
+
+    @Test
+    void testPathVariable_whenNotHaveValueAttribute_thenWorksFine() {
+        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(UrlVariable.class)
+                .web(WebApplicationType.NONE)
+                .run();
+
+        assertThatCode(() -> ctx.getBean(PostApi.class)).doesNotThrowAnyException();
+
+        PostApi api = ctx.getBean(PostApi.class);
+        Post post = api.getPost(1);
+
+        assertThat(post).isNotNull();
+
+        ctx.close();
+    }
+
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
     static class NotEnableHttpExchange {}
@@ -198,15 +232,30 @@ class ExchangeClientTests {
     @EnableExchangeClients(clients = {UserApi.class, PostApi.class})
     static class ClientsProperty {}
 
+    @Configuration(proxyBeanMethods = false)
+    @EnableAutoConfiguration
+    @EnableExchangeClients
+    static class UrlVariable {}
+
     @HttpExchange("https://my-json-server.typicode.com/")
     interface PostApi {
 
         @GetExchange("/typicode/demo/posts")
         List<Post> getPosts();
 
+        @GetExchange("/typicode/demo/posts/{id}")
+        Post getPost(@PathVariable int id);
+
         default String getPost() {
             return "post";
         }
+    }
+
+    @HttpExchange("${api.url}")
+    interface UrlVariableApi {
+
+        @GetExchange("/typicode/demo/posts")
+        List<Post> getPosts();
     }
 
     static class Post {
