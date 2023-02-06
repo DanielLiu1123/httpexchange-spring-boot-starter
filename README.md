@@ -8,13 +8,13 @@ The missing starter for Spring 6.x declarative http client.
 
 ## How to use
 
-Gradle users:
+Gradle:
 
 ```groovy
 implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.4'
 ```
 
-Maven users:
+Maven:
 
 ```xml
 
@@ -90,6 +90,22 @@ If you have experiences with `Spring Cloud OpenFeign`, you will find that the us
 
 `httpexhange-spring-boot-starter` will auto scan the `@HttpExchange` annotated interfaces and create the corresponding
 beans.
+
+## Core Features
+
+- Auto scan `@HttpExchange` annotated interfaces and create the corresponding beans.
+
+  All you need to do is to add `@EnableExchangeClients` annotation to your main class.
+
+- Support url variables.
+
+  ```java
+  @HttpExchange("${api.post.url}")
+  public interface PostApi {
+      @GetExchange("/typicode/demo/posts/{id}")
+      Post getPost(@PathVariable("id") int id);
+  }
+  ```
 
 ## License
 
