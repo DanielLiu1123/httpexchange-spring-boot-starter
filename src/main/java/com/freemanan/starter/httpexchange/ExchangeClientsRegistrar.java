@@ -117,6 +117,7 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
 
         AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, factory::create)
                 .getBeanDefinition();
+        abd.setPrimary(true);
         abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
         abd.setLazyInit(true);
 
