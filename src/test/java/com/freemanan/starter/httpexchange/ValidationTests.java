@@ -48,8 +48,8 @@ public class ValidationTests {
 
         assertThatCode(() -> api.getPost(1)).doesNotThrowAnyException();
         assertThatCode(() -> api.getPost(2)).doesNotThrowAnyException();
-        assertThatCode(() -> api.getPost(3))
-                .doesNotThrowAnyException(); // should throw ConstraintViolationException if validation works
+        // should throw ConstraintViolationException if validation works
+        assertThatCode(() -> api.getPost(3)).doesNotThrowAnyException();
     }
 
     @Configuration(proxyBeanMethods = false)
