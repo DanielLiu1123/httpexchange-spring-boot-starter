@@ -117,8 +117,10 @@ beans.
       Post getPost(@PathVariable("id") @Min(1) @Max(3) int id);
   }
   ```
-  
-NOTE: this feature needs `spring-boot` version >= 3.0.3, see [issue](https://github.com/spring-projects/spring-framework/issues/29782) and [tests](src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
+
+  NOTE: this feature needs `spring-boot` version >= 3.0.3,
+  see [issue](https://github.com/spring-projects/spring-framework/issues/29782)
+  and [tests](src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
 
 ## License
 
