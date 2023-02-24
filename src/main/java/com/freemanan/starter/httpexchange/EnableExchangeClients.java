@@ -11,12 +11,33 @@ import org.springframework.web.service.annotation.HttpExchange;
 /**
  * Enable auto scan {@link HttpExchange} interfaces, and register them as {@link HttpExchange} client beans.
  *
- * <p> Basic usage:
+ * <p> Examples:
+ *
+ * <p> Scan the package of the annotated class:
  * <pre>{@code
- * @SpringBootApplication
+ * @EnableExchangeClients
+ * public class App {}
+ * }</pre>
+ *
+ * <p> Scan the package of the specified {@link #basePackages} (not include the package of annotated class):
+ * <pre>{@code
  * @EnableExchangeClients("org.my.pkg")
  * public class App {}
  * }</pre>
+ *
+ * <p> Register specified clients (don't scan any packages):
+ * <pre>{@code
+ * @EnableExchangeClients(clients = {FooApi.class})
+ * public class App {}
+ * }</pre>
+ *
+ * <p> Scan specified {@link #basePackages} and register specified clients:
+ * <pre>{@code
+ * @EnableExchangeClients(basePackages = "org.my.pkg", clients = {FooApi.class})
+ * public class App {}
+ * }</pre>
+ *
+ * <p> NOTE: scanning packages will increase the program startup time, you can sacrifice some flexibility and use the {@link #clients} attribute to specify the interfaces that need to be registered as beans.
  *
  * @author Freeman
  */
@@ -47,9 +68,9 @@ public @interface EnableExchangeClients {
     /**
      * The classes to register as HttpExchange client beans.
      *
-     * <p> NOTE: when the clients attribute is present, the {@link #basePackages} attribute will be ignored.
+     * <p> clients and {@link #basePackages} <strong>can</strong> be used together.
      *
-     * @return the classes to register as HttpExchange client beans.
+     * @return the interfaces to register as HttpExchange client beans.
      */
     Class<?>[] clients() default {};
 }
