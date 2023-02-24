@@ -11,7 +11,7 @@ The missing starter for Spring 6.x declarative http client.
 Gradle:
 
 ```groovy
-implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.5'
+implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.6'
 ```
 
 Maven:
@@ -21,7 +21,7 @@ Maven:
 <dependency>
     <groupId>com.freemanan</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.0.5</version>
+    <version>3.0.6</version>
 </dependency>
 ```
 
