@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import com.freemanan.starter.Post;
 import com.freemanan.starter.order.api.OrderApi;
 import com.freemanan.starter.user.api.UserApi;
 import com.freemanan.starter.user.api.UserHobbyApi;
@@ -259,31 +260,5 @@ class ExchangeClientTests {
 
         @GetExchange("/typicode/demo/posts")
         List<Post> getPosts();
-    }
-
-    static class Post {
-        private Integer id;
-        private String title;
-
-        public Integer getId() {
-            return id;
-        }
-
-        public void setId(Integer id) {
-            this.id = id;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public void setTitle(String title) {
-            this.title = title;
-        }
-
-        @Override
-        public String toString() {
-            return "Post{" + "id=" + id + ", title='" + title + '\'' + '}';
-        }
     }
 }
