@@ -122,6 +122,15 @@ beans.
   see [issue](https://github.com/spring-projects/spring-framework/issues/29782)
   and [tests](src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
 
+## Version
+
+The major/minor version of this project is consistent with the version of `Spring Boot`, so `3.0.x` should work with
+`3.0.x` of `Spring Boot`, please always use the latest version.
+
+| Spring Boot | httpexchange-spring-boot-starter |
+|-------------|----------------------------------|
+| 3.0.x       | 3.0.6                            |
+
 ## License
 
 The MIT License.
