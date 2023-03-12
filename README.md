@@ -27,7 +27,7 @@ Maven:
 
 ## What is it
 
-Spring 6.0 has provided its own support for declarative http clients.
+Spring 6.0 has provided its own support for declarative HTTP clients.
 
 ```java
 
@@ -88,14 +88,14 @@ public class App {
 
 If you have experiences with `Spring Cloud OpenFeign`, you will find that the usage is very similar.
 
-`httpexhange-spring-boot-starter` will auto scan the `@HttpExchange` annotated interfaces and create the corresponding
-beans.
+`httpexhange-spring-boot-starter` will automatically scan the interfaces annotated with `@HttpExchange` and create the
+corresponding beans.
 
 ## Core Features
 
-- Auto scan `@HttpExchange` annotated interfaces and create the corresponding beans.
+- Automatically scan interfaces annotated with @HttpExchange and create corresponding beans.
 
-  All you need to do is to add `@EnableExchangeClients` annotation to your main class.
+  All you need to do is add the @EnableExchangeClients annotation to your main class.
 
 - Support url variables.
 
@@ -124,8 +124,9 @@ beans.
 
 ## Version
 
-The major/minor version of this project is consistent with the version of `Spring Boot`, so `3.0.x` should work with
-`3.0.x` of `Spring Boot`, please always use the latest version.
+The major/minor version of this project is consistent with the version of `Spring Boot`. Therefore, `3.0.x` of this
+project
+should work with `3.0.x` of `Spring Boot`. Please always use the latest version.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
