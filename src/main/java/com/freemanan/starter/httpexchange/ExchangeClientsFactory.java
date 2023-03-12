@@ -69,8 +69,12 @@ public class ExchangeClientsFactory {
     private static class Holder {
         private static final AtomicReference<HttpServiceProxyFactory> INSTANCE = new AtomicReference<>();
 
-        public static synchronized HttpServiceProxyFactory getOrSupply(Supplier<HttpServiceProxyFactory> supplier) {
-            return INSTANCE.updateAndGet(factory -> factory != null ? factory : supplier.get());
+        public static HttpServiceProxyFactory getOrSupply(Supplier<HttpServiceProxyFactory> supplier) {
+            if (INSTANCE.get() != null) {
+                return INSTANCE.get();
+            }
+            INSTANCE.compareAndSet(null, supplier.get());
+            return INSTANCE.get();
         }
     }
 }

@@ -16,25 +16,21 @@ import org.springframework.web.service.annotation.HttpExchange;
  * <p> Scan the package of the annotated class:
  * <pre>{@code
  * @EnableExchangeClients
- * public class App {}
  * }</pre>
  *
  * <p> Scan the package of the specified {@link #basePackages} (not include the package of annotated class):
  * <pre>{@code
  * @EnableExchangeClients("org.my.pkg")
- * public class App {}
  * }</pre>
  *
  * <p> Register specified clients (don't scan any packages):
  * <pre>{@code
  * @EnableExchangeClients(clients = {FooApi.class})
- * public class App {}
  * }</pre>
  *
  * <p> Scan specified {@link #basePackages} and register specified clients:
  * <pre>{@code
  * @EnableExchangeClients(basePackages = "org.my.pkg", clients = {FooApi.class})
- * public class App {}
  * }</pre>
  *
  * <p> NOTE: scanning packages will increase the program startup time, you can sacrifice some flexibility and use the {@link #clients} attribute to specify the interfaces that need to be registered as beans.
