@@ -125,8 +125,7 @@ corresponding beans.
 ## Version
 
 The major/minor version of this project is consistent with the version of `Spring Boot`. Therefore, `3.0.x` of this
-project
-should work with `3.0.x` of `Spring Boot`. Please always use the latest version.
+project should work with `3.0.x` of `Spring Boot`. Please always use the latest version.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
