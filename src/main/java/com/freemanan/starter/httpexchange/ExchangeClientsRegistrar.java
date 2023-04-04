@@ -14,6 +14,7 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
@@ -63,12 +64,13 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
         // see https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/1
         Class<?>[] clientClasses = (Class<?>[]) attrs.getOrDefault("clients", new Class<?>[0]);
         String[] basePackages = (String[]) attrs.getOrDefault("value", new String[0]);
+        HttpClientsProperties properties = getProperties(environment);
         if (clientClasses.length > 0) {
-            registerClassesAsHttpExchange(registry, clientClasses);
+            registerClassesAsHttpExchange(registry, properties, clientClasses);
             if (basePackages.length > 0) {
                 // @EnableExchangeClients(basePackages = "com.example.api", clients = {UserHobbyApi.class})
                 // should scan basePackages and register specified clients
-                registerBeansForBasePackages(registry, scanner, basePackages);
+                registerBeansForBasePackages(registry, scanner, properties, basePackages);
             }
             return;
         }
@@ -79,24 +81,34 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
             basePackages = new String[] {ClassUtils.getPackageName(metadata.getClassName())};
         }
 
-        registerBeansForBasePackages(registry, scanner, basePackages);
+        registerBeansForBasePackages(registry, scanner, properties, basePackages);
+    }
+
+    private static HttpClientsProperties getProperties(Environment environment) {
+        HttpClientsProperties properties = Binder.get(environment)
+                .bind(HttpClientsProperties.PREFIX, HttpClientsProperties.class)
+                .orElseGet(HttpClientsProperties::new);
+        properties.afterPropertiesSet();
+        return properties;
     }
 
     private static void registerBeansForBasePackages(
             BeanDefinitionRegistry registry,
             ClassPathScanningCandidateComponentProvider scanner,
+            HttpClientsProperties properties,
             String[] basePackages) {
         for (String pkg : basePackages) {
             Set<BeanDefinition> beanDefinitions = scanner.findCandidateComponents(pkg);
             for (BeanDefinition beanDefinition : beanDefinitions) {
                 if (beanDefinition instanceof AnnotatedBeanDefinition bd) {
-                    registerHttpExchange(registry, bd.getMetadata().getClassName());
+                    registerHttpExchange(registry, properties, bd.getMetadata().getClassName());
                 }
             }
         }
     }
 
-    private static void registerHttpExchange(BeanDefinitionRegistry registry, String className) {
+    private static void registerHttpExchange(
+            BeanDefinitionRegistry registry, HttpClientsProperties properties, String className) {
         Class<?> clz;
         try {
             clz = Class.forName(className);
@@ -113,9 +125,9 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
         }
 
         assert registry instanceof ConfigurableBeanFactory;
-        ExchangeClientsFactory factory = new ExchangeClientsFactory((ConfigurableBeanFactory) registry, clz);
+        ExchangeClientCreator creator = new ExchangeClientCreator((ConfigurableBeanFactory) registry, properties, clz);
 
-        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, factory::create)
+        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, creator::create)
                 .getBeanDefinition();
         abd.setPrimary(true);
         abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
@@ -168,9 +180,10 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
         return mr.getClassMetadata().isInterface();
     }
 
-    private static void registerClassesAsHttpExchange(BeanDefinitionRegistry registry, Class<?>[] classes) {
+    private static void registerClassesAsHttpExchange(
+            BeanDefinitionRegistry registry, HttpClientsProperties properties, Class<?>[] classes) {
         for (Class<?> clz : classes) {
-            registerHttpExchange(registry, clz.getName());
+            registerHttpExchange(registry, properties, clz.getName());
         }
     }
 }

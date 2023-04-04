@@ -1,7 +1,8 @@
 package com.freemanan.starter.httpexchange;
 
 import static com.freemanan.cr.core.anno.Verb.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.freemanan.starter.Dependencies.*;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.freemanan.cr.core.anno.Action;
 import com.freemanan.cr.core.anno.ClasspathReplacer;
@@ -9,12 +10,12 @@ import io.netty.handler.timeout.ReadTimeoutException;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.time.Duration;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -30,7 +31,9 @@ import reactor.netty.http.client.HttpClient;
 /**
  * @author Freeman
  */
-@ClasspathReplacer({@Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:3.0.3")})
+@ClasspathReplacer({
+    @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)
+})
 public class WebClientConfigurationTests {
 
     @Test
@@ -67,18 +70,19 @@ public class WebClientConfigurationTests {
         int timeout;
 
         @Bean
-        WebClient webClient(WebClient.Builder builder) {
-            HttpClient httpClient = HttpClient.create();
-            if (timeout > 0) {
-                httpClient = httpClient.responseTimeout(Duration.ofSeconds(timeout));
-            }
-            builder.clientConnector(new ReactorClientHttpConnector(httpClient));
-            return builder.build();
+        WebClientCustomizer webClientCustomizer() {
+            return builder -> {
+                HttpClient httpClient = HttpClient.create();
+                if (timeout > 0) {
+                    httpClient = httpClient.responseTimeout(Duration.ofSeconds(timeout));
+                }
+                builder.clientConnector(new ReactorClientHttpConnector(httpClient));
+            };
         }
 
         @Bean
-        HttpServiceProxyFactory.Builder httpServiceProxyFactory(WebClient webClient) {
-            return HttpServiceProxyFactory.builder().clientAdapter(WebClientAdapter.forClient(webClient));
+        HttpServiceProxyFactory.Builder httpServiceProxyFactory(WebClient.Builder builder) {
+            return HttpServiceProxyFactory.builder().clientAdapter(WebClientAdapter.forClient(builder.build()));
         }
     }
 
@@ -87,6 +91,6 @@ public class WebClientConfigurationTests {
     interface TimeoutApi {
 
         @GetExchange("/delay/{delay}")
-        Map<String, Object> delay(@PathVariable @Min(0) @Max(10) int delay);
+        void delay(@PathVariable @Min(0) @Max(10) int delay);
     }
 }
