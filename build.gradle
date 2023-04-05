@@ -17,7 +17,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-starter-json")
     testImplementation("org.springframework.boot:spring-boot-starter-validation")
-    testImplementation("com.freemanan:classpath-replacer-junit5:1.2.0")
+    testImplementation("com.freemanan:classpath-replacer-junit5:${classpathReplacerVersion}")
 
     testCompileOnly("org.springframework.boot:spring-boot-starter-webflux")
 }
@@ -49,7 +49,7 @@ spotless {
 
 spotbugs {
     spotbugsTest.enabled = false
-    omitVisitors = ['FindReturnRef', 'MethodReturnCheck']
+    omitVisitors.addAll('FindReturnRef', 'MethodReturnCheck')
 }
 
-apply from: './deploy.gradle'
+apply from: "${rootDir}/deploy.gradle"
