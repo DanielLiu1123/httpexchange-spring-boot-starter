@@ -1,9 +1,11 @@
 package com.freemanan.starter.httpexchange;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,15 +23,15 @@ public class HttpClientsProperties implements InitializingBean {
     /**
      * Default base url.
      */
-    private String defaultBaseUrl;
+    private String baseUrl;
     /**
      * Default response timeout, in milliseconds.
      */
-    private Long defaultResponseTimeout;
+    private Long responseTimeout;
     /**
-     * Default headers, will be merged with {@link Client} headers.
+     * Default headers.
      */
-    private Map<String, List<String>> defaultHeaders = new HashMap<>();
+    private List<Header> headers = new ArrayList<>();
 
     private List<Client> clients = new ArrayList<>();
 
@@ -45,36 +47,50 @@ public class HttpClientsProperties implements InitializingBean {
          */
         private String name;
         /**
-         * Base url, will be merged with {@link HttpClientsProperties#defaultBaseUrl}.
+         * Base url, will be merged with {@link HttpClientsProperties#baseUrl}.
          */
         private String baseUrl;
         /**
-         * Response timeout, in milliseconds, will be merged with {@link HttpClientsProperties#defaultResponseTimeout}.
+         * Response timeout, in milliseconds, will be merged with {@link HttpClientsProperties#responseTimeout}.
          */
         private Long responseTimeout;
         /**
-         * Headers, will be merged with {@link HttpClientsProperties#defaultHeaders}.
+         * Headers, will be merged with {@link HttpClientsProperties#headers}.
          */
-        private Map<String, List<String>> headers = new HashMap<>();
+        private List<Header> headers = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Header {
+        private String key;
+        private List<String> values = new ArrayList<>();
     }
 
     @Override
     public void afterPropertiesSet() {
         for (Client client : clients) {
             if (client.getBaseUrl() == null) {
-                client.setBaseUrl(defaultBaseUrl);
+                client.setBaseUrl(baseUrl);
             }
             if (client.getResponseTimeout() == null) {
-                client.setResponseTimeout(defaultResponseTimeout);
+                client.setResponseTimeout(responseTimeout);
             }
             // defaultHeaders + client.headers
-            Map<String, List<String>> total = new HashMap<>(this.defaultHeaders);
-            total.putAll(client.getHeaders());
-            client.setHeaders(total);
+            LinkedHashMap<String, List<String>> total = headers.stream()
+                    .collect(toMap(Header::getKey, Header::getValues, (oldV, newV) -> newV, LinkedHashMap::new));
+            for (Header header : client.getHeaders()) {
+                total.put(header.getKey(), header.getValues());
+            }
+            List<Header> mergedHeaders = total.entrySet().stream()
+                    .map(e -> new Header(e.getKey(), e.getValue()))
+                    .collect(toList());
+            client.setHeaders(mergedHeaders);
         }
     }
 
     HttpClientsProperties.Client defaultClient() {
-        return new Client("__default__", defaultBaseUrl, defaultResponseTimeout, defaultHeaders);
+        return new Client("__default__", baseUrl, responseTimeout, headers);
     }
 }

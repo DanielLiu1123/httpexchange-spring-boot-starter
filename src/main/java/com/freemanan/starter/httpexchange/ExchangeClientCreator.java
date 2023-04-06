@@ -1,14 +1,18 @@
 package com.freemanan.starter.httpexchange;
 
-import com.freemanan.starter.httpexchange.filter.TimeoutExchangeFilter;
+import static com.freemanan.starter.httpexchange.Util.findMatchedConfig;
+
+import java.time.Duration;
+import java.util.Optional;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
+import org.springframework.util.StringValueResolver;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 /**
@@ -22,28 +26,14 @@ class ExchangeClientCreator {
     private final HttpClientsProperties.Client client;
     private final ReusableModel model;
 
-    public ExchangeClientCreator(
-            ConfigurableBeanFactory beanFactory, HttpClientsProperties properties, Class<?> clientType) {
+    ExchangeClientCreator(ConfigurableBeanFactory beanFactory, HttpClientsProperties properties, Class<?> clientType) {
         Assert.notNull(beanFactory, "beanFactory must not be null");
         Assert.notNull(clientType, "clientType must not be null");
         this.beanFactory = beanFactory;
         this.environment = beanFactory.getBean(Environment.class);
         this.clientType = clientType;
-        this.client = getClient(properties, clientType);
+        this.client = findMatchedConfig(clientType, properties).orElseGet(properties::defaultClient);
         this.model = new ReusableModel(client.getBaseUrl(), client.getResponseTimeout(), client.getHeaders());
-    }
-
-    private static HttpClientsProperties.Client getClient(HttpClientsProperties properties, Class<?> type) {
-        return properties.getClients().stream()
-                .filter(it -> StringUtils.hasText(it.getName()))
-                .filter(it -> {
-                    String name = it.getName().replaceAll("-", "");
-                    return name.equalsIgnoreCase(type.getSimpleName())
-                            || name.equalsIgnoreCase(type.getName())
-                            || name.equalsIgnoreCase(type.getCanonicalName());
-                })
-                .findFirst()
-                .orElseGet(properties::defaultClient);
     }
 
     /**
@@ -66,8 +56,25 @@ class ExchangeClientCreator {
         HttpServiceProxyFactory.Builder builder = beanFactory
                 .getBeanProvider(HttpServiceProxyFactory.Builder.class)
                 .getIfUnique(HttpServiceProxyFactory::builder)
-                .clientAdapter(WebClientAdapter.forClient(getOrCreateWebClient()))
-                .embeddedValueResolver(environment::resolvePlaceholders);
+                .clientAdapter(WebClientAdapter.forClient(getOrCreateWebClient()));
+
+        // Customized argument resolvers
+        beanFactory
+                .getBeanProvider(HttpServiceArgumentResolver.class)
+                .orderedStream()
+                .forEach(builder::customArgumentResolver);
+        // Support to pass object properties as request parameters in get request
+        builder.customArgumentResolver(new ObjectToParametersArgumentResolver());
+
+        // String value resolver, support ${} placeholder by default
+        StringValueResolver delegatedResolver = new UrlPlaceholderStringValueResolver(
+                environment, beanFactory.getBeanProvider(StringValueResolver.class));
+        builder.embeddedValueResolver(delegatedResolver);
+
+        // Response timeout
+        Optional.ofNullable(client.getResponseTimeout())
+                .ifPresent(timeout -> builder.blockTimeout(Duration.ofMillis(timeout)));
+
         return builder.build();
     }
 
@@ -79,13 +86,17 @@ class ExchangeClientCreator {
         WebClient.Builder builder =
                 beanFactory.getBeanProvider(WebClient.Builder.class).getIfUnique(WebClient::builder);
         if (client.getBaseUrl() != null) {
-            builder.baseUrl(client.getBaseUrl());
-        }
-        if (client.getResponseTimeout() != null) {
-            builder.filter(new TimeoutExchangeFilter(client.getResponseTimeout()));
+            String baseUrl = client.getBaseUrl();
+            Assert.notNull(baseUrl, "baseUrl must not be null");
+            if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+                baseUrl = "http://" + baseUrl;
+            }
+            builder.baseUrl(baseUrl);
         }
         if (!CollectionUtils.isEmpty(client.getHeaders())) {
-            client.getHeaders().forEach((key, values) -> builder.defaultHeader(key, values.toArray(new String[0])));
+            client.getHeaders()
+                    .forEach(header -> builder.defaultHeader(
+                            header.getKey(), header.getValues().toArray(String[]::new)));
         }
         return builder.build();
     }

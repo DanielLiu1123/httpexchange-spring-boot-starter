@@ -10,8 +10,6 @@ import com.freemanan.starter.user.api.UserApi;
 import com.freemanan.starter.user.api.UserHobbyApi;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
-import java.util.Map;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -22,11 +20,8 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.service.annotation.GetExchange;
-import org.springframework.web.service.annotation.HttpExchange;
 
 /**
  * Core tests.
@@ -73,19 +68,10 @@ class ExchangeClientTests {
                 .properties("logging.level.org.springframework.web=DEBUG")
                 .run();
 
-        PostApi postApi = ctx.getBean(PostApi.class);
-        OrderApi orderApi = ctx.getBean(OrderApi.class);
-        UserApi userApi = ctx.getBean(UserApi.class);
-        UserHobbyApi userHobbyApi = ctx.getBean(UserHobbyApi.class);
-
-        assertThat(postApi.getPosts()).isNotEmpty();
-        assertThat(orderApi).isNotNull();
-        assertThat(userApi).isNotNull();
-        assertThat(userHobbyApi).isNotNull();
-
-        ResponseEntity<Map<String, String>> response = userHobbyApi.getUserHobby("1");
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
+        assertThatCode(() -> ctx.getBean(PostApi.class)).doesNotThrowAnyException();
+        assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
+        assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
+        assertThatCode(() -> ctx.getBean(UserHobbyApi.class)).doesNotThrowAnyException();
 
         ctx.close();
     }
@@ -156,44 +142,7 @@ class ExchangeClientTests {
 
         PostApi postApi = ctx.getBean(PostApi.class);
 
-        assertThatExceptionOfType(UndeclaredThrowableException.class)
-                .isThrownBy(() -> postApi.getPost())
-                .withRootCauseInstanceOf(IllegalAccessException.class);
-
-        ctx.close();
-    }
-
-    @Test
-    @Disabled(
-            "This test is not working when run './gradlew test', but works fine when run this single test, can't find the reason.")
-    void testUrlVariable() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(UrlVariable.class)
-                .web(WebApplicationType.NONE)
-                .properties("api.url=https://my-json-server.typicode.com")
-                .run();
-
-        assertThatCode(() -> ctx.getBean(UrlVariableApi.class)).doesNotThrowAnyException();
-
-        UrlVariableApi api = ctx.getBean(UrlVariableApi.class);
-        List<Post> posts = api.getPosts();
-
-        assertThat(posts).isNotEmpty();
-
-        ctx.close();
-    }
-
-    @Test
-    void testPathVariable_whenNotHaveValueAttribute_thenWorksFine() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(UrlVariable.class)
-                .web(WebApplicationType.NONE)
-                .run();
-
-        assertThatCode(() -> ctx.getBean(PostApi.class)).doesNotThrowAnyException();
-
-        PostApi api = ctx.getBean(PostApi.class);
-        Post post = api.getPost(1);
-
-        assertThat(post).isNotNull();
+        assertThatCode(postApi::getDeletedPosts).isInstanceOf(UndeclaredThrowableException.class);
 
         ctx.close();
     }
@@ -236,29 +185,19 @@ class ExchangeClientTests {
     @EnableExchangeClients(clients = {UserApi.class, PostApi.class})
     static class ClientsProperty {}
 
-    @Configuration(proxyBeanMethods = false)
-    @EnableAutoConfiguration
-    @EnableExchangeClients
-    static class UrlVariable {}
-
-    @HttpExchange("https://my-json-server.typicode.com/")
     interface PostApi {
 
-        @GetExchange("/typicode/demo/posts")
+        @GetExchange("/posts")
         List<Post> getPosts();
 
-        @GetExchange("/typicode/demo/posts/{id}")
+        @GetExchange("/posts/search")
+        List<Post> getPosts(Post post);
+
+        @GetExchange("/posts/{id}")
         Post getPost(@PathVariable int id);
 
-        default String getPost() {
-            return "post";
+        default List<Post> getDeletedPosts() {
+            throw new UnsupportedOperationException();
         }
-    }
-
-    @HttpExchange("${api.url}")
-    interface UrlVariableApi {
-
-        @GetExchange("/typicode/demo/posts")
-        List<Post> getPosts();
     }
 }

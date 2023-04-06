@@ -3,83 +3,79 @@ package com.freemanan.starter.httpexchange;
 import static com.freemanan.cr.core.anno.Verb.ADD;
 import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.freemanan.cr.core.anno.Action;
 import com.freemanan.cr.core.anno.ClasspathReplacer;
 import com.freemanan.starter.PortFinder;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.service.annotation.GetExchange;
-import org.springframework.web.service.annotation.HttpExchange;
 
 /**
+ * {@link ObjectToParametersArgumentResolver} tester.
+ *
  * @author Freeman
  */
-class ControllerApiTests {
+class ObjectToParametersArgumentResolverTests {
 
     @Test
     @ClasspathReplacer({
-        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-web:" + springBootVersion)
+        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)
     })
-    void userApiFirst_whenHaveControllerAndApiBeans() {
+    void convertObjectPropertiesToRequestParameters() {
         int port = PortFinder.availablePort();
         var ctx = new SpringApplicationBuilder(FooController.class)
-                .profiles("ControllerApiTests")
                 .properties("server.port=" + port)
+                .properties(HttpClientsProperties.PREFIX + ".base-url=http://localhost:" + port)
                 .run();
-        long count = ctx.getBeanProvider(FooApi.class).stream().count();
-        assertThat(count).isEqualTo(2);
 
         FooApi fooApi = ctx.getBean(FooApi.class);
-        assertThat(fooApi instanceof FooController).isFalse();
 
-        assertThat(fooApi.getById("1")).isEqualTo(new Foo("1", "foo"));
+        assertThat(fooApi).isNotInstanceOf(FooController.class);
 
-        // Can't pass Object as query param by default,
-        // but we have QueryArgumentResolver to resolve it,
-        // if no QueryArgumentResolver, it will throw IllegalStateException
-        // assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> fooApi.findAll(new Foo("1",
-        // "foo1")));
+        List<Foo> resp = fooApi.findAll(new Foo("1", "foo1"));
+        assertThat(resp).isEqualTo(List.of(new Foo("1", "foo1")));
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> fooApi.findAll(Map.of()))
+                .withMessageContaining("No suitable resolver");
 
         ctx.close();
     }
 
     record Foo(String id, String name) {}
 
-    @HttpExchange("/foo")
     interface FooApi {
-
-        @GetExchange("/{id}")
-        Foo getById(@PathVariable String id);
-
-        @GetExchange
+        @GetExchange("/foo")
         List<Foo> findAll(Foo foo);
+
+        @GetExchange("/foo/by-map")
+        List<Foo> findAll(Map<String, Object> map);
     }
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
     @EnableExchangeClients(clients = FooApi.class)
     @RestController
-    @RequestMapping("/foo")
     static class FooController implements FooApi {
 
         @Override
-        @GetMapping("/{id}")
-        public Foo getById(@PathVariable String id) {
-            return new Foo(id, "foo");
+        @GetMapping("/foo")
+        public List<Foo> findAll(Foo foo) {
+            return List.of(foo);
         }
 
         @Override
-        @GetMapping
-        public List<Foo> findAll(Foo foo) {
-            return List.of(new Foo("1", "foo1"));
+        @GetMapping("/foo/by-map")
+        public List<Foo> findAll(Map<String, Object> map) {
+            return List.of(new Foo("1", "dummy"));
         }
     }
 }

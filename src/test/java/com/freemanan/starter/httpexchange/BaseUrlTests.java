@@ -18,9 +18,9 @@ public class BaseUrlTests {
 
     @Test
     void testDefaultBaseUrl() {
-        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+        var ctx = new SpringApplicationBuilder(BaseUrlConfig.class)
                 .web(WebApplicationType.NONE)
-                .properties(HttpClientsProperties.PREFIX + ".default-base-url=https://httpbin.org")
+                .properties(HttpClientsProperties.PREFIX + ".base-url=https://httpbin.org")
                 .run();
         BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
 
@@ -31,7 +31,7 @@ public class BaseUrlTests {
 
     @Test
     void testNoBaseUrl() {
-        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+        var ctx = new SpringApplicationBuilder(BaseUrlConfig.class)
                 .web(WebApplicationType.NONE)
                 .run();
         BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
@@ -43,9 +43,9 @@ public class BaseUrlTests {
 
     @Test
     void testBaseUrl_whenClientHasBaseUrl_thenOverrideDefaultBaseUrl() {
-        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+        var ctx = new SpringApplicationBuilder(BaseUrlConfig.class)
                 .web(WebApplicationType.NONE)
-                .properties(HttpClientsProperties.PREFIX + ".default-base-url=https://httpbin.org")
+                .properties(HttpClientsProperties.PREFIX + ".base-url=https://httpbin.org")
                 .properties(HttpClientsProperties.PREFIX + ".clients[0].name=BaseUrlApi")
                 .properties(HttpClientsProperties.PREFIX + ".clients[0].base-url=https://httpbinxxxxxxxx.org")
                 .run();
@@ -59,7 +59,7 @@ public class BaseUrlTests {
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
     @EnableExchangeClients(clients = BaseUrlApi.class)
-    static class TimeoutConfig {}
+    static class BaseUrlConfig {}
 
     interface BaseUrlApi {
 

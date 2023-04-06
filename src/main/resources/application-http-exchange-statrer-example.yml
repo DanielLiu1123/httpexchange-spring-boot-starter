@@ -1,15 +1,16 @@
 http-exchange:
-  default-base-url: http://api-gateway
-  default-response-timeout: 10000
-  default-headers:
-    X-Header1: v1
-    X-Header2: [v1, v2]
+  base-url: http://api-gateway
+  response-timeout: 10000
+  headers:
+    - key: X-App-Name
+      values: ${spring.application.name}
   clients:
     - name: OrderApi
       base-url: http://order
       response-timeout: 1000
       headers:
-        X-Header1: v2
+        - key: X-Key
+          values: [value1, value2]
     - name: UserApi
       base-url: http://user
       response-timeout: 2000

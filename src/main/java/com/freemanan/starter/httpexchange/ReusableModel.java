@@ -1,7 +1,6 @@
 package com.freemanan.starter.httpexchange;
 
 import java.util.List;
-import java.util.Map;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -9,4 +8,4 @@ import org.springframework.web.reactive.function.client.WebClient;
  *
  * @author Freeman
  */
-record ReusableModel(String baseUrl, Long responseTimeout, Map<String, List<String>> headers) {}
+record ReusableModel(String baseUrl, Long responseTimeout, List<HttpClientsProperties.Header> headers) {}
