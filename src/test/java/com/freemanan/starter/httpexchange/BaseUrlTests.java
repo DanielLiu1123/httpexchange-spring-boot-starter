@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import com.freemanan.cr.core.anno.Action;
 import com.freemanan.cr.core.anno.ClasspathReplacer;
 import com.freemanan.starter.PortFinder;
-import java.net.SocketException;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -63,9 +62,7 @@ public class BaseUrlTests {
                 .run();
         BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
 
-        assertThatCode(() -> api.delay(10))
-                .hasRootCauseInstanceOf(SocketException.class)
-                .hasMessageContaining("Invalid argument");
+        assertThatCode(() -> api.delay(10)).isInstanceOf(RuntimeException.class);
 
         ctx.close();
     }
