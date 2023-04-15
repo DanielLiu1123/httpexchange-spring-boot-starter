@@ -2,60 +2,73 @@ package com.freemanan.starter.httpexchange;
 
 import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.freemanan.cr.core.anno.Action;
 import com.freemanan.cr.core.anno.ClasspathReplacer;
+import com.freemanan.cr.core.anno.Verb;
 import com.freemanan.starter.PortFinder;
-import io.netty.handler.timeout.ReadTimeoutException;
-import java.time.Duration;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.annotation.GetExchange;
-import org.springframework.web.service.invoker.HttpServiceProxyFactory;
-import reactor.netty.http.client.HttpClient;
 
 /**
  * @author Freeman
  */
-@ClasspathReplacer({@Action("org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)})
-public class WebClientConfigurationTests {
+@ClasspathReplacer(
+        @Action(verb = Verb.ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion))
+public class TimeoutTests {
 
     @Test
-    void testNotSetTimeout() {
+    void testDefaultTimeout_whenExceed() {
         int port = PortFinder.availablePort();
-        var ctx = new SpringApplicationBuilder(TimeoutController.class)
+        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
+                .properties(HttpClientsProperties.PREFIX + ".response-timeout=200")
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)
                 .run();
         DelayApi api = ctx.getBean(DelayApi.class);
 
-        assertThatCode(() -> api.delay(1000)).doesNotThrowAnyException();
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> api.delay(300))
+                .withMessageContaining("Timeout on blocking read for 200000000 NANOSECONDS");
 
         ctx.close();
     }
 
     @Test
-    void testTimeoutExceed() {
+    void testDefaultTimeout_whenNotExceed() {
         int port = PortFinder.availablePort();
-        var ctx = new SpringApplicationBuilder(TimeoutController.class)
+        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
+                .properties(HttpClientsProperties.PREFIX + ".response-timeout=200")
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)
-                .properties("http.timeout=1")
                 .run();
         DelayApi api = ctx.getBean(DelayApi.class);
 
-        assertThatCode(() -> api.delay(1500)).hasRootCauseInstanceOf(ReadTimeoutException.class);
+        assertThatCode(() -> api.delay(100)).doesNotThrowAnyException();
+
+        ctx.close();
+    }
+
+    @Test
+    void testTimeout_whenExceed() {
+        int port = PortFinder.availablePort();
+        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+                .properties("server.port=" + port)
+                .properties(HttpClientsProperties.PREFIX + ".response-timeout=200")
+                .properties(HttpClientsProperties.PREFIX + ".clients[0].name=DelayApi")
+                .properties(HttpClientsProperties.PREFIX + ".clients[0].base-url=http://localhost:" + port)
+                .properties(HttpClientsProperties.PREFIX + ".clients[0].response-timeout=600")
+                .run();
+        DelayApi api = ctx.getBean(DelayApi.class);
+
+        assertThatCode(() -> api.delay(400)).doesNotThrowAnyException();
 
         ctx.close();
     }
@@ -69,26 +82,7 @@ public class WebClientConfigurationTests {
     @EnableAutoConfiguration
     @EnableExchangeClients(clients = DelayApi.class)
     @RestController
-    static class TimeoutController implements DelayApi {
-
-        @Value("${http.timeout:0}")
-        int timeout;
-
-        @Bean
-        WebClientCustomizer webClientCustomizer() {
-            return builder -> {
-                HttpClient httpClient = HttpClient.create();
-                if (timeout > 0) {
-                    httpClient = httpClient.responseTimeout(Duration.ofSeconds(timeout));
-                }
-                builder.clientConnector(new ReactorClientHttpConnector(httpClient));
-            };
-        }
-
-        @Bean
-        HttpServiceProxyFactory.Builder httpServiceProxyFactory(WebClient.Builder builder) {
-            return HttpServiceProxyFactory.builder().clientAdapter(WebClientAdapter.forClient(builder.build()));
-        }
+    static class TimeoutConfig implements DelayApi {
 
         @Override
         @GetMapping("/delay/{delay}")

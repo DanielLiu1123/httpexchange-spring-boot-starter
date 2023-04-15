@@ -1,11 +1,12 @@
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
+version = version as String
 version = System.getenv('RELEASE') ? version.substring(0, version.lastIndexOf('-SNAPSHOT')) : version
 
 def isRelease = !version.endsWith('-SNAPSHOT')
 
-task sourcesJar(type: Jar) {
+tasks.register('sourcesJar', Jar) {
     from sourceSets.main.allJava
     archiveClassifier.set('sources')
 }
@@ -65,7 +66,7 @@ publishing {
         }
     }
 
-    tasks.withType(Sign) {
+    tasks.withType(Sign).configureEach {
         onlyIf { isRelease }
     }
 

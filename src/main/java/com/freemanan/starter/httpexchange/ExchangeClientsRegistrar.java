@@ -1,7 +1,9 @@
 package com.freemanan.starter.httpexchange;
 
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
+
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
@@ -37,9 +40,13 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
 
     private Environment environment;
 
+    private HttpClientsProperties properties;
+
     @Override
     public void setEnvironment(Environment environment) {
         this.environment = environment;
+        this.properties = getProperties(environment);
+        check(properties);
     }
 
     @Override
@@ -57,7 +64,7 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
 
         Map<String, Object> attrs = Optional.ofNullable(
                         metadata.getAnnotationAttributes(EnableExchangeClients.class.getName()))
-                .orElse(Collections.emptyMap());
+                .orElse(Map.of());
 
         // Shouldn't scan base packages when using clients property
         // see https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/1
@@ -82,7 +89,26 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
         registerBeansForBasePackages(registry, scanner, basePackages);
     }
 
-    private static void registerBeansForBasePackages(
+    private static void check(HttpClientsProperties properties) {
+        // check if there are duplicated client names
+        properties.getClients().stream()
+                .collect(groupingBy(HttpClientsProperties.Client::getName, counting()))
+                .forEach((name, count) -> {
+                    if (count > 1) {
+                        log.warn("There are {} clients with name '{}', please check your configuration", count, name);
+                    }
+                });
+    }
+
+    private static HttpClientsProperties getProperties(Environment environment) {
+        HttpClientsProperties properties = Binder.get(environment)
+                .bind(HttpClientsProperties.PREFIX, HttpClientsProperties.class)
+                .orElseGet(HttpClientsProperties::new);
+        properties.afterPropertiesSet();
+        return properties;
+    }
+
+    private void registerBeansForBasePackages(
             BeanDefinitionRegistry registry,
             ClassPathScanningCandidateComponentProvider scanner,
             String[] basePackages) {
@@ -96,7 +122,7 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
         }
     }
 
-    private static void registerHttpExchange(BeanDefinitionRegistry registry, String className) {
+    private void registerHttpExchange(BeanDefinitionRegistry registry, String className) {
         Class<?> clz;
         try {
             clz = Class.forName(className);
@@ -113,9 +139,9 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
         }
 
         assert registry instanceof ConfigurableBeanFactory;
-        ExchangeClientsFactory factory = new ExchangeClientsFactory((ConfigurableBeanFactory) registry, clz);
+        ExchangeClientCreator creator = new ExchangeClientCreator((ConfigurableBeanFactory) registry, properties, clz);
 
-        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, factory::create)
+        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, creator::create)
                 .getBeanDefinition();
         abd.setPrimary(true);
         abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
@@ -123,6 +149,7 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
 
         try {
             registry.registerBeanDefinition(className, abd);
+            Cache.addClientClass(clz);
         } catch (BeanDefinitionOverrideException ignore) {
             // clients are included in base packages
             log.warn(
@@ -168,7 +195,7 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
         return mr.getClassMetadata().isInterface();
     }
 
-    private static void registerClassesAsHttpExchange(BeanDefinitionRegistry registry, Class<?>[] classes) {
+    private void registerClassesAsHttpExchange(BeanDefinitionRegistry registry, Class<?>[] classes) {
         for (Class<?> clz : classes) {
             registerHttpExchange(registry, clz.getName());
         }
