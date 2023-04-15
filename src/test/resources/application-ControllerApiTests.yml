@@ -1,0 +1,9 @@
+http-exchange:
+  clients:
+    - name: FooApi
+      base-url: http://localhost:${server.port}
+      headers:
+        - key: X-Request-Id
+          values: [xxx, yyy, zzz]
+        - key: app-port
+          values: ${server.port}
