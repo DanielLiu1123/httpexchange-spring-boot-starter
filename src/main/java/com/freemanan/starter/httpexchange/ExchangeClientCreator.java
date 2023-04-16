@@ -85,10 +85,9 @@ class ExchangeClientCreator {
     private WebClient buildWebClient() {
         WebClient.Builder builder =
                 beanFactory.getBeanProvider(WebClient.Builder.class).getIfUnique(WebClient::builder);
-        if (client.getBaseUrl() != null) {
+        if (StringUtils.hasText(client.getBaseUrl())) {
             String baseUrl = client.getBaseUrl();
-            Assert.isTrue(StringUtils.hasText(baseUrl), "baseUrl must not be empty");
-            if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+            if (!baseUrl.contains("://")) {
                 baseUrl = "http://" + baseUrl;
             }
             builder.baseUrl(baseUrl);
