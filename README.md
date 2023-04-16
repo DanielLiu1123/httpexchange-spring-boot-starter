@@ -93,9 +93,9 @@ corresponding beans.
 
 ## Core Features
 
-- Automatically scan interfaces annotated with @HttpExchange and create corresponding beans.
+- Automatically scan interfaces annotated with `@HttpExchange` and create corresponding beans.
 
-  All you need to do is add the @EnableExchangeClients annotation to your main class.
+  All you need to do is add the `@EnableExchangeClients` annotation to your main class.
 
 - Support url variables.
 
@@ -117,10 +117,61 @@ corresponding beans.
       Post getPost(@PathVariable("id") @Min(1) @Max(3) int id);
   }
   ```
-
   NOTE: this feature needs `spring-boot` version >= 3.0.3,
   see [issue](https://github.com/spring-projects/spring-framework/issues/29782)
   and [tests](src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
+
+- Convert Java Bean to Query String.
+
+  In Spring Web/WebFlux (server side), it will automatically convert query string to Java Bean,
+  but `Spring Cloud OpenFeign` or `Exchange client of Spring 6` does not support to convert Java bean to query string by
+  default. In `Spring Cloud OpenFeign` you need `@SpringQueryMap` to achieve this feature.
+
+  `httpexhange-spring-boot-starter` supports this feature by default, and you don't need any another annotation.
+
+  ```java
+  public interface PostApi {
+      @GetExchange
+      List<Post> findAll(Post condition);
+  }
+  ```
+
+  Auto convert non-null fields of `condition` to query string.
+
+- Configuration Driven.
+
+  `httpexhange-spring-boot-starter` provides a lot of configuration properties to customize the behavior of the client.
+
+  You can configure the `base-url`, `timeout` and `headers` for each client, `httpexhange-spring-boot-starter` will
+  reuse `WebClient` as much as possible.
+
+  ```yaml
+  http-exchange:
+    base-url: http://api-gateway # global base-url
+    response-timeout: 10000      # global timeout
+    headers:                     # global headers
+      - key: X-App-Name
+        values: ${spring.application.name}
+    clients:
+      - name: OrderApi
+        base-url: http://order   # client specific base-url, will override global base-url
+        response-timeout: 1000   # client specific timeout, will override global timeout
+        headers:                 # client specific headers, will merge with global headers
+          - key: X-Key
+            values: [value1, value2]
+      - name: UserApi
+        base-url: user
+        response-timeout: 2000
+      - client-class: com.example.FooApi
+        base-url: service-foo.namespace
+  ```
+
+  `httpexhange-spring-boot-starter` use property `name` or `client-class` to identify the client, use `client-class`
+  first if configured, otherwise use `name` to identify the client.
+
+  For example, there is a client interface: `com.example.PostApi`, you can
+  use `name: PostApi`, `name: com.example.PostApi`, `name: post-api` or `client-class: com.example.PostApi` to identify
+  the client.
 
 ## Version
 
