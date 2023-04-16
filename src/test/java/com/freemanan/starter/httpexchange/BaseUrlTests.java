@@ -20,7 +20,7 @@ import org.springframework.web.service.annotation.GetExchange;
  * @author Freeman
  */
 @ClasspathReplacer(@Action("org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion))
-public class BaseUrlTests {
+class BaseUrlTests {
 
     @Test
     void testDefaultBaseUrl() {

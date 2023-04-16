@@ -26,12 +26,11 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-json")
-    testImplementation("org.springframework.boot:spring-boot-starter-validation")
     testImplementation("com.freemanan:classpath-replacer-junit5:${classpathReplacerVersion}")
 
     testCompileOnly("org.springframework.boot:spring-boot-starter-web")
     testCompileOnly("org.springframework.boot:spring-boot-starter-webflux")
+    testCompileOnly("org.springframework.boot:spring-boot-starter-validation")
 }
 
 compileJava {

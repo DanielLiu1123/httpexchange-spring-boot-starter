@@ -12,5 +12,7 @@ http-exchange:
         - key: X-Key
           values: [value1, value2]
     - name: UserApi
-      base-url: http://user
+      base-url: user
       response-timeout: 2000
+    - client-class: com.example.FooApi
+      base-url: service-foo.namespace

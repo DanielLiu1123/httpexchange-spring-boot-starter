@@ -1,0 +1,4 @@
+http-exchange:
+  clients:
+    - client-class: com.freemanan.starter.httpexchange.ClientClassTests.FooApi
+      base-url: localhost:${server.port}

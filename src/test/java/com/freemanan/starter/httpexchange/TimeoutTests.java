@@ -22,7 +22,7 @@ import org.springframework.web.service.annotation.GetExchange;
  */
 @ClasspathReplacer(
         @Action(verb = Verb.ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion))
-public class TimeoutTests {
+class TimeoutTests {
 
     @Test
     void testDefaultTimeout_whenExceed() {
