@@ -8,7 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -22,12 +25,19 @@ class HttpClientsConfiguration implements DisposableBean, SmartInitializingSingl
 
     private final HttpClientsProperties properties;
 
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = HttpClientsProperties.PREFIX, name = "bean-to-query", matchIfMissing = true)
+    public BeanToQueryArgumentResolver beanToQueryArgumentResolver() {
+        return new BeanToQueryArgumentResolver();
+    }
+
     @Override
     public void afterSingletonsInstantiated() {
         // Identify the configuration items that are not taking effect and print warning messages.
         Set<Class<?>> classes = Cache.getClientClasses();
         properties.getClients().stream()
-                .filter(it -> findMatchedClientClass(it.getName(), classes).isEmpty())
+                .filter(it -> findMatchedClientClass(it, classes).isEmpty())
                 .forEach(it -> log.warn(
                         "The configuration item '{}' is not taking effect, no matched http client found, please check your configuration.",
                         it.getName()));

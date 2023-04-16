@@ -30,11 +30,12 @@ import org.springframework.web.service.annotation.GetExchange;
  * @author Freeman
  */
 @ExtendWith(OutputCaptureExtension.class)
-public class ValidationTests {
+class ValidationTests {
 
     @Test
     @ClasspathReplacer({
-        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)
+        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion),
+        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-validation:" + springBootVersion)
     })
     void worksFine_whenSpringBootGreater3_0_3() {
         int port = PortFinder.availablePort();
@@ -53,7 +54,10 @@ public class ValidationTests {
     }
 
     @Test
-    @ClasspathReplacer({@Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:3.0.2")})
+    @ClasspathReplacer({
+        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:3.0.2"),
+        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-validation:3.0.2")
+    })
     void notWork_whenSpringBootLessThan3_0_3(CapturedOutput output) {
         int port = PortFinder.availablePort();
         var ctx = new SpringApplicationBuilder(ValidateController.class)
@@ -72,7 +76,7 @@ public class ValidationTests {
     }
 
     @Validated
-    public interface ValidateApi {
+    interface ValidateApi {
 
         @GetExchange("/validate/{id}")
         String validate(@PathVariable @Min(1) @Max(2) int id);
