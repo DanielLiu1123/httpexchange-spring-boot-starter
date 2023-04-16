@@ -22,7 +22,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 /**
  * @author Freeman
  */
-class ControllerApiTests {
+class ExtendTests {
 
     @Test
     @ClasspathReplacer({

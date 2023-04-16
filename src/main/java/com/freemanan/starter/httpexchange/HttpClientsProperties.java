@@ -3,6 +3,7 @@ package com.freemanan.starter.httpexchange;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,8 +12,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 /**
+ * Http Clients Configuration Properties.
+ *
  * @author Freeman
  */
 @Data
@@ -22,40 +26,58 @@ public class HttpClientsProperties implements InitializingBean {
 
     /**
      * Default base url.
+     *
+     * <p> e.g. {@code localhost:8080}, {@code http://localhost:8080}, {@code https://localhost:8080}
      */
     private String baseUrl;
     /**
-     * Default response timeout, in milliseconds.
+     * Default response timeout, in milliseconds, default value is {@code 5000}.
+     *
+     * @see HttpServiceProxyFactory.Builder#blockTimeout(Duration)
      */
     private Long responseTimeout;
     /**
-     * Default headers.
+     * Default headers, will be added to all the requests.
      */
     private List<Header> headers = new ArrayList<>();
 
     private List<Client> clients = new ArrayList<>();
+
+    /**
+     * Whether to convert Java bean to query parameters, default value is {@code true}.
+     */
+    private boolean beanToQuery = true;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Client {
         /**
-         * Client name, must be unique.
+         * Client name, identify a client.
          *
          * <p> Can be simple name, or full class name.
-         * <p> e.g. {@code FooApi}, {@code com.example.FooApi}, {@code foo-api}
+         *
+         * <p> e.g. {@code FooApi}, {@code com.example.FooApi}, {@code foo-api} can be used to identify client {@code com.example.FooApi}.
          */
         private String name;
         /**
-         * Base url, will be merged with {@link HttpClientsProperties#baseUrl}.
+         * Client class, identify a client, must be an interface.
+         *
+         * <p> This a more IDE friendly way to identify a client.
+         *
+         * <p> Properties {@link #name} and clazz used to identify a client, use clazz first if both set.
+         */
+        private Class<?> clientClass;
+        /**
+         * Base url, use {@link HttpClientsProperties#baseUrl} if not set.
          */
         private String baseUrl;
         /**
-         * Response timeout, in milliseconds, will be merged with {@link HttpClientsProperties#responseTimeout}.
+         * Response timeout, in milliseconds, use {@link HttpClientsProperties#responseTimeout} if not set.
          */
         private Long responseTimeout;
         /**
-         * Headers, will be merged with {@link HttpClientsProperties#headers}.
+         * Headers to be added to the requests, use {@link HttpClientsProperties#headers} if not set.
          */
         private List<Header> headers = new ArrayList<>();
     }
@@ -64,7 +86,13 @@ public class HttpClientsProperties implements InitializingBean {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Header {
+        /**
+         * Header key.
+         */
         private String key;
+        /**
+         * Header values.
+         */
         private List<String> values = new ArrayList<>();
     }
 
@@ -91,6 +119,6 @@ public class HttpClientsProperties implements InitializingBean {
     }
 
     HttpClientsProperties.Client defaultClient() {
-        return new Client("__default__", baseUrl, responseTimeout, headers);
+        return new Client("__default__", null, baseUrl, responseTimeout, headers);
     }
 }

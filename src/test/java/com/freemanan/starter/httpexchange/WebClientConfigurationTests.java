@@ -29,7 +29,7 @@ import reactor.netty.http.client.HttpClient;
  * @author Freeman
  */
 @ClasspathReplacer({@Action("org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)})
-public class WebClientConfigurationTests {
+class WebClientConfigurationTests {
 
     @Test
     void testNotSetTimeout() {
