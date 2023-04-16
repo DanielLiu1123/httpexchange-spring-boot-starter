@@ -74,18 +74,19 @@ class BaseUrlTests {
     static class BaseUrlController implements BaseUrlApi {
         @Override
         @GetMapping("/delay/{delay}")
-        public void delay(int delay) {
+        public String delay(int delay) {
             try {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+            return "delay " + delay;
         }
     }
 
     interface BaseUrlApi {
 
         @GetExchange("/delay/{delay}")
-        void delay(@PathVariable int delay);
+        String delay(@PathVariable int delay);
     }
 }

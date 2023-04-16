@@ -3,6 +3,7 @@ package com.freemanan.starter.httpexchange;
 import java.util.Optional;
 import java.util.Set;
 import lombok.experimental.UtilityClass;
+import org.springframework.util.StringUtils;
 
 /**
  * @author Freeman
@@ -32,6 +33,9 @@ class Util {
     static boolean match(Class<?> clz, HttpClientsProperties.Client client) {
         if (clz == client.getClientClass()) {
             return true;
+        }
+        if (!StringUtils.hasText(client.getName())) {
+            return false;
         }
         String name = client.getName().replaceAll("-", "");
         return name.equalsIgnoreCase(clz.getSimpleName())
