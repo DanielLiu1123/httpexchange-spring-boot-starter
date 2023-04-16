@@ -4,26 +4,9 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.freemanan/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/com.freemanan/httpexchange-spring-boot-starter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The missing starter for Spring 6.x declarative http client.
+The missing starter for Spring 6.x declarative HTTP client. 
 
-## How to use
-
-Gradle:
-
-```groovy
-implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.9'
-```
-
-Maven:
-
-```xml
-
-<dependency>
-    <groupId>com.freemanan</groupId>
-    <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.0.9</version>
-</dependency>
-```
+The goal is to provide a Spring Boot Starter for declarative HTTP client similar to `Spring Cloud OpenFeign`, but completely driven by configuration and without the need for any additional annotations.
 
 ## What is it
 
@@ -68,7 +51,23 @@ public class App {
 
 ```
 
-You can simplify with `httpexhange-spring-boot-starter`:
+## Quick Start
+
+```groovy
+// gradle
+implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.9'
+```
+
+```xml
+<!-- maven -->
+<dependency>
+    <groupId>com.freemanan</groupId>
+    <artifactId>httpexchange-spring-boot-starter</artifactId>
+    <version>3.0.9</version>
+</dependency>
+```
+
+You can simplify the code as follows:
 
 ```java
 
