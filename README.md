@@ -137,6 +137,22 @@ corresponding beans.
 
   Auto convert non-null fields of `condition` to query string.
 
+- Customize Resolvers.
+
+  ```java
+  @Bean
+  HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
+      return new YourHttpServiceArgumentResolver();
+  }
+  
+  @Bean
+  StringValueResolver yourStringValueResolver() {
+      return new YourStringValueResolver();
+  }
+  ```
+  
+  see `org.springframework.web.service.invoker.HttpServiceProxyFactory.Builder`, `httpexhange-spring-boot-starter` will detect all of the `HttpServiceArgumentResolver` beans and `StringValueResolver` (only one), then apply them to build the `HttpServiceProxyFactory`.
+
 - Configuration Driven.
 
   `httpexhange-spring-boot-starter` provides a lot of configuration properties to customize the behavior of the client.
