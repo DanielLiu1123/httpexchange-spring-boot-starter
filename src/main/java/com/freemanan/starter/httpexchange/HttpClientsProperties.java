@@ -1,6 +1,5 @@
 package com.freemanan.starter.httpexchange;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 import java.time.Duration;
@@ -107,13 +106,13 @@ public class HttpClientsProperties implements InitializingBean {
             }
             // defaultHeaders + client.headers
             LinkedHashMap<String, List<String>> total = headers.stream()
-                    .collect(toMap(Header::getKey, Header::getValues, (oldV, newV) -> newV, LinkedHashMap::new));
+                    .collect(toMap(Header::getKey, Header::getValues, (oldV, newV) -> oldV, LinkedHashMap::new));
             for (Header header : client.getHeaders()) {
                 total.put(header.getKey(), header.getValues());
             }
             List<Header> mergedHeaders = total.entrySet().stream()
                     .map(e -> new Header(e.getKey(), e.getValue()))
-                    .collect(toList());
+                    .toList();
             client.setHeaders(mergedHeaders);
         }
     }
