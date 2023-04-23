@@ -29,7 +29,7 @@ This is basic usage:
 public class App {
 
     public static void main(String[] args) {
-        ConfigurableApplicationContext ctx = SpringApplication.run(App.class, args);
+        var ctx = SpringApplication.run(App.class, args);
 
         PostApi postApi = ctx.getBean(PostApi.class);
         Post post = postApi.getPost(1);
@@ -76,7 +76,7 @@ You can simplify the code as follows:
 public class App {
 
     public static void main(String[] args) {
-        ConfigurableApplicationContext ctx = SpringApplication.run(App.class, args);
+        var ctx = SpringApplication.run(App.class, args);
 
         PostApi postApi = ctx.getBean(PostApi.class);
         Post post = postApi.getPost(1);
