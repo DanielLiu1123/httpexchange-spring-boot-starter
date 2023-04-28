@@ -2,7 +2,7 @@ package com.freemanan.starter.httpexchange;
 
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -12,10 +12,9 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.Ordered;
-import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.http.HttpMethod;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.invoker.HttpRequestValues;
 import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
 
@@ -40,15 +39,14 @@ public class BeanToQueryArgumentResolver implements HttpServiceArgumentResolver,
 
     @Override
     public boolean resolve(Object argument, MethodParameter parameter, HttpRequestValues.Builder requestValues) {
-        if (hasWebBindAnnotation(parameter) || argument == null || BeanUtils.isSimpleValueType(argument.getClass())) {
+        if (argument == null
+                || hasWebBindPackageAnnotation(parameter)
+                || argument instanceof URI // UrlArgumentResolver
+                || argument instanceof HttpMethod // HttpMethodArgumentResolver
+                || BeanUtils.isSimpleValueType(argument.getClass())) {
             // if there is @RequestParam, @PathVariable, @RequestHeader, @CookieValue, etc,
             // we can not convert Java bean to request parameters,
             // it will be resolved by other ArgumentResolver.
-            return false;
-        }
-
-        Method method = parameter.getMethod();
-        if (method == null || AnnotationUtils.findAnnotation(method, HttpExchange.class) == null) {
             return false;
         }
 
@@ -116,7 +114,7 @@ public class BeanToQueryArgumentResolver implements HttpServiceArgumentResolver,
         return result;
     }
 
-    protected static boolean hasWebBindAnnotation(MethodParameter parameter) {
+    protected static boolean hasWebBindPackageAnnotation(MethodParameter parameter) {
         for (Annotation annotation : parameter.getParameterAnnotations()) {
             if (annotation.annotationType().getPackageName().startsWith(webBindAnnotationPackage)) {
                 return true;

@@ -92,6 +92,20 @@ corresponding beans.
 
 ## Core Features
 
+- Spring web annotations support
+
+  `httpexhange-spring-boot-starter` supports to use spring web annotations to generate HTTP client. e.g. `@RequestMapping`, `@GetMapping`, `@PostMapping` etc.
+
+  ```java
+  @RequestMapping("/foo")
+  public interface PostApi {
+      @GetMapping("/{id}")
+      Post getPost(@PathVariable int id);
+  }
+  ```
+  
+  The advantage of this feature is that the behavior of the server and client can be consistent.
+
 - Automatically scan interfaces annotated with `@HttpExchange` and create corresponding beans.
 
   All you need to do is add the `@EnableExchangeClients` annotation to your main class.
