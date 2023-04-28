@@ -2,6 +2,7 @@ package com.freemanan.starter.httpexchange;
 
 import static com.freemanan.starter.httpexchange.Util.findMatchedConfig;
 
+import com.freemanan.starter.httpexchange.shaded.ShadedHttpServiceProxyFactory;
 import java.time.Duration;
 import java.util.Optional;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -10,6 +11,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -26,8 +28,13 @@ class ExchangeClientCreator {
     private final Class<?> clientType;
     private final HttpClientsProperties.Client client;
     private final ReusableModel model;
+    private final boolean usingClientSideAnnotation;
 
-    ExchangeClientCreator(ConfigurableBeanFactory beanFactory, HttpClientsProperties properties, Class<?> clientType) {
+    ExchangeClientCreator(
+            ConfigurableBeanFactory beanFactory,
+            HttpClientsProperties properties,
+            Class<?> clientType,
+            boolean usingClientSideAnnotation) {
         Assert.notNull(beanFactory, "beanFactory must not be null");
         Assert.notNull(properties, "properties must not be null");
         Assert.notNull(clientType, "clientType must not be null");
@@ -36,17 +43,22 @@ class ExchangeClientCreator {
         this.clientType = clientType;
         this.client = findMatchedConfig(clientType, properties).orElseGet(properties::defaultClient);
         this.model = new ReusableModel(client.getBaseUrl(), client.getResponseTimeout(), client.getHeaders());
+        this.usingClientSideAnnotation = usingClientSideAnnotation;
     }
 
     /**
-     * Create a proxy {@link HttpExchange} interface instance.
+     * Create a proxy {@link HttpExchange}/{@link RequestMapping} interface instance.
      *
-     * @param <T> type of the {@link HttpExchange} interface
+     * @param <T> type of the {@link HttpExchange}/{@link RequestMapping} interface
      * @return the proxy instance
      */
     @SuppressWarnings("unchecked")
     public <T> T create() {
-        HttpServiceProxyFactory cachedFactory = getOrCreateServiceProxyFactory();
+        if (usingClientSideAnnotation) {
+            HttpServiceProxyFactory cachedFactory = getOrCreateServiceProxyFactory();
+            return (T) cachedFactory.createClient(clientType);
+        }
+        ShadedHttpServiceProxyFactory cachedFactory = getOrCreateShadedServiceProxyFactory();
         return (T) cachedFactory.createClient(clientType);
     }
 
@@ -54,7 +66,21 @@ class ExchangeClientCreator {
         return Cache.getFactory(model, this::buildServiceProxyFactory);
     }
 
+    private ShadedHttpServiceProxyFactory getOrCreateShadedServiceProxyFactory() {
+        return Cache.getShadedFactory(model, this::buildShadedServiceProxyFactory);
+    }
+
     private HttpServiceProxyFactory buildServiceProxyFactory() {
+        HttpServiceProxyFactory.Builder builder = proxyFactoryBuilder();
+        return builder.build();
+    }
+
+    private ShadedHttpServiceProxyFactory buildShadedServiceProxyFactory() {
+        ShadedHttpServiceProxyFactory.Builder builder = ShadedHttpServiceProxyFactory.builder(proxyFactoryBuilder());
+        return builder.build();
+    }
+
+    private HttpServiceProxyFactory.Builder proxyFactoryBuilder() {
         HttpServiceProxyFactory.Builder builder = beanFactory
                 .getBeanProvider(HttpServiceProxyFactory.Builder.class)
                 .getIfUnique(HttpServiceProxyFactory::builder)
@@ -75,7 +101,7 @@ class ExchangeClientCreator {
         Optional.ofNullable(client.getResponseTimeout())
                 .ifPresent(timeout -> builder.blockTimeout(Duration.ofMillis(timeout)));
 
-        return builder.build();
+        return builder;
     }
 
     private WebClient getOrCreateWebClient() {

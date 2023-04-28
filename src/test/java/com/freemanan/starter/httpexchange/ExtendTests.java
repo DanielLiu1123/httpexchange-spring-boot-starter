@@ -26,7 +26,7 @@ class ExtendTests {
 
     @Test
     @ClasspathReplacer({
-        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-web:" + springBootVersion)
+        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)
     })
     void userApiFirst_whenHaveControllerAndApiBeans() {
         int port = PortFinder.availablePort();
