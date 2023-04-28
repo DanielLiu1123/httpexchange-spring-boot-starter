@@ -31,6 +31,7 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
 
 /**
@@ -150,15 +151,19 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
             throw new IllegalArgumentException(className + " is not an interface");
         }
 
-        if (isPureInterface(clz)) {
+        boolean hasClientSideAnnotation = hasClientSideAnnotation(clz);
+
+        if (!hasClientSideAnnotation && !hasServerSideAnnotation(clz)) {
             return;
         }
 
         assert registry instanceof ConfigurableBeanFactory;
-        ExchangeClientCreator creator = new ExchangeClientCreator((ConfigurableBeanFactory) registry, properties, clz);
+        ExchangeClientCreator creator =
+                new ExchangeClientCreator((ConfigurableBeanFactory) registry, properties, clz, hasClientSideAnnotation);
 
         AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, creator::create)
                 .getBeanDefinition();
+
         abd.setPrimary(true);
         abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
         abd.setLazyInit(true);
@@ -174,18 +179,30 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
         }
     }
 
-    private static boolean isPureInterface(Class<?> clz) {
-        HttpExchange httpExchange = AnnotationUtils.findAnnotation(clz, HttpExchange.class);
-        if (httpExchange != null) {
-            return false;
+    private static boolean hasServerSideAnnotation(Class<?> clz) {
+        if (AnnotationUtils.findAnnotation(clz, RequestMapping.class) != null) {
+            return true;
+        }
+        Method[] methods = ReflectionUtils.getAllDeclaredMethods(clz);
+        for (Method method : methods) {
+            if (AnnotationUtils.findAnnotation(method, RequestMapping.class) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasClientSideAnnotation(Class<?> clz) {
+        if (AnnotationUtils.findAnnotation(clz, HttpExchange.class) != null) {
+            return true;
         }
         Method[] methods = ReflectionUtils.getAllDeclaredMethods(clz);
         for (Method method : methods) {
             if (AnnotationUtils.findAnnotation(method, HttpExchange.class) != null) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     private ClassPathScanningCandidateComponentProvider getScanner() {
