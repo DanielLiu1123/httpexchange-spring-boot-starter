@@ -26,8 +26,7 @@ class ExchangeClientCreator {
     private final ConfigurableBeanFactory beanFactory;
     private final Environment environment;
     private final Class<?> clientType;
-    private final HttpClientsProperties.Client client;
-    private final ReusableModel model;
+    private final HttpClientsProperties.Channel channelConfig;
     private final boolean usingClientSideAnnotation;
 
     ExchangeClientCreator(
@@ -41,8 +40,7 @@ class ExchangeClientCreator {
         this.beanFactory = beanFactory;
         this.environment = beanFactory.getBean(Environment.class);
         this.clientType = clientType;
-        this.client = findMatchedConfig(clientType, properties).orElseGet(properties::defaultClient);
-        this.model = new ReusableModel(client.getBaseUrl(), client.getResponseTimeout(), client.getHeaders());
+        this.channelConfig = findMatchedConfig(clientType, properties).orElseGet(properties::defaultClient);
         this.usingClientSideAnnotation = usingClientSideAnnotation;
     }
 
@@ -55,19 +53,15 @@ class ExchangeClientCreator {
     @SuppressWarnings("unchecked")
     public <T> T create() {
         if (usingClientSideAnnotation) {
-            HttpServiceProxyFactory cachedFactory = getOrCreateServiceProxyFactory();
-            return (T) cachedFactory.createClient(clientType);
+            HttpServiceProxyFactory cachedFactory = buildServiceProxyFactory();
+            T result = (T) cachedFactory.createClient(clientType);
+            Cache.addClientClass(clientType);
+            return result;
         }
-        ShadedHttpServiceProxyFactory cachedFactory = getOrCreateShadedServiceProxyFactory();
-        return (T) cachedFactory.createClient(clientType);
-    }
-
-    private HttpServiceProxyFactory getOrCreateServiceProxyFactory() {
-        return Cache.getFactory(model, this::buildServiceProxyFactory);
-    }
-
-    private ShadedHttpServiceProxyFactory getOrCreateShadedServiceProxyFactory() {
-        return Cache.getShadedFactory(model, this::buildShadedServiceProxyFactory);
+        ShadedHttpServiceProxyFactory cachedFactory = buildShadedServiceProxyFactory();
+        T result = (T) cachedFactory.createClient(clientType);
+        Cache.addClientClass(clientType);
+        return result;
     }
 
     private HttpServiceProxyFactory buildServiceProxyFactory() {
@@ -84,7 +78,7 @@ class ExchangeClientCreator {
         HttpServiceProxyFactory.Builder builder = beanFactory
                 .getBeanProvider(HttpServiceProxyFactory.Builder.class)
                 .getIfUnique(HttpServiceProxyFactory::builder)
-                .clientAdapter(WebClientAdapter.forClient(getOrCreateWebClient()));
+                .clientAdapter(WebClientAdapter.forClient(buildWebClient()));
 
         // Customized argument resolvers
         beanFactory
@@ -98,28 +92,25 @@ class ExchangeClientCreator {
         builder.embeddedValueResolver(delegatedResolver);
 
         // Response timeout
-        Optional.ofNullable(client.getResponseTimeout())
+        Optional.ofNullable(channelConfig.getResponseTimeout())
                 .ifPresent(timeout -> builder.blockTimeout(Duration.ofMillis(timeout)));
 
         return builder;
     }
 
-    private WebClient getOrCreateWebClient() {
-        return Cache.getWebClient(model, this::buildWebClient);
-    }
-
     private WebClient buildWebClient() {
         WebClient.Builder builder =
                 beanFactory.getBeanProvider(WebClient.Builder.class).getIfUnique(WebClient::builder);
-        if (StringUtils.hasText(client.getBaseUrl())) {
-            String baseUrl = client.getBaseUrl();
+        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
+            String baseUrl = channelConfig.getBaseUrl();
             if (!baseUrl.contains("://")) {
                 baseUrl = "http://" + baseUrl;
             }
             builder.baseUrl(baseUrl);
         }
-        if (!CollectionUtils.isEmpty(client.getHeaders())) {
-            client.getHeaders()
+        if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
+            channelConfig
+                    .getHeaders()
                     .forEach(header -> builder.defaultHeader(
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }

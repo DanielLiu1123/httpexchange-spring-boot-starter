@@ -1,14 +1,9 @@
 package com.freemanan.starter.httpexchange;
 
-import static java.util.stream.Collectors.counting;
-import static java.util.stream.Collectors.groupingBy;
-
 import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
@@ -30,7 +25,6 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
 
@@ -50,7 +44,6 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
     public void setEnvironment(Environment environment) {
         this.environment = environment;
         this.properties = getProperties(environment);
-        check(properties);
     }
 
     @Override
@@ -91,30 +84,6 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
         }
 
         registerBeansForBasePackages(registry, scanner, basePackages);
-    }
-
-    private static void check(HttpClientsProperties properties) {
-        // check if there are duplicated client names
-        properties.getClients().stream()
-                .map(HttpClientsProperties.Client::getName)
-                .filter(StringUtils::hasText)
-                .collect(groupingBy(Function.identity(), counting()))
-                .forEach((name, count) -> {
-                    if (count > 1) {
-                        log.warn("There are {} clients with name '{}', please check your configuration", count, name);
-                    }
-                });
-
-        // check if there are duplicated client classes
-        properties.getClients().stream()
-                .map(HttpClientsProperties.Client::getClientClass)
-                .filter(Objects::nonNull)
-                .collect(groupingBy(Function.identity(), counting()))
-                .forEach((clz, count) -> {
-                    if (count > 1) {
-                        log.warn("There are {} clients with class '{}', please check your configuration", count, clz);
-                    }
-                });
     }
 
     private static HttpClientsProperties getProperties(Environment environment) {
@@ -170,7 +139,6 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
 
         try {
             registry.registerBeanDefinition(className, abd);
-            Cache.addClientClass(clz);
         } catch (BeanDefinitionOverrideException ignore) {
             // clients are included in base packages
             log.warn(

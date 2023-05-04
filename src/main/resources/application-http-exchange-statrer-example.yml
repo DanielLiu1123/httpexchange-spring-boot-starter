@@ -4,15 +4,18 @@ http-exchange:
   headers:
     - key: X-App-Name
       values: ${spring.application.name}
-  clients:
-    - name: OrderApi
-      base-url: http://order
+  channels:
+    - base-url: http://order
       response-timeout: 1000
       headers:
         - key: X-Key
           values: [value1, value2]
-    - name: UserApi
-      base-url: user
+      clients:
+        - OrderApi
+        - OrderDetailApi
+        - OrderItemApi
+    - base-url: user
       response-timeout: 2000
-    - client-class: com.example.FooApi
-      base-url: service-foo.namespace
+      classes:
+        - com.example.api.UserApi
+        - com.example.api.UserDetailApi

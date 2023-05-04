@@ -61,9 +61,9 @@ class TimeoutShadedTests {
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".response-timeout=200")
-                .properties(HttpClientsProperties.PREFIX + ".clients[0].name=DelayApi")
-                .properties(HttpClientsProperties.PREFIX + ".clients[0].base-url=http://localhost:" + port)
-                .properties(HttpClientsProperties.PREFIX + ".clients[0].response-timeout=600")
+                .properties(HttpClientsProperties.PREFIX + ".channels[0].base-url=http://localhost:" + port)
+                .properties(HttpClientsProperties.PREFIX + ".channels[0].clients[0]=DelayApi")
+                .properties(HttpClientsProperties.PREFIX + ".channels[0].response-timeout=600")
                 .run();
         DelayApi api = ctx.getBean(DelayApi.class);
 
@@ -84,7 +84,7 @@ class TimeoutShadedTests {
     static class TimeoutConfig implements DelayApi {
 
         @Override
-        public String delay(@PathVariable int delay) {
+        public String delay(int delay) {
             try {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {
