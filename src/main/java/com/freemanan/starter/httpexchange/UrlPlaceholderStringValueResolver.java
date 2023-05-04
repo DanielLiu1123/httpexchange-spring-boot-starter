@@ -15,23 +15,22 @@ class UrlPlaceholderStringValueResolver implements StringValueResolver {
     private static final Logger log = LoggerFactory.getLogger(UrlPlaceholderStringValueResolver.class);
 
     private final Environment environment;
-    private final ObjectProvider<StringValueResolver> delegateProvider;
+    private final StringValueResolver delegate;
 
     UrlPlaceholderStringValueResolver(Environment environment, ObjectProvider<StringValueResolver> delegateProvider) {
         this.environment = environment;
-        this.delegateProvider = delegateProvider;
+        this.delegate = delegateProvider.getIfUnique();
     }
 
     @Override
     public String resolveStringValue(String strVal) {
-        String resolved = null;
+        String resolved;
         try {
             resolved = environment.resolvePlaceholders(strVal);
         } catch (Exception e) {
             log.warn("Failed to resolve placeholders in '{}'", strVal, e);
+            resolved = strVal;
         }
-        resolved = (resolved != null ? resolved : strVal);
-        StringValueResolver delegate = delegateProvider.getIfAvailable();
         if (delegate != null) {
             return delegate.resolveStringValue(resolved);
         }

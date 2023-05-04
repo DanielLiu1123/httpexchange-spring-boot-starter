@@ -34,52 +34,18 @@ public class HttpClientsProperties implements InitializingBean {
      *
      * @see HttpServiceProxyFactory.Builder#blockTimeout(Duration)
      */
-    private Long responseTimeout;
+    private Long responseTimeout = 5000L;
     /**
      * Default headers, will be added to all the requests.
      */
     private List<Header> headers = new ArrayList<>();
 
-    private List<Client> clients = new ArrayList<>();
+    private List<Channel> channels = new ArrayList<>();
 
     /**
      * Whether to convert Java bean to query parameters, default value is {@code true}.
      */
     private boolean beanToQuery = true;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Client {
-        /**
-         * Client name, identify a client.
-         *
-         * <p> Can be simple name, or full class name.
-         *
-         * <p> e.g. {@code FooApi}, {@code com.example.FooApi}, {@code foo-api} can be used to identify client {@code com.example.FooApi}.
-         */
-        private String name;
-        /**
-         * Client class, identify a client, must be an interface.
-         *
-         * <p> This a more IDE friendly way to identify a client.
-         *
-         * <p> Properties {@link #name} and clazz used to identify a client, use clazz first if both set.
-         */
-        private Class<?> clientClass;
-        /**
-         * Base url, use {@link HttpClientsProperties#baseUrl} if not set.
-         */
-        private String baseUrl;
-        /**
-         * Response timeout, in milliseconds, use {@link HttpClientsProperties#responseTimeout} if not set.
-         */
-        private Long responseTimeout;
-        /**
-         * Headers to be added to the requests, use {@link HttpClientsProperties#headers} if not set.
-         */
-        private List<Header> headers = new ArrayList<>();
-    }
 
     @Data
     @NoArgsConstructor
@@ -97,27 +63,38 @@ public class HttpClientsProperties implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
-        for (Client client : clients) {
-            if (client.getBaseUrl() == null) {
-                client.setBaseUrl(baseUrl);
+        for (Channel chan : channels) {
+            if (chan.getBaseUrl() == null) {
+                chan.setBaseUrl(baseUrl);
             }
-            if (client.getResponseTimeout() == null) {
-                client.setResponseTimeout(responseTimeout);
+            if (chan.getResponseTimeout() == null) {
+                chan.setResponseTimeout(responseTimeout);
             }
-            // defaultHeaders + client.headers
+            // defaultHeaders + chan.headers
             LinkedHashMap<String, List<String>> total = headers.stream()
                     .collect(toMap(Header::getKey, Header::getValues, (oldV, newV) -> oldV, LinkedHashMap::new));
-            for (Header header : client.getHeaders()) {
+            for (Header header : chan.getHeaders()) {
                 total.put(header.getKey(), header.getValues());
             }
             List<Header> mergedHeaders = total.entrySet().stream()
                     .map(e -> new Header(e.getKey(), e.getValue()))
                     .toList();
-            client.setHeaders(mergedHeaders);
+            chan.setHeaders(mergedHeaders);
         }
     }
 
-    HttpClientsProperties.Client defaultClient() {
-        return new Client("__default__", null, baseUrl, responseTimeout, headers);
+    HttpClientsProperties.Channel defaultClient() {
+        return new Channel(baseUrl, responseTimeout, headers, List.of(), List.of());
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Channel {
+        private String baseUrl;
+        private Long responseTimeout;
+        private List<Header> headers = new ArrayList<>();
+        private List<String> clients = new ArrayList<>();
+        private List<Class<?>> classes = new ArrayList<>();
     }
 }

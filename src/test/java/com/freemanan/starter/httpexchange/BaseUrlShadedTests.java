@@ -56,8 +56,8 @@ class BaseUrlShadedTests {
         var ctx = new SpringApplicationBuilder(BaseUrlController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)
-                .properties(HttpClientsProperties.PREFIX + ".clients[0].name=BaseUrlApi")
-                .properties(HttpClientsProperties.PREFIX + ".clients[0].base-url=localhost:" + (port + 1))
+                .properties(HttpClientsProperties.PREFIX + ".channels[0].base-url=localhost:" + (port + 1))
+                .properties(HttpClientsProperties.PREFIX + ".channels[0].clients[0]=BaseUrlApi")
                 .run();
         BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
 

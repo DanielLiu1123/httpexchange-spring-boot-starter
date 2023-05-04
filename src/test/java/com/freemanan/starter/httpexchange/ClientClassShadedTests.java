@@ -29,8 +29,8 @@ public class ClientClassShadedTests {
         int port = PortFinder.availablePort();
         var ctx = new SpringApplicationBuilder(FooController.class)
                 .properties("server.port=" + port)
-                .properties("http-exchange.clients[0].client-class=" + FooApi.class.getCanonicalName())
-                .properties("http-exchange.clients[0].base-url=localhost:${server.port}")
+                .properties("http-exchange.channels[0].base-url=localhost:${server.port}")
+                .properties("http-exchange.channels[0].classes[0]=" + FooApi.class.getCanonicalName())
                 .run();
 
         FooApi fooApi = ctx.getBean(FooApi.class);
