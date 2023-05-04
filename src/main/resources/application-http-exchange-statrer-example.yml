@@ -11,9 +11,9 @@ http-exchange:
         - key: X-Key
           values: [value1, value2]
       clients:
-        - OrderApi
+        - order-api
         - OrderDetailApi
-        - OrderItemApi
+        - com.example.api.OrderItemApi
     - base-url: user
       response-timeout: 2000
       classes:
