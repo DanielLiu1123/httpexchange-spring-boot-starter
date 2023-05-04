@@ -55,7 +55,7 @@ public class App {
 
 ```groovy
 // gradle
-implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.9'
+implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.10'
 ```
 
 ```xml
@@ -63,7 +63,7 @@ implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.9'
 <dependency>
     <groupId>com.freemanan</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.0.9</version>
+    <version>3.0.10</version>
 </dependency>
 ```
 
@@ -181,35 +181,38 @@ corresponding beans.
     headers:                     # global headers
       - key: X-App-Name
         values: ${spring.application.name}
-    clients:
-      - name: OrderApi
-        base-url: http://order   # client specific base-url, will override global base-url
+    channels:
+      - base-url: http://order   # client specific base-url, will override global base-url
         response-timeout: 1000   # client specific timeout, will override global timeout
         headers:                 # client specific headers, will merge with global headers
           - key: X-Key
             values: [value1, value2]
-      - name: UserApi
-        base-url: user
+        clients:
+          - OrderApi             # client to apply this channel
+      - base-url: user
         response-timeout: 2000
-      - client-class: com.example.FooApi
-        base-url: service-foo.namespace
+        clients:
+          - UserApi
+      - base-url: service-foo.namespace
+        classes: [com.example.FooApi]
   ```
 
-  `httpexhange-spring-boot-starter` use property `name` or `client-class` to identify the client, use `client-class`
-  first if configured, otherwise use `name` to identify the client.
+  `httpexhange-spring-boot-starter` use property `clients` or `classes` to identify the client, use `classes`
+  first if configured, otherwise use `clients` to identify the client.
 
   For example, there is a client interface: `com.example.PostApi`, you can
-  use `name: PostApi`, `name: com.example.PostApi`, `name: post-api` or `client-class: com.example.PostApi` to identify
+  use `clients: [PostApi]`, `clients: [com.example.PostApi]`, `clients: [post-api]` or `classes: [com.example.PostApi]` to identify
   the client.
 
 ## Version
 
-The major/minor version of this project is consistent with the version of `Spring Boot`. Therefore, `3.0.x` of this
-project should work with `3.0.x` of `Spring Boot`. Please always use the latest version.
+This project should work with any version of Spring Boot 3.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.0.x       | 3.0.9                            |
+| 3.x         | 3.0.10                           |
+
+> Please always use the latest version!
 
 ## License
 

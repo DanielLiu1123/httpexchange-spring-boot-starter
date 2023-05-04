@@ -41,6 +41,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.invoker.HttpClientAdapter;
 import org.springframework.web.service.invoker.HttpRequestValues;
@@ -202,10 +203,10 @@ final class ShadedHttpServiceMethod {
         private static HttpMethod initHttpMethod(@Nullable RequestMapping typeAnnot, RequestMapping annot) {
 
             String value1 = (typeAnnot != null ? typeAnnot.method().length : 0) > 0
-                    ? typeAnnot.method()[0].asHttpMethod().name()
+                    ? asHttpMethod(typeAnnot.method()[0]).name()
                     : null;
             String value2 = (annot.method().length > 0)
-                    ? annot.method()[0].asHttpMethod().name()
+                    ? asHttpMethod(annot.method()[0]).name()
                     : null;
 
             if (StringUtils.hasText(value2)) {
@@ -217,6 +218,19 @@ final class ShadedHttpServiceMethod {
             }
 
             return null;
+        }
+
+        private static HttpMethod asHttpMethod(RequestMethod method) {
+            return switch (method) {
+                case GET -> HttpMethod.GET;
+                case HEAD -> HttpMethod.HEAD;
+                case POST -> HttpMethod.POST;
+                case PUT -> HttpMethod.PUT;
+                case PATCH -> HttpMethod.PATCH;
+                case DELETE -> HttpMethod.DELETE;
+                case OPTIONS -> HttpMethod.OPTIONS;
+                case TRACE -> HttpMethod.TRACE;
+            };
         }
 
         @Nullable
