@@ -55,6 +55,12 @@ spotless {
         trimTrailingWhitespace()
         endWithNewline()
         palantirJavaFormat()
+
+        custom('Refuse wildcard imports', {
+            if (it =~ /\nimport .*\*;/) {
+                throw new IllegalStateException("Do not use wildcard imports, 'spotlessApply' cannot resolve this issue, please fix it manually.")
+            }
+        } as Closure<String>)
     }
 }
 
