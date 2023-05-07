@@ -4,26 +4,34 @@ import static com.freemanan.starter.httpexchange.Util.nameMatch;
 
 import java.util.List;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.function.client.WebClient;
 
 /**
+ * Http Clients Auto Configuration.
+ *
  * @author Freeman
  */
-@Configuration(proxyBeanMethods = false)
+@AutoConfiguration
+@ConditionalOnClass(WebClient.class)
+@ConditionalOnProperty(prefix = HttpClientsProperties.PREFIX, name = "enabled", matchIfMissing = true)
 @EnableConfigurationProperties(HttpClientsProperties.class)
-@RequiredArgsConstructor
-class HttpClientsConfiguration implements SmartInitializingSingleton {
-    private static final Logger log = LoggerFactory.getLogger(HttpClientsConfiguration.class);
+public class HttpClientsAutoConfiguration implements SmartInitializingSingleton {
+    private static final Logger log = LoggerFactory.getLogger(HttpClientsAutoConfiguration.class);
 
     private final HttpClientsProperties properties;
+
+    public HttpClientsAutoConfiguration(HttpClientsProperties properties) {
+        this.properties = properties;
+    }
 
     @Bean
     @ConditionalOnMissingBean

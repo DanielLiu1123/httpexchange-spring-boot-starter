@@ -24,6 +24,10 @@ public class HttpClientsProperties implements InitializingBean {
     public static final String PREFIX = "http-exchange";
 
     /**
+     * Whether to enable http exchange autoconfiguration, default {@code true}.
+     */
+    private boolean enabled = true;
+    /**
      * Default base url.
      *
      * <p> e.g. {@code localhost:8080}, {@code http://localhost:8080}, {@code https://localhost:8080}

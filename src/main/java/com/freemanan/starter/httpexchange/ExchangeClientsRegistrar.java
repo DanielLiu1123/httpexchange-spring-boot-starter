@@ -53,7 +53,9 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Resourc
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
-        registerHttpExchanges(metadata, registry);
+        if (properties.isEnabled()) {
+            registerHttpExchanges(metadata, registry);
+        }
     }
 
     private void registerHttpExchanges(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {

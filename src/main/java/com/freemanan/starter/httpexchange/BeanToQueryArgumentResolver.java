@@ -28,7 +28,7 @@ import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
  * <p> NOTE: make this class as public, give a chance to be replaced by user.
  *
  * @author Freeman
- * @see HttpClientsConfiguration#beanToQueryArgumentResolver
+ * @see HttpClientsAutoConfiguration#beanToQueryArgumentResolver
  */
 public class BeanToQueryArgumentResolver implements HttpServiceArgumentResolver, Ordered {
     private static final Logger log = LoggerFactory.getLogger(BeanToQueryArgumentResolver.class);
