@@ -1,36 +1,30 @@
-# Http Exchange Spring Boot Starter
+## Http Exchange Spring Boot Starter
 
 [![Build](https://img.shields.io/github/actions/workflow/status/DanielLiu1123/httpexchange-spring-boot-starter/build.yml?branch=main)](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.freemanan/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/com.freemanan/httpexchange-spring-boot-starter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The missing starter for Spring 6.x declarative HTTP client. 
+### Introduction
 
-The goal is to provide a Spring Boot Starter for declarative HTTP client similar to `Spring Cloud OpenFeign`, but completely driven by configuration and without the need for any additional annotations.
+`httpexchange-spring-boot-starter` is the missing starter for Spring 6.x declarative HTTP client.
 
-## What is it
+Spring 6.x has provided its native support for declarative HTTP clients, you don't need to
+use [Spring Cloud OpenFeign](https://github.com/spring-cloud/spring-cloud-openfeign)
+or [Spring Cloud Square](https://github.com/spring-projects-experimental/spring-cloud-square) anymore.
+See [Spring Documentation](https://docs.spring.io/spring-framework/docs/6.0.0/reference/html/integration.html#rest-http-interface)
+for more details.
 
-Spring 6.0 has provided its own support for declarative HTTP clients.
+Here is an example:
 
-```java
-
-@HttpExchange("https://my-json-server.typicode.com")
-public interface PostApi {
-    @GetExchange("/typicode/demo/posts/{id}")
-    Post getPost(@PathVariable("id") int id);
-}
-```
-
-This is basic usage:
+<details>
+  <summary>App.java</summary>
 
 ```java
 
 @SpringBootApplication
 public class App {
-
     public static void main(String[] args) {
         var ctx = SpringApplication.run(App.class, args);
-
         PostApi postApi = ctx.getBean(PostApi.class);
         Post post = postApi.getPost(1);
     }
@@ -46,20 +40,42 @@ public class App {
     PostApi postApi(HttpServiceProxyFactory factory) {
         return factory.createClient(UserClient.class);
     }
-
 }
 
+@HttpExchange("https://my-json-server.typicode.com")
+interface PostApi {
+    @GetExchange("/typicode/demo/posts/{id}")
+    Post getPost(@PathVariable("id") int id);
+}
 ```
 
-## Quick Start
+</details>
 
-```groovy
-// gradle
-implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.10'
-```
+_**So what is the problem ? 🤔**_
+
+1. No auto configuration
+
+   There's no autoconfigure for the clients, you need to create client beans manually. This is very painful if you have
+   many clients.
+
+   If you are familiar with `Spring Cloud OpenFeign`, you will find `@EnableFeignClients` is very useful, it reduces a
+   lot of boilerplate code.
+
+2. Not support Spring web annotations
+
+   Native support for declarative HTTP clients is great, but it introduces a whole new set of annotations, such as
+   `@GetExchange`, `@PostExchange`, etc. And does not support Spring web annotations, such as
+   `@GetMapping`, `@PostMapping`, etc, which is extremely painful for users that using `Spring Cloud OpenFeign` and want
+   to migrate to Spring 6.x.
+
+**The main goal of this project is providing a `Spring Cloud OpenFeign` like experience for Spring 6.x declarative HTTP
+clients and support Spring web annotations (`@GetMapping`, `@PostMapping`).**
+
+### Quick Start
+
+Add dependency:
 
 ```xml
-<!-- maven -->
 <dependency>
     <groupId>com.freemanan</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
@@ -67,144 +83,175 @@ implementation 'com.freemanan:httpexchange-spring-boot-starter:3.0.10'
 </dependency>
 ```
 
-You can simplify the code as follows:
+Write a classic Spring Boot application:
 
 ```java
 
 @SpringBootApplication
 @EnableExchangeClients
 public class App {
-
     public static void main(String[] args) {
         var ctx = SpringApplication.run(App.class, args);
-
         PostApi postApi = ctx.getBean(PostApi.class);
         Post post = postApi.getPost(1);
     }
+}
 
+@HttpExchange("https://my-json-server.typicode.com")
+interface PostApi {
+    @GetExchange("/typicode/demo/posts/{id}")
+    Post getPost(@PathVariable("id") int id);
 }
 ```
 
-If you have experiences with `Spring Cloud OpenFeign`, you will find that the usage is very similar.
+> No more boilerplate code! 🎉
 
-`httpexhange-spring-boot-starter` will automatically scan the interfaces annotated with `@HttpExchange` and create the
-corresponding beans.
+### Features
 
-## Core Features
+#### Autoconfigure Clients
 
-- Spring web annotations support
+Autoconfigure clients, all you need to do is adding the `@EnableExchangeClients` annotation. `@EnableExchangeClients` is
+very similar to `@EnableFeignClients`.
 
-  `httpexhange-spring-boot-starter` supports to use spring web annotations to generate HTTP client. e.g. `@RequestMapping`, `@GetMapping`, `@PostMapping` etc.
+It scans the clients that in the package of annotated class by default, you can also specify the packages to scan.
 
-  ```java
-  @RequestMapping("/foo")
-  public interface PostApi {
-      @GetMapping("/{id}")
-      Post getPost(@PathVariable int id);
-  }
-  ```
-  
-  The advantage of this feature is that the behavior of the server and client can be consistent.
+```java
+@EnableExchangeClients(basePackages = "com.example")
+```
 
-- Automatically scan interfaces annotated with `@HttpExchange` and create corresponding beans.
+> If you specify the packages to scan, it will only scan the specified packages, not including the package of annotated
+> class.
 
-  All you need to do is add the `@EnableExchangeClients` annotation to your main class.
+You can also specify the clients to scan.
 
-- Support url variables.
+```java
+@EnableExchangeClients(clients = {PostApi.class, UserApi.class})
+```
 
-  ```java
-  @HttpExchange("${api.post.url}")
-  public interface PostApi {
-      @GetExchange("/typicode/demo/posts/{id}")
-      Post getPost(@PathVariable("id") int id);
-  }
-  ```
+> This is faster than scanning clients in the package.
 
-- Support validation.
+You can also specify the clients and the packages to scan at the same time.
 
-  ```java
-  @HttpExchange("${api.post.url}")
-  @Validated
-  public interface PostApi {
-      @GetExchange("/typicode/demo/posts/{id}")
-      Post getPost(@PathVariable("id") @Min(1) @Max(3) int id);
-  }
-  ```
-  NOTE: this feature needs `spring-boot` version >= 3.0.3,
-  see [issue](https://github.com/spring-projects/spring-framework/issues/29782)
-  and [tests](src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
+```java
+@EnableExchangeClients(basePackages = "com.example", clients = {PostApi.class, UserApi.class})
+```
 
-- Convert Java Bean to Query String.
+> `Spring Cloud OpenFeign` does not support using `basePackages` and `clients` at the same time.
 
-  In Spring Web/WebFlux (server side), it will automatically convert query string to Java Bean,
-  but `Spring Cloud OpenFeign` or `Exchange client of Spring 6` does not support to convert Java bean to query string by
-  default. In `Spring Cloud OpenFeign` you need `@SpringQueryMap` to achieve this feature.
+#### Spring Web Annotations Support
 
-  `httpexhange-spring-boot-starter` supports this feature by default, and you don't need any another annotation.
+Support to use spring web annotations to generate HTTP client, e.g. `@RequestMapping`, `@GetMapping`, `@PostMapping`
+etc.
 
-  ```java
-  public interface PostApi {
-      @GetExchange
-      List<Post> findAll(Post condition);
-  }
-  ```
+```java
+@RequestMapping("/typicode/demo")
+public interface PostApi {
+    @GetMapping("/posts/{id}")
+    Post getPost(@PathVariable int id);
+}
+```
 
-  Auto convert non-null fields of `condition` to query string.
+#### Configuration Driven
 
-- Customize Resolvers.
+Providing a lot of configuration properties to customize the behavior of the client.
 
-  ```java
-  @Bean
-  HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
-      return new YourHttpServiceArgumentResolver();
-  }
-  
-  @Bean
-  StringValueResolver yourStringValueResolver() {
-      return new YourStringValueResolver();
-  }
-  ```
-  
-  see `org.springframework.web.service.invoker.HttpServiceProxyFactory.Builder`, `httpexhange-spring-boot-starter` will detect all of the `HttpServiceArgumentResolver` beans and `StringValueResolver` (only one), then apply them to build the `HttpServiceProxyFactory`.
+You can configure the `base-url`, `timeout` and `headers` for each channel, and each channel can apply to multiple clients.
 
-- Configuration Driven.
+```yaml
+http-exchange:
+  base-url: http://api-gateway          # global base-url
+  response-timeout: 10000               # global timeout
+  headers:                              # global headers
+    - key: X-App-Name
+      values: ${spring.application.name}
+  channels:
+    - base-url: http://order            # client specific base-url, will override global base-url
+      response-timeout: 1000            # client specific timeout, will override global timeout
+      headers:                          # client specific headers, will merge with global headers
+        - key: X-Key
+          values: [value1, value2]
+      clients:                          # client to apply this channel
+        - OrderApi             
+    - base-url: user
+      response-timeout: 2000
+      clients:
+        - UserApi
+    - base-url: service-foo.namespace
+      classes: [com.example.FooApi]     # client class to apply this channel
+```
 
-  `httpexhange-spring-boot-starter` provides a lot of configuration properties to customize the behavior of the client.
+Using property `clients` or `classes` to identify the client, use `classes`
+first if configured, otherwise use `clients` to identify the client.
 
-  You can configure the `base-url`, `timeout` and `headers` for each client, `httpexhange-spring-boot-starter` will
-  reuse `WebClient` as much as possible.
+For example, there is a client interface: `com.example.PostApi`, you can
+use `clients: [PostApi]`, `clients: [com.example.PostApi]`, `clients: [post-api]` or `classes: [com.example.PostApi]` to identify
+the client.
 
-  ```yaml
-  http-exchange:
-    base-url: http://api-gateway # global base-url
-    response-timeout: 10000      # global timeout
-    headers:                     # global headers
-      - key: X-App-Name
-        values: ${spring.application.name}
-    channels:
-      - base-url: http://order   # client specific base-url, will override global base-url
-        response-timeout: 1000   # client specific timeout, will override global timeout
-        headers:                 # client specific headers, will merge with global headers
-          - key: X-Key
-            values: [value1, value2]
-        clients:
-          - OrderApi             # client to apply this channel
-      - base-url: user
-        response-timeout: 2000
-        clients:
-          - UserApi
-      - base-url: service-foo.namespace
-        classes: [com.example.FooApi]
-  ```
+#### Url Variables
 
-  `httpexhange-spring-boot-starter` use property `clients` or `classes` to identify the client, use `classes`
-  first if configured, otherwise use `clients` to identify the client.
+```java
+@HttpExchange("${api.post.url}")
+public interface PostApi {
+    @GetExchange("/typicode/demo/posts/{id}")
+    Post getPost(@PathVariable("id") int id);
+}
+```
 
-  For example, there is a client interface: `com.example.PostApi`, you can
-  use `clients: [PostApi]`, `clients: [com.example.PostApi]`, `clients: [post-api]` or `classes: [com.example.PostApi]` to identify
-  the client.
+#### Validation
 
-## Version
+```java
+@HttpExchange("${api.post.url}")
+@Validated
+public interface PostApi {
+    @GetExchange("/typicode/demo/posts/{id}")
+    Post getPost(@PathVariable("id") @Min(1) @Max(3) int id);
+}
+```
+
+> This feature needs `spring-boot` version >= 3.0.3,
+> see [issue](https://github.com/spring-projects/spring-framework/issues/29782)
+> and [tests](src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
+
+#### Convert Java Bean to Query
+
+In Spring Web/WebFlux (server side), it will automatically convert query string to Java Bean,
+but `Spring Cloud OpenFeign` or `Exchange client of Spring 6` does not support to convert Java bean to query string by
+default. In `Spring Cloud OpenFeign` you need `@SpringQueryMap` to achieve this feature.
+
+`httpexhange-spring-boot-starter` supports this feature by default, and you don't need additional annotations.
+
+```java
+public interface PostApi {
+  @GetExchange
+  List<Post> findAll(Post condition);
+}
+```
+
+Auto convert **non-null simple values** fields of `condition` to query string.
+
+> Simple values: primitive types, primitive wrapper types, String, Date, etc.
+
+You can use `http-exchange.bean-to-query=false` to disable this feature.
+
+#### Customize Resolvers
+
+```java
+@Bean
+HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
+  return new YourHttpServiceArgumentResolver();
+}
+
+@Bean
+StringValueResolver yourStringValueResolver() {
+  return new YourStringValueResolver();
+}
+```
+
+Auto-detect all of the `HttpServiceArgumentResolver` beans and `StringValueResolver` (only one), then apply them to build
+the `HttpServiceProxyFactory`.
+
+
+### Version
 
 This project should work with any version of Spring Boot 3.
 
@@ -214,6 +261,6 @@ This project should work with any version of Spring Boot 3.
 
 > Please always use the latest version!
 
-## License
+### License
 
 The MIT License.
