@@ -1,9 +1,11 @@
-## Http Exchange Spring Boot Starter
+# Http Exchange Spring Boot Starter
 
 [![Build](https://img.shields.io/github/actions/workflow/status/DanielLiu1123/httpexchange-spring-boot-starter/build.yml?branch=main)](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.freemanan/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/com.freemanan/httpexchange-spring-boot-starter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+[Documentation](https://danielliu1123.github.io/httpexchange-spring-boot-starter/)
+   
 ### Introduction
 
 `httpexchange-spring-boot-starter` is the missing starter for Spring 6.x declarative HTTP client.
