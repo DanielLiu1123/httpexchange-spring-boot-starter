@@ -3,8 +3,12 @@ package com.freemanan.starter.httpexchange;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -77,8 +81,27 @@ public class BeanToQueryArgumentResolver implements HttpServiceArgumentResolver,
         }
 
         nameToValue.forEach((k, v) -> {
-            if (v != null && BeanUtils.isSimpleValueType(v.getClass())) {
+            if (v == null) {
+                return;
+            }
+            Class<?> clz = v.getClass();
+            if (BeanUtils.isSimpleValueType(clz)) {
                 requestValues.addRequestParameter(k, v.toString());
+            } else if (clz.isArray() && BeanUtils.isSimpleValueType(clz.getComponentType())) {
+                String arrValue = Arrays.stream((Object[]) v)
+                        .filter(Objects::nonNull)
+                        .map(Object::toString)
+                        .collect(Collectors.joining(","));
+                requestValues.addRequestParameter(k, arrValue);
+            } else if (v instanceof Collection<?> coll
+                    && coll.stream()
+                            .filter(Objects::nonNull)
+                            .allMatch(it -> BeanUtils.isSimpleValueType(it.getClass()))) {
+                String listValue = coll.stream()
+                        .filter(Objects::nonNull)
+                        .map(Object::toString)
+                        .collect(Collectors.joining(","));
+                requestValues.addRequestParameter(k, listValue);
             }
         });
 

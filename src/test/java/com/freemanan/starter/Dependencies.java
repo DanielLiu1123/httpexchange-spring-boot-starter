@@ -4,5 +4,5 @@ package com.freemanan.starter;
  * @author Freeman
  */
 public class Dependencies {
-    public static final String springBootVersion = "3.0.6";
+    public static final String springBootVersion = "3.1.0";
 }

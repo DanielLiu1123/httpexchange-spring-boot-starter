@@ -8,6 +8,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import com.freemanan.cr.core.anno.Action;
 import com.freemanan.cr.core.anno.ClasspathReplacer;
 import com.freemanan.starter.PortFinder;
+import java.net.URI;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -61,16 +63,37 @@ class BeanToQueryArgumentResolverShadedTests {
                 .isThrownBy(() -> fooApi.findAll(new EmptyBean()))
                 .withMessageContaining("No suitable resolver");
 
+        Date date = new Date();
+        FooWithArrProp resp = fooApi.testArrProp(new FooWithArrProp(
+                "1",
+                new String[] {"a", "b"},
+                List.of(1, 2),
+                List.of(new Foo("1", "foo1")),
+                date,
+                URI.create("http://localhost:8080")));
+        assertThat(resp.id()).isEqualTo("1");
+        assertThat(resp.arr()).isEqualTo(new String[] {"a", "b"});
+        assertThat(resp.list()).isEqualTo(List.of(1, 2));
+        assertThat(resp.foos()).isNull();
+        assertThat(resp.date()).isNotNull();
+        assertThat(resp.date()).isNotEqualTo(date); // FIXME(Freeman): known issue, loss milliseconds
+        assertThat(resp.url()).isEqualTo(URI.create("http://localhost:8080"));
+
         ctx.close();
     }
 
     record Foo(String id, String name) {}
+
+    record FooWithArrProp(String id, String[] arr, List<Integer> list, List<Foo> foos, Date date, URI url) {}
 
     record EmptyBean() {}
 
     interface FooApi {
         @GetMapping("/foo")
         List<Foo> findAll(Foo foo);
+
+        @GetMapping("/FooWithArrProp")
+        FooWithArrProp testArrProp(FooWithArrProp foo);
 
         @PostMapping("/foo")
         Foo post(Foo foo);
@@ -102,6 +125,11 @@ class BeanToQueryArgumentResolverShadedTests {
         @Override
         public List<Foo> findAll(Foo foo) {
             return List.of(foo);
+        }
+
+        @Override
+        public FooWithArrProp testArrProp(FooWithArrProp foo) {
+            return foo;
         }
 
         @Override
