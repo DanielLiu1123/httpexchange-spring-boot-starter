@@ -18,4 +18,8 @@ class Cache {
     public static Set<Class<?>> getClientClasses() {
         return Set.copyOf(clientClasses);
     }
+
+    public static void clear() {
+        clientClasses.clear();
+    }
 }

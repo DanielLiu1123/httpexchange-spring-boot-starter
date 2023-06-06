@@ -39,6 +39,7 @@ class BeanToQueryArgumentResolverShadedTests {
         var ctx = new SpringApplicationBuilder(FooController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=http://localhost:" + port)
+                .properties(HttpClientsProperties.PREFIX + ".bean-to-query=true")
                 .run();
 
         FooApi fooApi = ctx.getBean(FooApi.class);

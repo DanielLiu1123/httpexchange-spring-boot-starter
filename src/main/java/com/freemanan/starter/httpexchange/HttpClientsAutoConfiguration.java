@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -24,7 +25,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @ConditionalOnClass(WebClient.class)
 @ConditionalOnProperty(prefix = HttpClientsProperties.PREFIX, name = "enabled", matchIfMissing = true)
 @EnableConfigurationProperties(HttpClientsProperties.class)
-public class HttpClientsAutoConfiguration implements SmartInitializingSingleton {
+public class HttpClientsAutoConfiguration implements SmartInitializingSingleton, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(HttpClientsAutoConfiguration.class);
 
     private final HttpClientsProperties properties;
@@ -35,17 +36,22 @@ public class HttpClientsAutoConfiguration implements SmartInitializingSingleton 
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnProperty(prefix = HttpClientsProperties.PREFIX, name = "bean-to-query", matchIfMissing = true)
+    @ConditionalOnProperty(prefix = HttpClientsProperties.PREFIX, name = "bean-to-query", havingValue = "true")
     public BeanToQueryArgumentResolver beanToQueryArgumentResolver() {
         return new BeanToQueryArgumentResolver();
     }
 
     @Override
     public void afterSingletonsInstantiated() {
-        warningUselessConfiguration();
+        warningUnusedConfiguration();
     }
 
-    private void warningUselessConfiguration() {
+    @Override
+    public void destroy() throws Exception {
+        Cache.clear();
+    }
+
+    private void warningUnusedConfiguration() {
         // Identify the configuration items that are not taking effect and print warning messages.
         Set<Class<?>> classes = Cache.getClientClasses();
 
@@ -58,8 +64,11 @@ public class HttpClientsAutoConfiguration implements SmartInitializingSingleton 
                 String name = channel.getClients().get(j);
                 if (!nameMatch(name, classes)) {
                     log.warn(
-                            "The configuration item '{}' doesn't take effect, please remove it!",
-                            HttpClientsProperties.PREFIX + ".channels[" + i + "].clients[" + j + "]=" + name);
+                            "The configuration item '{}.channels[{}].clients[{}]={}' doesn't take effect, please remove it!",
+                            HttpClientsProperties.PREFIX,
+                            i,
+                            j,
+                            name);
                 }
             }
             int s = channel.getClasses().size();
@@ -67,9 +76,11 @@ public class HttpClientsAutoConfiguration implements SmartInitializingSingleton 
                 Class<?> clazz = channel.getClasses().get(j);
                 if (!classes.contains(clazz)) {
                     log.warn(
-                            "The configuration item '{}' doesn't take effect, please remove it!",
-                            HttpClientsProperties.PREFIX + ".channels[" + i + "].classes[" + j + "]="
-                                    + clazz.getCanonicalName());
+                            "The configuration item '{}.channels[{}].classes[{}]={}' doesn't take effect, please remove it!",
+                            HttpClientsProperties.PREFIX,
+                            i,
+                            j,
+                            clazz.getCanonicalName());
                 }
             }
         }

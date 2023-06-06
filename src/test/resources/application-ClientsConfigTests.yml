@@ -1,0 +1,5 @@
+http-exchange:
+  channels:
+    - base-url: localhost:${server.port}
+      clients:
+        - com.freemanan.starter.httpexchange.ClientsConfigTests.FooApi

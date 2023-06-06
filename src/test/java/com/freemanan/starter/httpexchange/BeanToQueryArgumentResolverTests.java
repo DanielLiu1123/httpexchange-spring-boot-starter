@@ -3,6 +3,7 @@ package com.freemanan.starter.httpexchange;
 import static com.freemanan.cr.core.anno.Verb.ADD;
 import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.freemanan.cr.core.anno.Action;
@@ -13,6 +14,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Configuration;
@@ -43,6 +46,7 @@ class BeanToQueryArgumentResolverTests {
         var ctx = new SpringApplicationBuilder(FooController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=http://localhost:" + port)
+                .properties(HttpClientsProperties.PREFIX + ".bean-to-query=true")
                 .run();
 
         FooApi fooApi = ctx.getBean(FooApi.class);
@@ -82,6 +86,34 @@ class BeanToQueryArgumentResolverTests {
         assertThat(resp.date()).isNotNull();
         assertThat(resp.date()).isNotEqualTo(date); // FIXME(Freeman): known issue, loss milliseconds
         assertThat(resp.url()).isEqualTo(URI.create("http://localhost:8080"));
+
+        ctx.close();
+    }
+
+    @Test
+    void noBeanToQueryArgumentResolverBean_whenDefaultConfig() {
+        int port = PortFinder.availablePort();
+        var ctx = new SpringApplicationBuilder(FooController.class)
+                .web(WebApplicationType.NONE)
+                .properties("server.port=" + port)
+                .run();
+
+        assertThatCode(() -> ctx.getBean(BeanToQueryArgumentResolver.class))
+                .isInstanceOf(NoSuchBeanDefinitionException.class);
+
+        ctx.close();
+    }
+
+    @Test
+    void hasBeanToQueryArgumentResolverBean_whenConfigBeanToQueryToTure() {
+        int port = PortFinder.availablePort();
+        var ctx = new SpringApplicationBuilder(FooController.class)
+                .web(WebApplicationType.NONE)
+                .properties("server.port=" + port)
+                .properties(HttpClientsProperties.PREFIX + ".bean-to-query=true")
+                .run();
+
+        assertThatCode(() -> ctx.getBean(BeanToQueryArgumentResolver.class)).doesNotThrowAnyException();
 
         ctx.close();
     }

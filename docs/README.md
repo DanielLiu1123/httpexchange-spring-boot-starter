@@ -236,7 +236,7 @@ public interface PostApi {
 
 Auto convert **non-null simple values** fields of `condition` to query string.
 
-> Simple values: primitive types, primitive wrapper types, String, Date, etc.
+> Simple values: primitive/wrapper types, String, Date, etc.
 
 You can use `http-exchange.bean-to-query=false` to disable this feature.
 

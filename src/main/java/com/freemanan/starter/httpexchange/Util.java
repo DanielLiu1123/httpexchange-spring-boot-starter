@@ -3,12 +3,15 @@ package com.freemanan.starter.httpexchange;
 import java.util.Optional;
 import java.util.Set;
 import lombok.experimental.UtilityClass;
+import org.springframework.util.AntPathMatcher;
 
 /**
  * @author Freeman
  */
 @UtilityClass
 class Util {
+
+    private static final AntPathMatcher matcher = new AntPathMatcher(".");
 
     public static Optional<HttpClientsProperties.Channel> findMatchedConfig(
             Class<?> clz, HttpClientsProperties properties) {
@@ -19,27 +22,27 @@ class Util {
         if (found.isPresent()) {
             return found;
         }
-        // not class match, try to find from the normal way
+        // not class match, try to find from the clients configuration
         return properties.getChannels().stream().filter(it -> match(clz, it)).findFirst();
     }
 
-    static boolean match(Class<?> clz, HttpClientsProperties.Channel client) {
+    public static boolean nameMatch(String name, Set<Class<?>> classes) {
+        return classes.stream().anyMatch(clz -> match(name, clz));
+    }
+
+    private static boolean match(Class<?> clz, HttpClientsProperties.Channel client) {
         if (client.getClasses().stream().anyMatch(ch -> ch == clz)) {
             return true;
         }
-        return client.getClients().stream().anyMatch(name -> {
-            name = name.replaceAll("-", "");
-            return name.equalsIgnoreCase(clz.getSimpleName())
-                    || name.equalsIgnoreCase(clz.getName())
-                    || name.equalsIgnoreCase(clz.getCanonicalName());
-        });
+        return client.getClients().stream().anyMatch(name -> match(name, clz));
     }
 
-    static boolean nameMatch(String name, Set<Class<?>> classes) {
-        String nameToUse = name.replaceAll("-", "");
-        return classes.stream()
-                .anyMatch(clz -> nameToUse.equalsIgnoreCase(clz.getSimpleName())
-                        || nameToUse.equalsIgnoreCase(clz.getName())
-                        || nameToUse.equalsIgnoreCase(clz.getCanonicalName()));
+    private static boolean match(String name, Class<?> clz) {
+        String nameToUse = name.replace("-", "");
+        return nameToUse.equalsIgnoreCase(clz.getSimpleName())
+                || nameToUse.equalsIgnoreCase(clz.getName())
+                || nameToUse.equalsIgnoreCase(clz.getCanonicalName())
+                || matcher.match(name, clz.getCanonicalName())
+                || matcher.match(name, clz.getSimpleName());
     }
 }

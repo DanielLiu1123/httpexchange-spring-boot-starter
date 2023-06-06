@@ -47,9 +47,9 @@ public class HttpClientsProperties implements InitializingBean {
     private List<Channel> channels = new ArrayList<>();
 
     /**
-     * Whether to convert Java bean to query parameters, default value is {@code true}.
+     * Whether to convert Java bean to query parameters, default value is {@code false}.
      */
-    private boolean beanToQuery = true;
+    private boolean beanToQuery = false;
 
     @Data
     @NoArgsConstructor
@@ -95,10 +95,39 @@ public class HttpClientsProperties implements InitializingBean {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Channel {
+        /**
+         * Base url, use {@link HttpClientsProperties#baseUrl} if not set.
+         */
         private String baseUrl;
+        /**
+         * Response timeout, in milliseconds, use {@link HttpClientsProperties#responseTimeout} if not set.
+         */
         private Long responseTimeout;
+        /**
+         * Default headers, will be merged with {@link HttpClientsProperties#headers}.
+         */
         private List<Header> headers = new ArrayList<>();
+        /**
+         * Exchange Clients to apply this channel.
+         *
+         * <p> e.g. client {@code com.example.client.ExampleClient} can be identified by
+         * <ul>
+         *     <li> {@code ExampleClient}, {@code exampleClient}, {@code example-client} (Class simple name)
+         *     <li> {@code com.example.client.ExampleClient} (Class canonical name)
+         *     <li> {@code com.**.*Client}, {@code com.example.**} (<a href="https://stackoverflow.com/questions/2952196/ant-path-style-patterns">Ant style pattern</a>)
+         * </ul>
+         *
+         * <p> This is a more flexible alternative to {@link HttpClientsProperties.Channel#classes}.
+         *
+         * @see Class#getCanonicalName()
+         * @see org.springframework.util.AntPathMatcher
+         */
         private List<String> clients = new ArrayList<>();
+        /**
+         * Exchange Client classes to apply this channel.
+         *
+         * <p> This is a more IDE-friendly alternative to {@link HttpClientsProperties.Channel#clients}.
+         */
         private List<Class<?>> classes = new ArrayList<>();
     }
 }

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.env.Environment;
+import org.springframework.lang.Nullable;
 import org.springframework.util.StringValueResolver;
 
 /**
@@ -15,6 +16,8 @@ class UrlPlaceholderStringValueResolver implements StringValueResolver {
     private static final Logger log = LoggerFactory.getLogger(UrlPlaceholderStringValueResolver.class);
 
     private final Environment environment;
+
+    @Nullable
     private final StringValueResolver delegate;
 
     UrlPlaceholderStringValueResolver(Environment environment, ObjectProvider<StringValueResolver> delegateProvider) {

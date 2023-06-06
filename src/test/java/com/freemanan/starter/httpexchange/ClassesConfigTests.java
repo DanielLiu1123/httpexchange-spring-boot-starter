@@ -15,11 +15,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
 /**
  * @author Freeman
  */
-public class ClientClassShadedTests {
+class ClassesConfigTests {
 
     @Test
     @ClasspathReplacer({
@@ -28,9 +30,8 @@ public class ClientClassShadedTests {
     void clientClassConfig() {
         int port = PortFinder.availablePort();
         var ctx = new SpringApplicationBuilder(FooController.class)
+                .profiles("ClassesConfigTests")
                 .properties("server.port=" + port)
-                .properties("http-exchange.channels[0].base-url=localhost:${server.port}")
-                .properties("http-exchange.channels[0].classes[0]=" + FooApi.class.getCanonicalName())
                 .run();
 
         FooApi fooApi = ctx.getBean(FooApi.class);
@@ -40,10 +41,10 @@ public class ClientClassShadedTests {
         ctx.close();
     }
 
-    @RequestMapping("/foo")
+    @HttpExchange("/foo")
     public interface FooApi {
 
-        @GetMapping("/{id}")
+        @GetExchange("/{id}")
         String getById(@PathVariable String id);
     }
 

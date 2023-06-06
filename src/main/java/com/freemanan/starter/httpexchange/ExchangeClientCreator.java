@@ -93,7 +93,8 @@ class ExchangeClientCreator {
 
         // Response timeout
         Optional.ofNullable(channelConfig.getResponseTimeout())
-                .ifPresent(timeout -> builder.blockTimeout(Duration.ofMillis(timeout)));
+                .map(Duration::ofMillis)
+                .ifPresent(builder::blockTimeout);
 
         return builder;
     }

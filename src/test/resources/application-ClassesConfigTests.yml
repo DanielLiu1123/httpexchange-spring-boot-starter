@@ -2,4 +2,4 @@ http-exchange:
   channels:
     - base-url: localhost:${server.port}
       classes:
-        - com.freemanan.starter.httpexchange.ClientClassTests.FooApi
+        - com.freemanan.starter.httpexchange.ClassesConfigTests.FooApi
