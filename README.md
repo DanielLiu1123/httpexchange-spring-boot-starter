@@ -1,4 +1,4 @@
-# Http Exchange Spring Boot Starter
+## Http Exchange Spring Boot Starter
 
 [![Build](https://img.shields.io/github/actions/workflow/status/DanielLiu1123/httpexchange-spring-boot-starter/build.yml?branch=main)](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.freemanan/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/com.freemanan/httpexchange-spring-boot-starter)
@@ -197,8 +197,7 @@ http-exchange:
       classes: [com.example.PostApi] # Class canonical name    
 ```
 
-> configuration 'clients' is more flexible, it supports Ant-style pattern.
-> configuration 'classes' is more IDE-friendly and efficient.
+> configuration `clients` is more flexible, it supports Ant-style pattern, `classes` is more IDE-friendly and efficient.
 
 #### Url Variables
 

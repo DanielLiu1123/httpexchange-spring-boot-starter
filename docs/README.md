@@ -166,33 +166,43 @@ You can configure the `base-url`, `timeout` and `headers` for each channel, and 
 
 ```yaml
 http-exchange:
-  base-url: http://api-gateway          # global base-url
-  response-timeout: 10000               # global timeout
-  headers:                              # global headers
-    - key: X-App-Name
-      values: ${spring.application.name}
-  channels:
-    - base-url: http://order            # client specific base-url, will override global base-url
-      response-timeout: 1000            # client specific timeout, will override global timeout
-      headers:                          # client specific headers, will merge with global headers
-        - key: X-Key
-          values: [value1, value2]
-      clients:                          # client to apply this channel
-        - OrderApi             
-    - base-url: user
-      response-timeout: 2000
-      clients:
-        - UserApi
-    - base-url: service-foo.namespace
-      classes: [com.example.FooApi]     # client class to apply this channel
+   base-url: http://api-gateway          # global base-url
+   response-timeout: 10000               # global timeout
+   headers:                              # global headers
+      - key: X-App-Name
+        values: ${spring.application.name}
+   channels:
+      - base-url: http://order            # client specific base-url, will override global base-url
+        response-timeout: 1000            # client specific timeout, will override global timeout
+        headers:                          # client specific headers, will merge with global headers
+           - key: X-Key
+             values: [value1, value2]
+        clients:                          # client to apply this channel
+           - OrderApi
+      - base-url: user
+        response-timeout: 2000
+        clients:
+           - UserApi
+      - base-url: service-foo.namespace
+        classes: [com.example.FooApi]     # client class to apply this channel
 ```
 
-Using property `clients` or `classes` to identify the client, use `classes`
-first if configured, otherwise use `clients` to identify the client.
+Using property `clients` or `classes` to identify the client, use `classes` first if configured, otherwise use `clients`.
 
-For example, there is a client interface: `com.example.PostApi`, you can
-use `clients: [PostApi]`, `clients: [com.example.PostApi]`, `clients: [post-api]` or `classes: [com.example.PostApi]` to identify
-the client.
+For example, there is a client interface: `com.example.PostApi`, you can use following configuration to identify the client
+
+```yaml
+http-exchange:
+  channels:
+    - base-url: http://service
+      clients: [com.example.PostApi] # Class canonical name
+    # clients: [post-api] Class simple name (Kebab-case)
+    # clients: [PostApi]  Class simple name (Pascal-case)
+    # clients: [com.**.*Api] (Ant-style pattern)
+      classes: [com.example.PostApi] # Class canonical name    
+```
+
+> configuration `clients` is more flexible, it supports Ant-style pattern, `classes` is more IDE-friendly and efficient.
 
 #### Url Variables
 
