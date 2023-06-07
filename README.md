@@ -182,12 +182,23 @@ http-exchange:
       classes: [com.example.FooApi]     # client class to apply this channel
 ```
 
-Using property `clients` or `classes` to identify the client, use `classes`
-first if configured, otherwise use `clients` to identify the client.
+Using property `clients` or `classes` to identify the client, use `classes` first if configured, otherwise use `clients`.
 
-For example, there is a client interface: `com.example.PostApi`, you can
-use `clients: [PostApi]`, `clients: [com.example.PostApi]`, `clients: [post-api]` or `classes: [com.example.PostApi]` to identify
-the client.
+For example, there is a client interface: `com.example.PostApi`, you can use following configuration to identify the client
+
+```yaml
+http-exchange:
+  channels:
+    - base-url: http://service
+      clients: [com.example.PostApi] # Class canonical name
+    # clients: [post-api] Class simple name (Kebab-case)
+    # clients: [PostApi]  Class simple name (Pascal-case)
+    # clients: [com.**.*Api] (Ant-style pattern)
+      classes: [com.example.PostApi] # Class canonical name    
+```
+
+> configuration 'clients' is more flexible, it supports Ant-style pattern.
+> configuration 'classes' is more IDE-friendly and efficient.
 
 #### Url Variables
 
@@ -220,7 +231,10 @@ In Spring Web/WebFlux (server side), it will automatically convert query string 
 but `Spring Cloud OpenFeign` or `Exchange client of Spring 6` does not support to convert Java bean to query string by
 default. In `Spring Cloud OpenFeign` you need `@SpringQueryMap` to achieve this feature.
 
-`httpexhange-spring-boot-starter` supports this feature by default, and you don't need additional annotations.
+`httpexhange-spring-boot-starter` supports this feature, and you don't need any additional annotations.
+
+> In order not to change the default behavior of Spring, this feature is disabled by default, 
+> you can use `http-exchange.bean-to-query=true` to enable it.
 
 ```java
 public interface PostApi {
@@ -231,9 +245,7 @@ public interface PostApi {
 
 Auto convert **non-null simple values** fields of `condition` to query string.
 
-> Simple values: primitive types, primitive wrapper types, String, Date, etc.
-
-You can use `http-exchange.bean-to-query=false` to disable this feature.
+> Simple values: primitive/wrapper types, String, Date, etc.
 
 #### Customize Resolvers
 

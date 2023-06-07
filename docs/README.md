@@ -225,7 +225,10 @@ In Spring Web/WebFlux (server side), it will automatically convert query string 
 but `Spring Cloud OpenFeign` or `Exchange client of Spring 6` does not support to convert Java bean to query string by
 default. In `Spring Cloud OpenFeign` you need `@SpringQueryMap` to achieve this feature.
 
-`httpexhange-spring-boot-starter` supports this feature by default, and you don't need additional annotations.
+`httpexhange-spring-boot-starter` supports this feature, and you don't need any additional annotations.
+
+> In order not to change the default behavior of Spring, this feature is disabled by default,
+> you can use `http-exchange.bean-to-query=true` to enable it.
 
 ```java
 public interface PostApi {
@@ -237,8 +240,6 @@ public interface PostApi {
 Auto convert **non-null simple values** fields of `condition` to query string.
 
 > Simple values: primitive/wrapper types, String, Date, etc.
-
-You can use `http-exchange.bean-to-query=false` to disable this feature.
 
 #### Customize Resolvers
 
