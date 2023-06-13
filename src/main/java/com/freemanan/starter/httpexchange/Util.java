@@ -3,6 +3,8 @@ package com.freemanan.starter.httpexchange;
 import java.util.Optional;
 import java.util.Set;
 import lombok.experimental.UtilityClass;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.core.env.Environment;
 import org.springframework.util.AntPathMatcher;
 
 /**
@@ -44,5 +46,13 @@ class Util {
                 || nameToUse.equalsIgnoreCase(clz.getCanonicalName())
                 || matcher.match(name, clz.getCanonicalName())
                 || matcher.match(name, clz.getSimpleName());
+    }
+
+    public static HttpClientsProperties getProperties(Environment environment) {
+        HttpClientsProperties properties = Binder.get(environment)
+                .bind(HttpClientsProperties.PREFIX, HttpClientsProperties.class)
+                .orElseGet(HttpClientsProperties::new);
+        properties.merge();
+        return properties;
     }
 }

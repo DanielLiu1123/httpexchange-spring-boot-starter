@@ -71,6 +71,13 @@ public class HttpClientsProperties implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
+        merge();
+    }
+
+    /**
+     * Merge default configuration to channels configuration.
+     */
+    public void merge() {
         for (Channel chan : channels) {
             if (chan.getBaseUrl() == null) {
                 chan.setBaseUrl(baseUrl);

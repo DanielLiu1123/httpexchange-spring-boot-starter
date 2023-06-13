@@ -19,6 +19,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
+import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,7 +28,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 /**
  * @author Freeman
  */
-public class HttpClientBeanRegistrar {
+class HttpClientBeanRegistrar {
     private static final Logger log = LoggerFactory.getLogger(HttpClientBeanRegistrar.class);
 
     private static final Set<BeanDefinitionRegistry> registries = ConcurrentHashMap.newKeySet();
@@ -44,17 +45,30 @@ public class HttpClientBeanRegistrar {
     }
 
     /**
+     * @return whether this {@link BeanDefinitionRegistry} has been registered
+     */
+    public static boolean hasRegistered(BeanDefinitionRegistry registry) {
+        return registries.contains(registry);
+    }
+
+    /**
      * Register HTTP client beans for base packages, using {@link HttpClientsProperties#getBasePackages()} if not specify base packages.
      *
      * @param basePackages base packages to scan
      */
     public void register(String... basePackages) {
         List<String> packages =
-                ObjectUtils.isEmpty(basePackages) ? properties.getBasePackages() : Arrays.asList(basePackages);
+                !ObjectUtils.isEmpty(basePackages) ? Arrays.asList(basePackages) : properties.getBasePackages();
         registerBeans4BasePackages(packages);
     }
 
-    private void registerHttpClientBean(BeanDefinitionRegistry registry, String className) {
+    /**
+     * Register HTTP client beans the specified class name.
+     *
+     * @param registry  {@link BeanDefinitionRegistry}
+     * @param className class name of HTTP client interface
+     */
+    public void registerHttpClientBean(BeanDefinitionRegistry registry, String className) {
         Class<?> clz;
         try {
             clz = Class.forName(className);
@@ -72,7 +86,8 @@ public class HttpClientBeanRegistrar {
             return;
         }
 
-        assert registry instanceof ConfigurableBeanFactory;
+        Assert.isInstanceOf(ConfigurableBeanFactory.class, registry);
+
         ExchangeClientCreator creator =
                 new ExchangeClientCreator((ConfigurableBeanFactory) registry, properties, clz, hasClientSideAnnotation);
 
@@ -91,6 +106,27 @@ public class HttpClientBeanRegistrar {
                     "Your @HttpExchanges client '{}' is included in base packages, you can remove it from 'clients' property.",
                     className);
         }
+    }
+
+    private static ClassPathScanningCandidateComponentProvider getScanner() {
+        ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false) {
+            @Override
+            protected boolean isCandidateComponent(AnnotatedBeanDefinition abd) {
+                return true;
+            }
+        };
+        provider.addIncludeFilter((mr, mrf) -> isHttpClientInterface(mr));
+        return provider;
+    }
+
+    private static boolean isHttpClientInterface(MetadataReader mr) {
+        ClassMetadata cm = mr.getClassMetadata();
+        AnnotationMetadata am = mr.getAnnotationMetadata();
+        return cm.isInterface()
+                && cm.isIndependent()
+                && !cm.isAnnotation()
+                && (am.hasAnnotatedMethods(HttpExchange.class.getName())
+                        || am.hasAnnotatedMethods(RequestMapping.class.getName()));
     }
 
     private static boolean hasServerSideAnnotation(Class<?> clz) {
@@ -119,13 +155,6 @@ public class HttpClientBeanRegistrar {
         return false;
     }
 
-    /**
-     * @return whether this {@link BeanDefinitionRegistry} has been registered
-     */
-    public static boolean hasRegistered(BeanDefinitionRegistry registry) {
-        return registries.contains(registry);
-    }
-
     private void registerBeans4BasePackages(List<String> basePackages) {
         for (String pkg : basePackages) {
             Set<BeanDefinition> beanDefinitions = scanner.findCandidateComponents(pkg);
@@ -135,26 +164,5 @@ public class HttpClientBeanRegistrar {
                 }
             }
         }
-    }
-
-    private static ClassPathScanningCandidateComponentProvider getScanner() {
-        ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false) {
-            @Override
-            protected boolean isCandidateComponent(AnnotatedBeanDefinition abd) {
-                return true;
-            }
-        };
-        provider.addIncludeFilter((mr, mrf) -> isHttpClientInterface(mr));
-        return provider;
-    }
-
-    private static boolean isHttpClientInterface(MetadataReader mr) {
-        ClassMetadata cm = mr.getClassMetadata();
-        AnnotationMetadata am = mr.getAnnotationMetadata();
-        return cm.isInterface()
-                && cm.isIndependent()
-                && !cm.isAnnotation()
-                && (am.hasAnnotatedMethods(HttpExchange.class.getName())
-                        || am.hasAnnotatedMethods(RequestMapping.class.getName()));
     }
 }
