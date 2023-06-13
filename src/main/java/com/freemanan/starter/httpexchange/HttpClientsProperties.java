@@ -28,6 +28,10 @@ public class HttpClientsProperties implements InitializingBean {
      */
     private boolean enabled = true;
     /**
+     * Base packages to scan, use {@link EnableExchangeClients#basePackages} first if configured.
+     */
+    private List<String> basePackages = new ArrayList<>();
+    /**
      * Default base url.
      *
      * <p> e.g. {@code localhost:8080}, {@code http://localhost:8080}, {@code https://localhost:8080}

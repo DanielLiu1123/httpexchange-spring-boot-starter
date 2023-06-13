@@ -1,9 +1,10 @@
 package com.freemanan.starter.httpexchange;
 
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
@@ -13,16 +14,12 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.boot.context.properties.bind.Binder;
-import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
-import org.springframework.util.ClassUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -30,76 +27,34 @@ import org.springframework.web.service.annotation.HttpExchange;
 /**
  * @author Freeman
  */
-class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
-    private static final Logger log = LoggerFactory.getLogger(ExchangeClientsRegistrar.class);
+public class HttpClientBeanRegistrar {
+    private static final Logger log = LoggerFactory.getLogger(HttpClientBeanRegistrar.class);
 
-    private HttpClientsProperties properties;
+    private static final Set<BeanDefinitionRegistry> registries = ConcurrentHashMap.newKeySet();
 
-    @Override
-    public void setEnvironment(Environment environment) {
-        this.properties = getProperties(environment);
+    private final ClassPathScanningCandidateComponentProvider scanner;
+    private final HttpClientsProperties properties;
+    private final BeanDefinitionRegistry registry;
+
+    public HttpClientBeanRegistrar(HttpClientsProperties properties, BeanDefinitionRegistry registry) {
+        this.scanner = getScanner();
+        this.properties = properties;
+        this.registry = registry;
+        registries.add(registry);
     }
 
-    @Override
-    public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
-        if (properties.isEnabled()) {
-            registerHttpExchanges(metadata, registry);
-        }
+    /**
+     * Register HTTP client beans for base packages, using {@link HttpClientsProperties#getBasePackages()} if not specify base packages.
+     *
+     * @param basePackages base packages to scan
+     */
+    public void register(String... basePackages) {
+        List<String> packages =
+                ObjectUtils.isEmpty(basePackages) ? properties.getBasePackages() : Arrays.asList(basePackages);
+        registerBeans4BasePackages(packages);
     }
 
-    private void registerHttpExchanges(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
-        ClassPathScanningCandidateComponentProvider scanner = getScanner();
-
-        Map<String, Object> attrs = Optional.ofNullable(
-                        metadata.getAnnotationAttributes(EnableExchangeClients.class.getName()))
-                .orElse(Map.of());
-
-        // Shouldn't scan base packages when using clients property
-        // see https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/1
-        Class<?>[] clientClasses = (Class<?>[]) attrs.getOrDefault("clients", new Class<?>[0]);
-        String[] basePackages = (String[]) attrs.getOrDefault("value", new String[0]);
-        if (clientClasses.length > 0) {
-            registerClassesAsHttpExchange(registry, clientClasses);
-            if (basePackages.length > 0) {
-                // @EnableExchangeClients(basePackages = "com.example.api", clients = {UserHobbyApi.class})
-                // should scan basePackages and register specified clients
-                registerBeansForBasePackages(registry, scanner, basePackages);
-            }
-            return;
-        }
-
-        if (basePackages.length == 0) {
-            // @EnableExchangeClients
-            // should scan the package of the annotated class
-            basePackages = new String[] {ClassUtils.getPackageName(metadata.getClassName())};
-        }
-
-        registerBeansForBasePackages(registry, scanner, basePackages);
-    }
-
-    private static HttpClientsProperties getProperties(Environment environment) {
-        HttpClientsProperties properties = Binder.get(environment)
-                .bind(HttpClientsProperties.PREFIX, HttpClientsProperties.class)
-                .orElseGet(HttpClientsProperties::new);
-        properties.afterPropertiesSet();
-        return properties;
-    }
-
-    private void registerBeansForBasePackages(
-            BeanDefinitionRegistry registry,
-            ClassPathScanningCandidateComponentProvider scanner,
-            String[] basePackages) {
-        for (String pkg : basePackages) {
-            Set<BeanDefinition> beanDefinitions = scanner.findCandidateComponents(pkg);
-            for (BeanDefinition beanDefinition : beanDefinitions) {
-                if (beanDefinition instanceof AnnotatedBeanDefinition bd) {
-                    registerHttpExchange(registry, bd.getMetadata().getClassName());
-                }
-            }
-        }
-    }
-
-    private void registerHttpExchange(BeanDefinitionRegistry registry, String className) {
+    private void registerHttpClientBean(BeanDefinitionRegistry registry, String className) {
         Class<?> clz;
         try {
             clz = Class.forName(className);
@@ -164,7 +119,25 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Environ
         return false;
     }
 
-    private ClassPathScanningCandidateComponentProvider getScanner() {
+    /**
+     * @return whether this {@link BeanDefinitionRegistry} has been registered
+     */
+    public static boolean hasRegistered(BeanDefinitionRegistry registry) {
+        return registries.contains(registry);
+    }
+
+    private void registerBeans4BasePackages(List<String> basePackages) {
+        for (String pkg : basePackages) {
+            Set<BeanDefinition> beanDefinitions = scanner.findCandidateComponents(pkg);
+            for (BeanDefinition bd : beanDefinitions) {
+                if (bd.getBeanClassName() != null) {
+                    registerHttpClientBean(registry, bd.getBeanClassName());
+                }
+            }
+        }
+    }
+
+    private static ClassPathScanningCandidateComponentProvider getScanner() {
         ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false) {
             @Override
             protected boolean isCandidateComponent(AnnotatedBeanDefinition abd) {
@@ -183,11 +156,5 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Environ
                 && !cm.isAnnotation()
                 && (am.hasAnnotatedMethods(HttpExchange.class.getName())
                         || am.hasAnnotatedMethods(RequestMapping.class.getName()));
-    }
-
-    private void registerClassesAsHttpExchange(BeanDefinitionRegistry registry, Class<?>[] classes) {
-        for (Class<?> clz : classes) {
-            registerHttpExchange(registry, clz.getName());
-        }
     }
 }

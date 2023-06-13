@@ -39,7 +39,7 @@ public class BeanToQueryArgumentResolver implements HttpServiceArgumentResolver,
 
     public static final int ORDER = 0;
 
-    private static final String webBindAnnotationPackage = RequestParam.class.getPackageName();
+    private static final String WEB_BIND_ANNOTATION_PACKAGE = RequestParam.class.getPackageName();
 
     @Override
     public boolean resolve(Object argument, MethodParameter parameter, HttpRequestValues.Builder requestValues) {
@@ -139,7 +139,7 @@ public class BeanToQueryArgumentResolver implements HttpServiceArgumentResolver,
 
     protected static boolean hasWebBindPackageAnnotation(MethodParameter parameter) {
         for (Annotation annotation : parameter.getParameterAnnotations()) {
-            if (annotation.annotationType().getPackageName().startsWith(webBindAnnotationPackage)) {
+            if (annotation.annotationType().getPackageName().startsWith(WEB_BIND_ANNOTATION_PACKAGE)) {
                 return true;
             }
         }
