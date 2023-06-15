@@ -34,11 +34,10 @@ class ExtendTests {
                 .profiles("ControllerApiTests")
                 .properties("server.port=" + port)
                 .run();
-        long count = ctx.getBeanProvider(FooApi.class).stream().count();
-        assertThat(count).isEqualTo(2);
+        assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(2);
 
         FooApi fooApi = ctx.getBean(FooApi.class);
-        assertThat(fooApi instanceof FooController).isFalse();
+        assertThat(fooApi).isNotInstanceOf(FooController.class);
 
         assertThat(fooApi.getById("1")).isEqualTo(new Foo("1", "foo"));
 
