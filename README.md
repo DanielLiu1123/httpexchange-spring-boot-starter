@@ -81,7 +81,7 @@ Add dependency:
 <dependency>
     <groupId>com.freemanan</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.1.1-RC1</version>
+    <version>3.1.1-RC2</version>
 </dependency>
 ```
 
@@ -270,7 +270,7 @@ This project should work with any version of Spring Boot 3.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.x         | 3.1.1-RC1                            |
+| 3.x         | 3.1.1-RC2                        |
 
 > Please always use the latest version!
 
