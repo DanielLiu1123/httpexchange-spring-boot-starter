@@ -178,6 +178,7 @@ http-exchange:
       response-timeout: 2000
       clients:
         - UserApi
+        - com.example.**.api.*          # Ant-style pattern
     - base-url: service-foo.namespace
       classes: [com.example.FooApi]     # client class to apply this channel
 ```
