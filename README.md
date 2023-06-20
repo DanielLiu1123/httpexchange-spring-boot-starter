@@ -234,7 +234,7 @@ default. In `Spring Cloud OpenFeign` you need `@SpringQueryMap` to achieve this 
 `httpexhange-spring-boot-starter` supports this feature, and you don't need any additional annotations.
 
 > In order not to change the default behavior of Spring, this feature is disabled by default, 
-> you can use `http-exchange.bean-to-query=true` to enable it.
+> you can set `http-exchange.bean-to-query=true` to enable it.
 
 ```java
 public interface PostApi {
