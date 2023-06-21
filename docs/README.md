@@ -74,7 +74,7 @@ Add dependency:
 #### ** Gradle **
 
 ```groovy
-implementation 'com.freemanan:httpexchange-spring-boot-starter:3.1.1-RC2'
+implementation 'com.freemanan:httpexchange-spring-boot-starter:3.1.1-RC3'
 ```
 
 #### ** Maven **
@@ -84,7 +84,7 @@ implementation 'com.freemanan:httpexchange-spring-boot-starter:3.1.1-RC2'
 <dependency>
     <groupId>com.freemanan</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.1.1-RC2</version>
+    <version>3.1.1-RC3</version>
 </dependency>
 ```
 
@@ -276,6 +276,6 @@ This project should work with any version of Spring Boot 3.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.x         | 3.1.1-RC2                            |
+| 3.x         | 3.1.1-RC3                            |
 
 > Please always use the latest version!
