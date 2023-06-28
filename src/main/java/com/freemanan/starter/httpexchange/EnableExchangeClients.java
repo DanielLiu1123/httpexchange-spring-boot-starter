@@ -33,7 +33,7 @@ import org.springframework.web.service.annotation.HttpExchange;
  * @EnableExchangeClients(basePackages = "org.my.pkg", clients = {FooApi.class})
  * }</pre>
  *
- * <p> NOTE: scanning packages will increase the program startup time, you can sacrifice some flexibility and use the {@link #clients} attribute to specify the interfaces that need to be registered as beans.
+ * <p color="orange"> NOTE: scanning packages will increase the program startup time, you can sacrifice some flexibility and use the {@link #clients} attribute to specify the interfaces that need to be registered as beans.
  *
  * @author Freeman
  */
