@@ -106,6 +106,7 @@ public class HttpClientsProperties implements InitializingBean {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Channel {
+        // TODO(Freeman): add name property to identify channel?
         /**
          * Base url, use {@link HttpClientsProperties#baseUrl} if not set.
          */
