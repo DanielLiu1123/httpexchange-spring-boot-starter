@@ -1,4 +1,4 @@
-## Http Exchange Spring Boot Starter
+# Http Exchange Spring Boot Starter
 
 [![Build](https://img.shields.io/github/actions/workflow/status/DanielLiu1123/httpexchange-spring-boot-starter/build.yml?branch=main)](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.freemanan/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/com.freemanan/httpexchange-spring-boot-starter)
@@ -6,7 +6,7 @@
 
 [Documentation](https://danielliu1123.github.io/httpexchange-spring-boot-starter/)
    
-### Introduction
+## Introduction
 
 `httpexchange-spring-boot-starter` is the missing starter for Spring 6.x declarative HTTP client.
 
@@ -73,7 +73,7 @@ _**So what is the problem ? 🤔**_
 **The main goal of this project is providing a `Spring Cloud OpenFeign` like experience for Spring 6.x declarative HTTP
 clients and support Spring web annotations (`@GetMapping`, `@PostMapping`).**
 
-### Quick Start
+## Quick Start
 
 Add dependency:
 
@@ -108,9 +108,9 @@ interface PostApi {
 
 > No more boilerplate code! 🎉
 
-### Features
+## Features
 
-#### Autoconfigure Clients
+### Autoconfigure Clients
 
 Autoconfigure clients, all you need to do is adding the `@EnableExchangeClients` annotation. `@EnableExchangeClients` is
 very similar to `@EnableFeignClients`.
@@ -140,7 +140,7 @@ You can also specify the clients and the packages to scan at the same time.
 
 > `Spring Cloud OpenFeign` does not support using `basePackages` and `clients` at the same time.
 
-#### Spring Web Annotations Support
+### Spring Web Annotations Support
 
 Support to use spring web annotations to generate HTTP client, e.g. `@RequestMapping`, `@GetMapping`, `@PostMapping`
 etc.
@@ -153,7 +153,7 @@ public interface PostApi {
 }
 ```
 
-#### Configuration Driven
+### Configuration Driven
 
 Providing a lot of configuration properties to customize the behavior of the client.
 
@@ -200,7 +200,7 @@ http-exchange:
 
 > configuration `clients` is more flexible, it supports Ant-style pattern, `classes` is more IDE-friendly and efficient.
 
-#### Url Variables
+### Url Variables
 
 ```java
 @HttpExchange("${api.post.url}")
@@ -210,7 +210,7 @@ public interface PostApi {
 }
 ```
 
-#### Validation
+### Validation
 
 ```java
 @HttpExchange("${api.post.url}")
@@ -225,7 +225,7 @@ public interface PostApi {
 > see [issue](https://github.com/spring-projects/spring-framework/issues/29782)
 > and [tests](src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
 
-#### Convert Java Bean to Query
+### Convert Java Bean to Query
 
 In Spring Web/WebFlux (server side), it will automatically convert query string to Java Bean,
 but `Spring Cloud OpenFeign` or `Exchange client of Spring 6` does not support to convert Java bean to query string by
@@ -247,7 +247,7 @@ Auto convert **non-null simple values** fields of `condition` to query string.
 
 > Simple values: primitive/wrapper types, String, Date, etc.
 
-#### Customize Resolvers
+### Customize Resolvers
 
 ```java
 @Bean
@@ -265,7 +265,7 @@ Auto-detect all of the `HttpServiceArgumentResolver` beans and `StringValueResol
 the `HttpServiceProxyFactory`.
 
 
-### Version
+## Version
 
 This project should work with any version of Spring Boot 3.
 
@@ -275,6 +275,6 @@ This project should work with any version of Spring Boot 3.
 
 > Please always use the latest version!
 
-### License
+## License
 
 The MIT License.
