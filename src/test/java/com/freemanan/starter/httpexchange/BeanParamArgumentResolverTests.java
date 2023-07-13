@@ -3,6 +3,7 @@ package com.freemanan.starter.httpexchange;
 import static com.freemanan.cr.core.anno.Verb.ADD;
 import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.freemanan.cr.core.anno.Action;
@@ -13,6 +14,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Configuration;
@@ -21,14 +23,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.service.annotation.DeleteExchange;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.PostExchange;
+import org.springframework.web.service.annotation.PutExchange;
 
 /**
- * {@link BeanToQueryArgumentResolver} tester.
+ * {@link BeanParamArgumentResolver} tester.
  *
  * @author Freeman
  */
-class BeanToQueryArgumentResolverShadedTests {
+class BeanParamArgumentResolverTests {
 
     @Test
     @ClasspathReplacer({
@@ -53,6 +60,13 @@ class BeanToQueryArgumentResolverShadedTests {
 
         assertThat(fooApi.complex(new Foo("1", "foo1"), new Foo("2", "foo2")))
                 .isEqualTo(List.of(new Foo("1", "foo1"), new Foo("2", "foo2")));
+
+        // test @QueryMap
+        assertThat(fooApi.testBeanParam(new Foo("1", "foo1"))).isEqualTo(new Foo("1", "foo1"));
+
+        // test @RequestParam for Map
+        assertThat(fooApi.testRequestParamForMap(Map.of("id", "1", "name", "foo1")))
+                .isEqualTo(Map.of("id", "1", "name", "foo1"));
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> fooApi.findAll(Map.of()))
@@ -83,6 +97,19 @@ class BeanToQueryArgumentResolverShadedTests {
         ctx.close();
     }
 
+    @Test
+    void hasQueryMapArgumentResolverBean_whenDefaultConfig() {
+        int port = PortFinder.availablePort();
+        var ctx = new SpringApplicationBuilder(FooController.class)
+                .web(WebApplicationType.NONE)
+                .properties("server.port=" + port)
+                .run();
+
+        assertThatCode(() -> ctx.getBean(BeanParamArgumentResolver.class)).doesNotThrowAnyException();
+
+        ctx.close();
+    }
+
     record Foo(String id, String name) {}
 
     record FooWithArrProp(String id, String[] arr, List<Integer> list, List<Foo> foos, Date date, URI url) {}
@@ -90,31 +117,37 @@ class BeanToQueryArgumentResolverShadedTests {
     record EmptyBean() {}
 
     interface FooApi {
-        @GetMapping("/foo")
+        @GetExchange("/foo")
         List<Foo> findAll(Foo foo);
 
-        @GetMapping("/FooWithArrProp")
+        @GetExchange("/FooWithArrProp")
         FooWithArrProp testArrProp(FooWithArrProp foo);
 
-        @PostMapping("/foo")
+        @PostExchange("/foo")
         Foo post(Foo foo);
 
-        @PutMapping("/foo")
+        @PutExchange("/foo")
         Foo put(Foo foo);
 
-        @DeleteMapping("/foo")
+        @DeleteExchange("/foo")
         Foo delete(Foo foo);
 
-        @PostMapping("/foo/complex")
+        @PostExchange("/foo/complex")
         List<Foo> complex(Foo foo, @RequestBody Foo foo2);
 
-        @GetMapping("/foo/by-map")
+        @GetExchange("/foo/by-map")
         List<Foo> findAll(Map<String, Object> map);
 
-        @GetMapping("/foo/emtpy-bean")
+        @GetExchange("/foo/emtpy-bean")
         default List<Foo> findAll(EmptyBean emptyBean) {
             return List.of();
         }
+
+        @GetExchange("/foo/testBeanParam")
+        Foo testBeanParam(@BeanParam Foo foo);
+
+        @GetExchange("/foo/testRequestParamForMap")
+        Map<String, String> testRequestParamForMap(@RequestParam Map<String, String> map);
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -124,38 +157,56 @@ class BeanToQueryArgumentResolverShadedTests {
     static class FooController implements FooApi {
 
         @Override
+        @GetMapping("/foo")
         public List<Foo> findAll(Foo foo) {
             return List.of(foo);
         }
 
         @Override
+        @GetMapping("/FooWithArrProp")
         public FooWithArrProp testArrProp(FooWithArrProp foo) {
             return foo;
         }
 
         @Override
+        @PostMapping("/foo")
         public Foo post(Foo foo) {
             return foo;
         }
 
         @Override
+        @PutMapping("/foo")
         public Foo put(Foo foo) {
             return foo;
         }
 
         @Override
+        @DeleteMapping("/foo")
         public Foo delete(Foo foo) {
             return foo;
         }
 
-        @Override
+        @PostMapping("/foo/complex")
         public List<Foo> complex(Foo foo, Foo foo2) {
             return List.of(foo, foo2);
         }
 
         @Override
+        @GetMapping("/foo/by-map")
         public List<Foo> findAll(Map<String, Object> map) {
             return List.of(new Foo("1", "dummy"));
+        }
+
+        @Override
+        @GetMapping("/foo/testBeanParam")
+        public Foo testBeanParam(Foo foo) {
+            return foo;
+        }
+
+        @Override
+        @GetMapping("/foo/testRequestParamForMap")
+        public Map<String, String> testRequestParamForMap(Map<String, String> map) {
+            return map;
         }
     }
 }

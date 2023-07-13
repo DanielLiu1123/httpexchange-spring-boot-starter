@@ -41,9 +41,8 @@ public class HttpClientsAutoConfiguration implements SmartInitializingSingleton,
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnProperty(prefix = HttpClientsProperties.PREFIX, name = "bean-to-query", havingValue = "true")
-    public BeanToQueryArgumentResolver beanToQueryArgumentResolver() {
-        return new BeanToQueryArgumentResolver();
+    public BeanParamArgumentResolver beanParamArgumentResolver(HttpClientsProperties properties) {
+        return new BeanParamArgumentResolver(properties);
     }
 
     @Override
