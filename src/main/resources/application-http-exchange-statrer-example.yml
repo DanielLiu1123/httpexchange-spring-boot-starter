@@ -1,4 +1,5 @@
 http-exchange:
+  base-packages: [com.example.api]
   base-url: http://api-gateway
   response-timeout: 10000
   headers:

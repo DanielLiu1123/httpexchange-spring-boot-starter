@@ -3,7 +3,6 @@ package com.freemanan.starter.httpexchange;
 import static com.freemanan.cr.core.anno.Verb.ADD;
 import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.freemanan.cr.core.anno.Action;
@@ -14,8 +13,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Configuration;
@@ -25,17 +22,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.service.annotation.DeleteExchange;
-import org.springframework.web.service.annotation.GetExchange;
-import org.springframework.web.service.annotation.PostExchange;
-import org.springframework.web.service.annotation.PutExchange;
 
 /**
- * {@link BeanToQueryArgumentResolver} tester.
+ * {@link BeanParamArgumentResolver} tester.
  *
  * @author Freeman
  */
-class BeanToQueryArgumentResolverTests {
+class BeanParamArgumentResolverShadedTests {
 
     @Test
     @ClasspathReplacer({
@@ -90,34 +83,6 @@ class BeanToQueryArgumentResolverTests {
         ctx.close();
     }
 
-    @Test
-    void noBeanToQueryArgumentResolverBean_whenDefaultConfig() {
-        int port = PortFinder.availablePort();
-        var ctx = new SpringApplicationBuilder(FooController.class)
-                .web(WebApplicationType.NONE)
-                .properties("server.port=" + port)
-                .run();
-
-        assertThatCode(() -> ctx.getBean(BeanToQueryArgumentResolver.class))
-                .isInstanceOf(NoSuchBeanDefinitionException.class);
-
-        ctx.close();
-    }
-
-    @Test
-    void hasBeanToQueryArgumentResolverBean_whenConfigBeanToQueryToTure() {
-        int port = PortFinder.availablePort();
-        var ctx = new SpringApplicationBuilder(FooController.class)
-                .web(WebApplicationType.NONE)
-                .properties("server.port=" + port)
-                .properties(HttpClientsProperties.PREFIX + ".bean-to-query=true")
-                .run();
-
-        assertThatCode(() -> ctx.getBean(BeanToQueryArgumentResolver.class)).doesNotThrowAnyException();
-
-        ctx.close();
-    }
-
     record Foo(String id, String name) {}
 
     record FooWithArrProp(String id, String[] arr, List<Integer> list, List<Foo> foos, Date date, URI url) {}
@@ -125,28 +90,28 @@ class BeanToQueryArgumentResolverTests {
     record EmptyBean() {}
 
     interface FooApi {
-        @GetExchange("/foo")
+        @GetMapping("/foo")
         List<Foo> findAll(Foo foo);
 
-        @GetExchange("/FooWithArrProp")
+        @GetMapping("/FooWithArrProp")
         FooWithArrProp testArrProp(FooWithArrProp foo);
 
-        @PostExchange("/foo")
+        @PostMapping("/foo")
         Foo post(Foo foo);
 
-        @PutExchange("/foo")
+        @PutMapping("/foo")
         Foo put(Foo foo);
 
-        @DeleteExchange("/foo")
+        @DeleteMapping("/foo")
         Foo delete(Foo foo);
 
-        @PostExchange("/foo/complex")
+        @PostMapping("/foo/complex")
         List<Foo> complex(Foo foo, @RequestBody Foo foo2);
 
-        @GetExchange("/foo/by-map")
+        @GetMapping("/foo/by-map")
         List<Foo> findAll(Map<String, Object> map);
 
-        @GetExchange("/foo/emtpy-bean")
+        @GetMapping("/foo/emtpy-bean")
         default List<Foo> findAll(EmptyBean emptyBean) {
             return List.of();
         }
@@ -159,42 +124,36 @@ class BeanToQueryArgumentResolverTests {
     static class FooController implements FooApi {
 
         @Override
-        @GetMapping("/foo")
         public List<Foo> findAll(Foo foo) {
             return List.of(foo);
         }
 
         @Override
-        @GetMapping("/FooWithArrProp")
         public FooWithArrProp testArrProp(FooWithArrProp foo) {
             return foo;
         }
 
         @Override
-        @PostMapping("/foo")
         public Foo post(Foo foo) {
             return foo;
         }
 
         @Override
-        @PutMapping("/foo")
         public Foo put(Foo foo) {
             return foo;
         }
 
         @Override
-        @DeleteMapping("/foo")
         public Foo delete(Foo foo) {
             return foo;
         }
 
-        @PostMapping("/foo/complex")
+        @Override
         public List<Foo> complex(Foo foo, Foo foo2) {
             return List.of(foo, foo2);
         }
 
         @Override
-        @GetMapping("/foo/by-map")
         public List<Foo> findAll(Map<String, Object> map) {
             return List.of(new Foo("1", "dummy"));
         }

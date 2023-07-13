@@ -3,12 +3,13 @@ package com.freemanan.starter.httpexchange;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -23,7 +24,7 @@ import org.springframework.web.service.invoker.HttpRequestValues;
 import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
 
 /**
- * {@link BeanToQueryArgumentResolver} used to convert Java bean to request parameters.
+ * {@link BeanParamArgumentResolver} used to convert Java bean to request parameters.
  *
  * <p> In Spring web, GET request query parameters will be filled into Java bean by default.
  *
@@ -32,14 +33,20 @@ import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
  * <p> NOTE: make this class as public, give a chance to be replaced by user.
  *
  * @author Freeman
- * @see HttpClientsAutoConfiguration#beanToQueryArgumentResolver
+ * @see HttpClientsAutoConfiguration#beanParamArgumentResolver(HttpClientsProperties)
  */
-public class BeanToQueryArgumentResolver implements HttpServiceArgumentResolver, Ordered {
-    private static final Logger log = LoggerFactory.getLogger(BeanToQueryArgumentResolver.class);
+public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, Ordered {
+    private static final Logger log = LoggerFactory.getLogger(BeanParamArgumentResolver.class);
 
     public static final int ORDER = 0;
 
     private static final String WEB_BIND_ANNOTATION_PACKAGE = RequestParam.class.getPackageName();
+
+    private final HttpClientsProperties properties;
+
+    public BeanParamArgumentResolver(HttpClientsProperties properties) {
+        this.properties = properties;
+    }
 
     @Override
     public boolean resolve(Object argument, MethodParameter parameter, HttpRequestValues.Builder requestValues) {
@@ -54,22 +61,36 @@ public class BeanToQueryArgumentResolver implements HttpServiceArgumentResolver,
             return false;
         }
 
-        if (argument instanceof Map) {
-            /*
-            NOTE: why not convert map to request parameters?
-
-            The following code will not fill the map with request parameters by default, you need @RequestParam to do that.
-
-            @GetMapping
-            public List<Foo> findAll(Map<String, Object> map) {
-                return List.of();
-            }
-
-            So on the client side, we do the same thing as the server side, DO NOT convert map to request parameters.
-            */
-            return false;
+        Optional<Annotation> annotation = Arrays.stream(parameter.getParameterAnnotations())
+                .filter(anno -> anno.annotationType() == BeanParam.class)
+                .findFirst();
+        if (annotation.isPresent()) {
+            return process(argument, requestValues);
         }
 
+        // Not enable bean to query feature.
+        if (!properties.isBeanToQuery()) {
+            return false;
+        }
+        return process(argument, requestValues);
+    }
+
+    private static boolean process(Object argument, HttpRequestValues.Builder requestValues) {
+        /*
+        NOTE: why not convert map to request parameters?
+
+        The following code will not fill the map with request parameters by default, you need @RequestParam to do that.
+
+        @GetMapping
+        public List<Foo> findAll(Map<String, Object> map) {
+            return List.of();
+        }
+
+        So on the client side, we do the same thing as the server side, DO NOT convert map to request parameters.
+        */
+        if (argument instanceof Map) {
+            return false;
+        }
         Map<String, Object> nameToValue = getPropertyValueMap(argument);
         if (CollectionUtils.isEmpty(nameToValue)) {
             // means Java bean has no property,
@@ -88,23 +109,25 @@ public class BeanToQueryArgumentResolver implements HttpServiceArgumentResolver,
             if (BeanUtils.isSimpleValueType(clz)) {
                 requestValues.addRequestParameter(k, v.toString());
             } else if (clz.isArray() && BeanUtils.isSimpleValueType(clz.getComponentType())) {
-                String arrValue = Arrays.stream((Object[]) v)
+                String[] arrValue = Arrays.stream((Object[]) v)
                         .filter(Objects::nonNull)
                         .map(Object::toString)
-                        .collect(Collectors.joining(","));
-                requestValues.addRequestParameter(k, arrValue);
-            } else if (v instanceof Collection<?> coll
-                    && coll.stream()
-                            .filter(Objects::nonNull)
-                            .allMatch(it -> BeanUtils.isSimpleValueType(it.getClass()))) {
-                String listValue = coll.stream()
-                        .filter(Objects::nonNull)
-                        .map(Object::toString)
-                        .collect(Collectors.joining(","));
-                requestValues.addRequestParameter(k, listValue);
+                        .toArray(String[]::new);
+                if (arrValue.length > 0) {
+                    requestValues.addRequestParameter(k, arrValue);
+                }
+            } else if (v instanceof Iterable<?> iter) {
+                List<String> values = new ArrayList<>();
+                iter.forEach(item -> {
+                    if (item != null && BeanUtils.isSimpleValueType(item.getClass())) {
+                        values.add(item.toString());
+                    }
+                });
+                if (!values.isEmpty()) {
+                    requestValues.addRequestParameter(k, values.toArray(String[]::new));
+                }
             }
         });
-
         return true;
     }
 
@@ -119,7 +142,11 @@ public class BeanToQueryArgumentResolver implements HttpServiceArgumentResolver,
      * @param source Java bean
      * @return property name to value map
      */
+    @SuppressWarnings("unchecked")
     protected static Map<String, Object> getPropertyValueMap(Object source) {
+        if (source instanceof Map) {
+            return (Map<String, Object>) source;
+        }
         Map<String, Object> result = new LinkedHashMap<>();
         try {
             BeanWrapper src = new BeanWrapperImpl(source);
