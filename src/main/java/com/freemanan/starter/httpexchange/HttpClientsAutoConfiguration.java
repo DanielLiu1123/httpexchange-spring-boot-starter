@@ -57,7 +57,7 @@ public class HttpClientsAutoConfiguration implements SmartInitializingSingleton,
 
     private void warningUnusedConfiguration() {
         // Identify the configuration items that are not taking effect and print warning messages.
-        Set<Class<?>> classes = Cache.getClientClasses();
+        Set<Class<?>> classes = Cache.getClients().keySet();
 
         List<HttpClientsProperties.Channel> channels = properties.getChannels();
 

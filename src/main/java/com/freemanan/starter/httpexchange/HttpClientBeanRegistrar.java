@@ -7,12 +7,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.scope.ScopedProxyUtils;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
+import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -20,6 +23,7 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +36,8 @@ class HttpClientBeanRegistrar {
     private static final Logger log = LoggerFactory.getLogger(HttpClientBeanRegistrar.class);
 
     private static final Set<BeanDefinitionRegistry> registries = ConcurrentHashMap.newKeySet();
+    private static final boolean SPRING_CLOUD_CONTEXT_PRESENT =
+            ClassUtils.isPresent("org.springframework.cloud.context.scope.refresh.RefreshScope", null);
 
     private final ClassPathScanningCandidateComponentProvider scanner;
     private final HttpClientsProperties properties;
@@ -89,7 +95,7 @@ class HttpClientBeanRegistrar {
         Assert.isInstanceOf(ConfigurableBeanFactory.class, registry);
 
         ExchangeClientCreator creator =
-                new ExchangeClientCreator((ConfigurableBeanFactory) registry, properties, clz, hasClientSideAnnotation);
+                new ExchangeClientCreator((ConfigurableBeanFactory) registry, clz, hasClientSideAnnotation);
 
         AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, creator::create)
                 .getBeanDefinition();
@@ -99,7 +105,14 @@ class HttpClientBeanRegistrar {
         abd.setLazyInit(true);
 
         try {
-            registry.registerBeanDefinition(className, abd);
+            if (SPRING_CLOUD_CONTEXT_PRESENT) {
+                abd.setScope("refresh");
+                BeanDefinitionHolder scopedProxy =
+                        ScopedProxyUtils.createScopedProxy(new BeanDefinitionHolder(abd, className), registry, false);
+                BeanDefinitionReaderUtils.registerBeanDefinition(scopedProxy, registry);
+            } else {
+                registry.registerBeanDefinition(className, abd);
+            }
         } catch (BeanDefinitionOverrideException ignore) {
             // clients are included in base packages
             log.warn(

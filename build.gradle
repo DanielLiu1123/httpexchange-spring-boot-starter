@@ -17,9 +17,14 @@ repositories {
 dependencies {
     api(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
     annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
+    compileOnly(platform("org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"))
+    testImplementation(platform("org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"))
 
     api("org.springframework.boot:spring-boot-starter")
     api("org.springframework:spring-webflux")
+
+    // dynamic refresh configuration for exchange clients
+    compileOnly("org.springframework.cloud:spring-cloud-context")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
@@ -31,6 +36,7 @@ dependencies {
     testCompileOnly("org.springframework.boot:spring-boot-starter-web")
     testCompileOnly("org.springframework.boot:spring-boot-starter-webflux")
     testCompileOnly("org.springframework.boot:spring-boot-starter-validation")
+    testImplementation("org.springframework.cloud:spring-cloud-context")
 }
 
 compileJava {
