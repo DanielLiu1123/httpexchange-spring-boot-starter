@@ -5,6 +5,8 @@ http-exchange:
   headers:
     - key: X-App-Name
       values: ${spring.application.name}
+  refresh:
+    enabled: true
   channels:
     - base-url: http://order
       response-timeout: 1000

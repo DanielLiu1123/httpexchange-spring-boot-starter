@@ -153,6 +153,23 @@ public interface PostApi {
 }
 ```
 
+### Dynamic Refresh Configuration
+
+Support to dynamically refresh the configuration of clients, you can put the configuration in the configuration
+center ([Consul](https://github.com/hashicorp/consul), [Apollo](https://github.com/apolloconfig/apollo), [Nacos](https://github.com/alibaba/nacos),
+etc.), and change the configuration (e.g. `base-url`, `timeout`, `headers`), the client will be refreshed automatically
+without restarting the application.
+
+Use following configuration to enable this feature:
+
+```yaml
+http-exchange:
+   refresh:
+      enabled: true # default is false
+```
+
+> This feature needs `spring-cloud-context` in the classpath and a `RefreshEvent` was published.
+
 ### Configuration Driven
 
 Providing a lot of configuration properties to customize the behavior of the client.
@@ -166,6 +183,8 @@ http-exchange:
   headers:                              # global headers
     - key: X-App-Name
       values: ${spring.application.name}
+  refresh:
+    enabled: true                       # enable dynamic refresh configuration
   channels:
     - base-url: http://order            # client specific base-url, will override global base-url
       response-timeout: 1000            # client specific timeout, will override global timeout

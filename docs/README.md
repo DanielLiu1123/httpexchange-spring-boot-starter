@@ -1,8 +1,8 @@
-### Introduction
+## Introduction
 
-`httpexchange-spring-boot-starter` is the missing starter for Spring 6.x declarative HTTP client. 
+`httpexchange-spring-boot-starter` is the missing starter for Spring 6.x declarative HTTP client.
 
-Spring 6.0 has provided its native support for declarative HTTP clients, you don't need to
+Spring 6.x has provided its native support for declarative HTTP clients, you don't need to
 use [Spring Cloud OpenFeign](https://github.com/spring-cloud/spring-cloud-openfeign)
 or [Spring Cloud Square](https://github.com/spring-projects-experimental/spring-cloud-square) anymore.
 See [Spring Documentation](https://docs.spring.io/spring-framework/docs/6.0.0/reference/html/integration.html#rest-http-interface)
@@ -60,35 +60,22 @@ _**So what is the problem ? 🤔**_
    Native support for declarative HTTP clients is great, but it introduces a whole new set of annotations, such as
    `@GetExchange`, `@PostExchange`, etc. And does not support Spring web annotations, such as
    `@GetMapping`, `@PostMapping`, etc, which is extremely painful for users that using `Spring Cloud OpenFeign` and want
-   to migrate to Spring 6.0.
+   to migrate to Spring 6.x.
 
-**The main goal of this project is providing a `Spring Cloud OpenFeign` like experience for Spring 6.0 declarative HTTP
+**The main goal of this project is providing a `Spring Cloud OpenFeign` like experience for Spring 6.x declarative HTTP
 clients and support Spring web annotations (`@GetMapping`, `@PostMapping`).**
 
-### Quick Start
+## Quick Start
 
 Add dependency:
 
-<!-- tabs:start -->
-
-#### ** Gradle **
-
-```groovy
-implementation 'com.freemanan:httpexchange-spring-boot-starter:3.1.1'
-```
-
-#### ** Maven **
-
 ```xml
-
 <dependency>
     <groupId>com.freemanan</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
     <version>3.1.1</version>
 </dependency>
 ```
-
-<!-- tabs:end -->
 
 Write a classic Spring Boot application:
 
@@ -113,9 +100,9 @@ interface PostApi {
 
 > No more boilerplate code! 🎉
 
-### Features
+## Features
 
-#### Autoconfigure Clients
+### Autoconfigure Clients
 
 Autoconfigure clients, all you need to do is adding the `@EnableExchangeClients` annotation. `@EnableExchangeClients` is
 very similar to `@EnableFeignClients`.
@@ -145,7 +132,7 @@ You can also specify the clients and the packages to scan at the same time.
 
 > `Spring Cloud OpenFeign` does not support using `basePackages` and `clients` at the same time.
 
-#### Spring Web Annotations Support
+### Spring Web Annotations Support
 
 Support to use spring web annotations to generate HTTP client, e.g. `@RequestMapping`, `@GetMapping`, `@PostMapping`
 etc.
@@ -158,7 +145,24 @@ public interface PostApi {
 }
 ```
 
-#### Configuration Driven
+### Dynamic Refresh Configuration
+
+Support to dynamically refresh the configuration of clients, you can put the configuration in the configuration
+center ([Consul](https://github.com/hashicorp/consul), [Apollo](https://github.com/apolloconfig/apollo), [Nacos](https://github.com/alibaba/nacos),
+etc.), and change the configuration (e.g. `base-url`, `timeout`, `headers`), the client will be refreshed automatically
+without restarting the application.
+
+Use following configuration to enable this feature:
+
+```yaml
+http-exchange:
+   refresh:
+      enabled: true # default is false
+```
+
+> This feature needs `spring-cloud-context` in the classpath and a `RefreshEvent` was published.
+
+### Configuration Driven
 
 Providing a lot of configuration properties to customize the behavior of the client.
 
@@ -166,26 +170,28 @@ You can configure the `base-url`, `timeout` and `headers` for each channel, and 
 
 ```yaml
 http-exchange:
-   base-url: http://api-gateway          # global base-url
-   response-timeout: 10000               # global timeout
-   headers:                              # global headers
-      - key: X-App-Name
-        values: ${spring.application.name}
-   channels:
-      - base-url: http://order            # client specific base-url, will override global base-url
-        response-timeout: 1000            # client specific timeout, will override global timeout
-        headers:                          # client specific headers, will merge with global headers
-           - key: X-Key
-             values: [value1, value2]
-        clients:                          # client to apply this channel
-           - OrderApi
-      - base-url: user
-        response-timeout: 2000
-        clients:
-           - UserApi
-           - com.example.**.api.*         # Ant-style pattern
-      - base-url: service-foo.namespace
-        classes: [com.example.FooApi]     # client class to apply this channel
+  base-url: http://api-gateway          # global base-url
+  response-timeout: 10000               # global timeout
+  headers:                              # global headers
+    - key: X-App-Name
+      values: ${spring.application.name}
+  refresh:
+    enabled: true                       # enable dynamic refresh configuration
+  channels:
+    - base-url: http://order            # client specific base-url, will override global base-url
+      response-timeout: 1000            # client specific timeout, will override global timeout
+      headers:                          # client specific headers, will merge with global headers
+        - key: X-Key
+          values: [value1, value2]
+      clients:                          # client to apply this channel
+        - OrderApi             
+    - base-url: user
+      response-timeout: 2000
+      clients:
+        - UserApi
+        - com.example.**.api.*          # Ant-style pattern
+    - base-url: service-foo.namespace
+      classes: [com.example.FooApi]     # client class to apply this channel
 ```
 
 Using property `clients` or `classes` to identify the client, use `classes` first if configured, otherwise use `clients`.
@@ -205,7 +211,7 @@ http-exchange:
 
 > configuration `clients` is more flexible, it supports Ant-style pattern, `classes` is more IDE-friendly and efficient.
 
-#### Url Variables
+### Url Variables
 
 ```java
 @HttpExchange("${api.post.url}")
@@ -215,7 +221,7 @@ public interface PostApi {
 }
 ```
 
-#### Validation
+### Validation
 
 ```java
 @HttpExchange("${api.post.url}")
@@ -230,7 +236,7 @@ public interface PostApi {
 > see [issue](https://github.com/spring-projects/spring-framework/issues/29782)
 > and [tests](src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
 
-#### Convert Java Bean to Query
+### Convert Java Bean to Query
 
 In Spring Web/WebFlux (server side), it will automatically convert query string to Java Bean,
 but `Spring Cloud OpenFeign` or `Exchange client of Spring 6` does not support to convert Java bean to query string by
@@ -252,7 +258,7 @@ Auto convert **non-null simple values** fields of `condition` to query string.
 
 > Simple values: primitive/wrapper types, String, Date, etc.
 
-#### Customize Resolvers
+### Customize Resolvers
 
 ```java
 @Bean
@@ -270,7 +276,7 @@ Auto-detect all of the `HttpServiceArgumentResolver` beans and `StringValueResol
 the `HttpServiceProxyFactory`.
 
 
-### Version
+## Version
 
 This project should work with any version of Spring Boot 3.
 
