@@ -11,7 +11,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.endpoint.event.RefreshEvent;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.service.annotation.GetExchange;
@@ -29,17 +28,17 @@ class DynamicRefreshTests {
                 .properties("server.port=" + port)
                 .properties("http-exchange.base-url=http://localhost:" + port)
                 .run();
-        ConfigurableEnvironment env = ctx.getEnvironment();
 
         FooApi api = ctx.getBean(FooApi.class);
         assertThat(api.get()).isEqualTo("OK");
 
-        env.getSystemProperties().put("http-exchange.base-url", "http://localhost:" + port + "/v2");
+        System.setProperty("http-exchange.base-url", "http://localhost:" + port + "/v2");
         ctx.publishEvent(new RefreshEvent(ctx, null, null));
 
         // base-url changed
         assertThat(api.get()).isEqualTo("OK v2");
 
+        System.clearProperty("http-exchange.base-url");
         ctx.close();
     }
 
