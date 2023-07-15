@@ -5,6 +5,7 @@ import static com.freemanan.starter.httpexchange.Util.findMatchedConfig;
 import com.freemanan.starter.httpexchange.shaded.ShadedHttpServiceProxyFactory;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -29,21 +30,15 @@ class ExchangeClientCreator {
     private final ConfigurableBeanFactory beanFactory;
     private final Environment environment;
     private final Class<?> clientType;
-    private final HttpClientsProperties.Channel channelConfig;
     private final boolean usingClientSideAnnotation;
+    private final AtomicReference<HttpClientsProperties> properties = new AtomicReference<>();
 
-    ExchangeClientCreator(
-            ConfigurableBeanFactory beanFactory,
-            HttpClientsProperties properties,
-            Class<?> clientType,
-            boolean usingClientSideAnnotation) {
+    ExchangeClientCreator(ConfigurableBeanFactory beanFactory, Class<?> clientType, boolean usingClientSideAnnotation) {
         Assert.notNull(beanFactory, "beanFactory must not be null");
-        Assert.notNull(properties, "properties must not be null");
         Assert.notNull(clientType, "clientType must not be null");
         this.beanFactory = beanFactory;
         this.environment = beanFactory.getBean(Environment.class);
         this.clientType = clientType;
-        this.channelConfig = findMatchedConfig(clientType, properties).orElseGet(properties::defaultClient);
         this.usingClientSideAnnotation = usingClientSideAnnotation;
     }
 
@@ -55,33 +50,45 @@ class ExchangeClientCreator {
      */
     @SuppressWarnings("unchecked")
     public <T> T create() {
+        HttpClientsProperties httpClientsProperties = beanFactory
+                .getBeanProvider(HttpClientsProperties.class)
+                .getIfUnique(() -> {
+                    HttpClientsProperties prop = properties.get();
+                    if (prop == null) {
+                        properties.set(Util.getProperties(environment));
+                    }
+                    return properties.get();
+                });
+        HttpClientsProperties.Channel chan =
+                findMatchedConfig(clientType, httpClientsProperties).orElseGet(httpClientsProperties::defaultClient);
         if (usingClientSideAnnotation) {
-            HttpServiceProxyFactory cachedFactory = buildServiceProxyFactory();
+            HttpServiceProxyFactory cachedFactory = buildServiceProxyFactory(chan);
             T result = (T) cachedFactory.createClient(clientType);
-            Cache.addClientClass(clientType);
+            Cache.addClient(result);
             return result;
         }
-        ShadedHttpServiceProxyFactory cachedFactory = buildShadedServiceProxyFactory();
+        ShadedHttpServiceProxyFactory cachedFactory = buildShadedServiceProxyFactory(chan);
         T result = (T) cachedFactory.createClient(clientType);
-        Cache.addClientClass(clientType);
+        Cache.addClient(result);
         return result;
     }
 
-    private HttpServiceProxyFactory buildServiceProxyFactory() {
-        HttpServiceProxyFactory.Builder builder = proxyFactoryBuilder();
+    private HttpServiceProxyFactory buildServiceProxyFactory(HttpClientsProperties.Channel channelConfig) {
+        HttpServiceProxyFactory.Builder builder = proxyFactoryBuilder(channelConfig);
         return builder.build();
     }
 
-    private ShadedHttpServiceProxyFactory buildShadedServiceProxyFactory() {
-        ShadedHttpServiceProxyFactory.Builder builder = ShadedHttpServiceProxyFactory.builder(proxyFactoryBuilder());
+    private ShadedHttpServiceProxyFactory buildShadedServiceProxyFactory(HttpClientsProperties.Channel channelConfig) {
+        ShadedHttpServiceProxyFactory.Builder builder =
+                ShadedHttpServiceProxyFactory.builder(proxyFactoryBuilder(channelConfig));
         return builder.build();
     }
 
-    private HttpServiceProxyFactory.Builder proxyFactoryBuilder() {
+    private HttpServiceProxyFactory.Builder proxyFactoryBuilder(HttpClientsProperties.Channel channelConfig) {
         HttpServiceProxyFactory.Builder builder = beanFactory
                 .getBeanProvider(HttpServiceProxyFactory.Builder.class)
                 .getIfUnique(HttpServiceProxyFactory::builder)
-                .clientAdapter(WebClientAdapter.forClient(buildWebClient()));
+                .clientAdapter(WebClientAdapter.forClient(buildWebClient(channelConfig)));
 
         // Customized argument resolvers
         beanFactory
@@ -102,7 +109,7 @@ class ExchangeClientCreator {
         return builder;
     }
 
-    private WebClient buildWebClient() {
+    private WebClient buildWebClient(HttpClientsProperties.Channel channelConfig) {
         WebClient.Builder builder =
                 beanFactory.getBeanProvider(WebClient.Builder.class).getIfUnique(WebClient::builder);
         if (StringUtils.hasText(channelConfig.getBaseUrl())) {
