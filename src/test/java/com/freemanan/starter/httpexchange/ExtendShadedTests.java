@@ -37,7 +37,7 @@ class ExtendShadedTests {
                 .properties("server.port=" + port)
                 .run();
         long count = ctx.getBeanProvider(FooApi.class).stream().count();
-        assertThat(count).isEqualTo(2);
+        assertThat(count).isEqualTo(3);
 
         FooApi fooApi = ctx.getBean(FooApi.class);
         assertThat(fooApi).isNotInstanceOf(FooController.class);

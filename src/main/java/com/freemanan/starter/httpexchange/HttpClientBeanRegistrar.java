@@ -111,7 +111,7 @@ class HttpClientBeanRegistrar {
                         ScopedProxyUtils.createScopedProxy(new BeanDefinitionHolder(abd, className), registry, false);
                 BeanDefinitionReaderUtils.registerBeanDefinition(scopedProxy, registry);
             } else {
-                registry.registerBeanDefinition(className, abd);
+                BeanDefinitionReaderUtils.registerBeanDefinition(new BeanDefinitionHolder(abd, className), registry);
             }
         } catch (BeanDefinitionOverrideException ignore) {
             // clients are included in base packages
