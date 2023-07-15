@@ -27,9 +27,14 @@ class DynamicRefreshTests {
         var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.base-url=http://localhost:" + port)
+                .properties("http-exchange.refresh.enabled=true")
                 .run();
 
+        // 3 beans: controller bean, api bean, proxied api bean
+        assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(3);
+
         FooApi api = ctx.getBean(FooApi.class);
+
         assertThat(api.get()).isEqualTo("OK");
 
         System.setProperty("http-exchange.base-url", "http://localhost:" + port + "/v2");

@@ -47,13 +47,18 @@ public class HttpClientsProperties implements InitializingBean {
      * Default headers, will be added to all the requests.
      */
     private List<Header> headers = new ArrayList<>();
-
+    /**
+     * Channels configuration.
+     */
     private List<Channel> channels = new ArrayList<>();
-
     /**
      * Whether to convert Java bean to query parameters, default value is {@code false}.
      */
     private boolean beanToQuery = false;
+    /**
+     * Refresh configuration.
+     */
+    private Refresh refresh = new Refresh();
 
     @Data
     @NoArgsConstructor
@@ -141,5 +146,16 @@ public class HttpClientsProperties implements InitializingBean {
          * <p> This is a more IDE-friendly alternative to {@link HttpClientsProperties.Channel#clients}.
          */
         private List<Class<?>> classes = new ArrayList<>();
+    }
+
+    @Data
+    public static class Refresh {
+        public static final String PREFIX = HttpClientsProperties.PREFIX + ".refresh";
+        /**
+         * Whether to enable refresh exchange clients, default {@code false}.
+         *
+         * <p> NOTE: this feature needs {@code spring-cloud-context} dependency in the classpath.
+         */
+        private boolean enabled = false;
     }
 }

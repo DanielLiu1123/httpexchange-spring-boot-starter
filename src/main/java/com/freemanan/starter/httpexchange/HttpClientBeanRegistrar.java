@@ -105,7 +105,7 @@ class HttpClientBeanRegistrar {
         abd.setLazyInit(true);
 
         try {
-            if (SPRING_CLOUD_CONTEXT_PRESENT) {
+            if (properties.getRefresh().isEnabled() && SPRING_CLOUD_CONTEXT_PRESENT) {
                 abd.setScope("refresh");
                 BeanDefinitionHolder scopedProxy =
                         ScopedProxyUtils.createScopedProxy(new BeanDefinitionHolder(abd, className), registry, false);

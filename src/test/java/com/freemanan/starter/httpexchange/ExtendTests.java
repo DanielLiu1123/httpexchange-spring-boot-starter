@@ -34,7 +34,7 @@ class ExtendTests {
                 .profiles("ControllerApiTests")
                 .properties("server.port=" + port)
                 .run();
-        assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(3);
+        assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(2);
 
         FooApi fooApi = ctx.getBean(FooApi.class);
         assertThat(fooApi).isNotInstanceOf(FooController.class);
