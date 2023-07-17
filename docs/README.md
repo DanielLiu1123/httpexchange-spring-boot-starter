@@ -221,6 +221,18 @@ public interface PostApi {
 }
 ```
 
+Using `UrlPlaceholderStringValueResolver` to resolve the placeholder by default if `HttpServiceProxyFactory.Builder` bean does not configure `StringValueResolver`.
+
+If You want to customize the `StringValueResolver` and still use the placeholder resolution feature, you can wrap your `StringValueResolver` with `UrlPlaceholderStringValueResolver` and set it to `HttpServiceProxyFactory.Builder`.
+
+```java
+@Bean
+public HttpServiceProxyFactory.Builder httpServiceProxyFactoryBuilder(Environment env) {
+    return HttpServiceProxyFactory.builder()
+            .embeddedValueResolver(UrlPlaceholderStringValueResolver.create(env, new MyStringValueResolver()));
+}
+```
+
 ### Validation
 
 ```java
@@ -256,25 +268,29 @@ public interface PostApi {
 
 Auto convert **non-null simple values** fields of `condition` to query string.
 
-> Simple values: primitive/wrapper types, String, Date, etc.
-
-### Customize Resolvers
+If you don't want to enable this feature globally, you can use `@BeanParam` annotation to enable it for specific parameter.
 
 ```java
-@Bean
-HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
-  return new YourHttpServiceArgumentResolver();
-}
-
-@Bean
-StringValueResolver yourStringValueResolver() {
-  return new YourStringValueResolver();
+public interface PostApi {
+  @GetExchange
+  List<Post> findAll(@BeanParam Post condition);
 }
 ```
 
-Auto-detect all of the `HttpServiceArgumentResolver` beans and `StringValueResolver` (only one), then apply them to build
-the `HttpServiceProxyFactory`.
+> Simple values: primitive/wrapper types, String, Date, etc.
 
+### Customize HttpServiceProxyFactory.Builder
+
+```java
+@Bean
+public HttpServiceProxyFactory.Builder httpServiceProxyFactoryBuilder() {
+    return HttpServiceProxyFactory.builder()
+            .argumentResolver(new MyHttpServiceArgumentResolver())
+            .stringValueResolver(new MyStringValueResolver());
+}
+```
+
+Auto-detect `HttpServiceProxyFactory.Builder` bean in the application context, and use it to build the proxy beans.
 
 ## Version
 

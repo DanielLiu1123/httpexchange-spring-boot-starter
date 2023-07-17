@@ -59,6 +59,13 @@ public class HttpClientsProperties implements InitializingBean {
      * Refresh configuration.
      */
     private Refresh refresh = new Refresh();
+    /**
+     * Whether to use reactor, default value is {@code false}.
+     *
+     * <p> If {@code true}, {@link org.springframework.web.reactive.function.client.WebClient} will be used.
+     * Otherwise, {@link org.springframework.web.client.RestClient} will be used, default {@code false}.
+     */
+    private boolean useReactor = false;
 
     @Data
     @NoArgsConstructor
@@ -100,11 +107,14 @@ public class HttpClientsProperties implements InitializingBean {
                     .map(e -> new Header(e.getKey(), e.getValue()))
                     .toList();
             chan.setHeaders(mergedHeaders);
+            if (chan.getUseReactor() == null) {
+                chan.setUseReactor(useReactor);
+            }
         }
     }
 
     HttpClientsProperties.Channel defaultClient() {
-        return new Channel(baseUrl, responseTimeout, headers, List.of(), List.of());
+        return new Channel(baseUrl, responseTimeout, headers, List.of(), List.of(), useReactor);
     }
 
     @Data
@@ -146,6 +156,10 @@ public class HttpClientsProperties implements InitializingBean {
          * <p> This is a more IDE-friendly alternative to {@link HttpClientsProperties.Channel#clients}.
          */
         private List<Class<?>> classes = new ArrayList<>();
+        /**
+         * Whether to use reactor, use {@link HttpClientsProperties#useReactor} if not set.
+         */
+        private Boolean useReactor;
     }
 
     @Data
