@@ -67,7 +67,7 @@ _**So what is the problem ? 🤔**_
 
    Native support for declarative HTTP clients is great, but it introduces a whole new set of annotations, such as
    `@GetExchange`, `@PostExchange`, etc. And does not support Spring web annotations, such as
-   `@GetMapping`, `@PostMapping`, etc, which is extremely painful for users that using `Spring Cloud OpenFeign` and want
+   `@GetMapping`, `@PostMapping`, etc., which is extremely painful for users that using `Spring Cloud OpenFeign` and want
    to migrate to Spring 6.x.
 
 **The main goal of this project is providing a `Spring Cloud OpenFeign` like experience for Spring 6.x declarative HTTP
@@ -272,11 +272,6 @@ Auto convert **non-null simple values** fields of `condition` to query string.
 @Bean
 HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
   return new YourHttpServiceArgumentResolver();
-}
-
-@Bean
-StringValueResolver yourStringValueResolver() {
-  return new YourStringValueResolver();
 }
 ```
 
