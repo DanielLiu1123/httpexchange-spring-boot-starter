@@ -67,7 +67,7 @@ _**So what is the problem ? 🤔**_
 
    Native support for declarative HTTP clients is great, but it introduces a whole new set of annotations, such as
    `@GetExchange`, `@PostExchange`, etc. And does not support Spring web annotations, such as
-   `@GetMapping`, `@PostMapping`, etc, which is extremely painful for users that using `Spring Cloud OpenFeign` and want
+   `@GetMapping`, `@PostMapping`, etc., which is extremely painful for users that using `Spring Cloud OpenFeign` and want
    to migrate to Spring 6.x.
 
 **The main goal of this project is providing a `Spring Cloud OpenFeign` like experience for Spring 6.x declarative HTTP
@@ -81,7 +81,7 @@ Add dependency:
 <dependency>
     <groupId>com.freemanan</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.1.1</version>
+    <version>3.1.2</version>
 </dependency>
 ```
 
@@ -273,11 +273,6 @@ Auto convert **non-null simple values** fields of `condition` to query string.
 HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
   return new YourHttpServiceArgumentResolver();
 }
-
-@Bean
-StringValueResolver yourStringValueResolver() {
-  return new YourStringValueResolver();
-}
 ```
 
 Auto-detect all of the `HttpServiceArgumentResolver` beans and `StringValueResolver` (only one), then apply them to build
@@ -290,7 +285,7 @@ This project should work with any version of Spring Boot 3.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.x         | 3.1.1                            |
+| 3.x         | 3.1.2                            |
 
 > Please always use the latest version!
 
