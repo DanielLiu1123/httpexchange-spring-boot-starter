@@ -45,7 +45,7 @@ interface PostApi {
 
 </details>
 
-_**So what is the problem ? 🤔**_
+_**So what is the problem? 🤔**_
 
 1. No auto configuration
 
@@ -178,9 +178,9 @@ http-exchange:
   refresh:
     enabled: true                       # enable dynamic refresh configuration
   channels:
-    - base-url: http://order            # client specific base-url, will override global base-url
-      response-timeout: 1000            # client specific timeout, will override global timeout
-      headers:                          # client specific headers, will merge with global headers
+    - base-url: http://order            # client-specific base-url, will override global base-url
+      response-timeout: 1000            # client-specific timeout will override global timeout
+      headers:                          # client-specific headers will merge with global headers
         - key: X-Key
           values: [value1, value2]
       clients:                          # client to apply this channel
