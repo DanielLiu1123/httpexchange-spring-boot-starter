@@ -53,12 +53,12 @@ interface PostApi {
 
 </details>
 
-_**So what is the problem ? 🤔**_
+_**So what is the problem? 🤔**_
 
 1. No auto configuration
 
-   There's no autoconfigure for the clients, you need to create client beans manually. This is very painful if you have
-   many clients.
+   There's no autoconfigure for the clients, you need to create client beans manually.
+   This is excruciating if you have many clients.
 
    If you are familiar with `Spring Cloud OpenFeign`, you will find `@EnableFeignClients` is very useful, it reduces a
    lot of boilerplate code.
@@ -160,7 +160,7 @@ center ([Consul](https://github.com/hashicorp/consul), [Apollo](https://github.c
 etc.), and change the configuration (e.g. `base-url`, `timeout`, `headers`), the client will be refreshed automatically
 without restarting the application.
 
-Use following configuration to enable this feature:
+Use the following configuration to enable this feature:
 
 ```yaml
 http-exchange:
@@ -204,7 +204,7 @@ http-exchange:
 
 Using property `clients` or `classes` to identify the client, use `classes` first if configured, otherwise use `clients`.
 
-For example, there is a client interface: `com.example.PostApi`, you can use following configuration to identify the client
+For example, there is a client interface: `com.example.PostApi`, you can use the following configuration to identify the client
 
 ```yaml
 http-exchange:
