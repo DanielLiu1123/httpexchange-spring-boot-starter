@@ -11,6 +11,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 /**
@@ -60,12 +62,11 @@ public class HttpClientsProperties implements InitializingBean {
      */
     private Refresh refresh = new Refresh();
     /**
-     * Whether to use reactor, default value is {@code false}.
+     * Backend type.
      *
-     * <p> If {@code true}, {@link org.springframework.web.reactive.function.client.WebClient} will be used.
-     * Otherwise, {@link org.springframework.web.client.RestClient} will be used, default {@code false}.
+     * @see Backend
      */
-    private boolean useReactor = false;
+    private Backend backend = Backend.WEB_CLIENT;
 
     @Data
     @NoArgsConstructor
@@ -107,14 +108,14 @@ public class HttpClientsProperties implements InitializingBean {
                     .map(e -> new Header(e.getKey(), e.getValue()))
                     .toList();
             chan.setHeaders(mergedHeaders);
-            if (chan.getUseReactor() == null) {
-                chan.setUseReactor(useReactor);
+            if (chan.getBackend() == null) {
+                chan.setBackend(backend);
             }
         }
     }
 
     HttpClientsProperties.Channel defaultClient() {
-        return new Channel(baseUrl, responseTimeout, headers, List.of(), List.of(), useReactor);
+        return new Channel(baseUrl, responseTimeout, headers, List.of(), List.of(), backend);
     }
 
     @Data
@@ -157,9 +158,11 @@ public class HttpClientsProperties implements InitializingBean {
          */
         private List<Class<?>> classes = new ArrayList<>();
         /**
-         * Whether to use reactor, use {@link HttpClientsProperties#useReactor} if not set.
+         * Backend type, use {@link HttpClientsProperties#backend} if not set.
+         *
+         * @see Backend
          */
-        private Boolean useReactor;
+        private Backend backend;
     }
 
     @Data
@@ -171,5 +174,16 @@ public class HttpClientsProperties implements InitializingBean {
          * <p> NOTE: this feature needs {@code spring-cloud-context} dependency in the classpath.
          */
         private boolean enabled = false;
+    }
+
+    public enum Backend {
+        /**
+         * Use {@link RestClient} as backend.
+         */
+        REST_CLIENT,
+        /**
+         * Use {@link WebClient} as backend.
+         */
+        WEB_CLIENT
     }
 }

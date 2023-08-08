@@ -89,10 +89,17 @@ class ExchangeClientCreator {
                 .getBeanProvider(HttpServiceProxyFactory.Builder.class)
                 .getIfUnique(HttpServiceProxyFactory::builder);
 
-        if (REACTOR_PRESENT && Boolean.TRUE.equals(channelConfig.getUseReactor())) {
-            builder.exchangeAdapter(WebClientAdapter.forClient(buildWebClient(channelConfig)));
-        } else {
-            builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+        switch (channelConfig.getBackend()) {
+            case WEB_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+            case REST_CLIENT -> {
+                if (REACTOR_PRESENT) {
+                    builder.exchangeAdapter(WebClientAdapter.forClient(buildWebClient(channelConfig)));
+                } else {
+                    log.warn("Reactor is not present, fall back backends to REST_CLIENT");
+                    builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+                }
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + channelConfig.getBackend());
         }
 
         // String value resolver, support ${} placeholder by default
