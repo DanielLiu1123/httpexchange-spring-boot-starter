@@ -16,7 +16,7 @@ class Cache {
     private static final Map<Class<?>, Object> classToInstance = new ConcurrentHashMap<>();
 
     /**
-     * Add client to cache.
+     * Add a client to cache.
      *
      * @param client client
      */
