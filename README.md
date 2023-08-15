@@ -250,7 +250,7 @@ In Spring Web/WebFlux (server side), it will automatically convert query string 
 but `Spring Cloud OpenFeign` or `Exchange client of Spring 6` does not support to convert Java bean to query string by
 default. In `Spring Cloud OpenFeign` you need `@SpringQueryMap` to achieve this feature.
 
-`httpexhange-spring-boot-starter`   supports this feature, and you don't need any additional annotations.
+`httpexhange-spring-boot-starter` supports this feature, and you don't need any additional annotations.
 
 > In order not to change the default behavior of Spring, this feature is disabled by default, 
 > you can set `http-exchange.bean-to-query=true` to enable it.
