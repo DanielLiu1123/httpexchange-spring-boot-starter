@@ -275,9 +275,7 @@ HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
 }
 ```
 
-Auto-detect all of the `HttpServiceArgumentResolver` beans and `StringValueResolver` (only one), then apply them to build
-the `HttpServiceProxyFactory`.
-
+Auto-detect all of the `HttpServiceArgumentResolver` beans, then apply them to build the `HttpServiceProxyFactory`.
 
 ## Version
 

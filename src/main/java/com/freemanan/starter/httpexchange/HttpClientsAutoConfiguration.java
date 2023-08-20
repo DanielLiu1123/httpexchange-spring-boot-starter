@@ -35,7 +35,7 @@ public class HttpClientsAutoConfiguration implements SmartInitializingSingleton,
     }
 
     @Bean
-    public static HttpClientBeanDefinitionRegistry httpClientBeanDefinitionRegistry() {
+    static HttpClientBeanDefinitionRegistry httpClientBeanDefinitionRegistry() {
         return new HttpClientBeanDefinitionRegistry();
     }
 

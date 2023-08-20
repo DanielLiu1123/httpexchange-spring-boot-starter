@@ -30,7 +30,7 @@ class DynamicRefreshTests {
                 .properties("http-exchange.refresh.enabled=true")
                 .run();
 
-        // 3 beans: controller bean, api bean, proxied api bean
+        // Three beans: controller bean, api bean, proxied api bean
         assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(3);
 
         FooApi api = ctx.getBean(FooApi.class);
