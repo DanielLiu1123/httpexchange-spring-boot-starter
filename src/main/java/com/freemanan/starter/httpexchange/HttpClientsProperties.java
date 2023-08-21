@@ -46,7 +46,7 @@ public class HttpClientsProperties implements InitializingBean {
      */
     private Long responseTimeout = 5000L;
     /**
-     * Default headers, will be added to all the requests.
+     * Default headers will be added to all the requests.
      */
     private List<Header> headers = new ArrayList<>();
     /**
@@ -62,11 +62,11 @@ public class HttpClientsProperties implements InitializingBean {
      */
     private Refresh refresh = new Refresh();
     /**
-     * Backend type.
+     * Backend type, default {@link Backend#REST_CLIENT}.
      *
      * @see Backend
      */
-    private Backend backend = Backend.WEB_CLIENT;
+    private Backend backend = Backend.REST_CLIENT;
 
     @Data
     @NoArgsConstructor

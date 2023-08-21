@@ -90,8 +90,8 @@ class ExchangeClientCreator {
                 .getIfUnique(HttpServiceProxyFactory::builder);
 
         switch (channelConfig.getBackend()) {
-            case WEB_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
-            case REST_CLIENT -> {
+            case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+            case WEB_CLIENT -> {
                 if (REACTOR_PRESENT) {
                     builder.exchangeAdapter(WebClientAdapter.forClient(buildWebClient(channelConfig)));
                 } else {
