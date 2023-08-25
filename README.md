@@ -40,7 +40,7 @@ public class App {
 
     @Bean
     PostApi postApi(HttpServiceProxyFactory factory) {
-        return factory.createClient(UserClient.class);
+        return factory.createClient(PostApi.class);
     }
 }
 
