@@ -9,12 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.reactive.function.client.WebClient;
 
 /**
  * Http Clients Auto Configuration.
@@ -22,7 +20,6 @@ import org.springframework.web.reactive.function.client.WebClient;
  * @author Freeman
  */
 @AutoConfiguration
-@ConditionalOnClass(WebClient.class)
 @ConditionalOnProperty(prefix = HttpClientsProperties.PREFIX, name = "enabled", matchIfMissing = true)
 @EnableConfigurationProperties(HttpClientsProperties.class)
 public class HttpClientsAutoConfiguration implements SmartInitializingSingleton, DisposableBean {
