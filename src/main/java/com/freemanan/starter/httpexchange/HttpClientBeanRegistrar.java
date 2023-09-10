@@ -178,4 +178,8 @@ class HttpClientBeanRegistrar {
             }
         }
     }
+
+    static void clear() {
+        registries.clear();
+    }
 }

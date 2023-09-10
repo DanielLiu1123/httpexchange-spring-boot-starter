@@ -53,6 +53,7 @@ public class HttpClientsAutoConfiguration implements SmartInitializingSingleton,
     @Override
     public void destroy() {
         Cache.clear();
+        HttpClientBeanRegistrar.clear();
     }
 
     private void warningUnusedConfiguration() {
