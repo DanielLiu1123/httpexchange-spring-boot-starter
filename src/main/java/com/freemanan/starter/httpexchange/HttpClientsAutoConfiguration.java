@@ -7,7 +7,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -25,7 +25,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @ConditionalOnClass(WebClient.class)
 @ConditionalOnProperty(prefix = HttpClientsProperties.PREFIX, name = "enabled", matchIfMissing = true)
 @EnableConfigurationProperties(HttpClientsProperties.class)
-public class HttpClientsAutoConfiguration implements SmartInitializingSingleton, DisposableBean {
+public class HttpClientsAutoConfiguration implements CommandLineRunner, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(HttpClientsAutoConfiguration.class);
 
     private final HttpClientsProperties properties;
@@ -46,7 +46,7 @@ public class HttpClientsAutoConfiguration implements SmartInitializingSingleton,
     }
 
     @Override
-    public void afterSingletonsInstantiated() {
+    public void run(String... args) throws Exception {
         warningUnusedConfiguration();
     }
 
