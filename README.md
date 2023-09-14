@@ -22,6 +22,11 @@ Here is an example:
   <summary>App.java</summary>
 
 ```java
+@HttpExchange("https://my-json-server.typicode.com")
+interface PostApi {
+   @GetExchange("/typicode/demo/posts/{id}")
+   Post getPost(@PathVariable("id") int id);
+}
 
 @SpringBootApplication
 public class App {
@@ -43,12 +48,6 @@ public class App {
         return factory.createClient(PostApi.class);
     }
 }
-
-@HttpExchange("https://my-json-server.typicode.com")
-interface PostApi {
-    @GetExchange("/typicode/demo/posts/{id}")
-    Post getPost(@PathVariable("id") int id);
-}
 ```
 
 </details>
@@ -57,7 +56,7 @@ _**So what is the problem? 🤔**_
 
 1. No auto configuration
 
-   There's no autoconfigure for the clients, you need to create client beans manually.
+   There's no autoconfiguration for the clients, you need to create client beans manually.
    This is excruciating if you have many clients.
 
    If you are familiar with `Spring Cloud OpenFeign`, you will find `@EnableFeignClients` is very useful, it reduces a
@@ -88,6 +87,11 @@ Add dependency:
 Write a classic Spring Boot application:
 
 ```java
+@HttpExchange("https://my-json-server.typicode.com")
+interface PostApi {
+   @GetExchange("/typicode/demo/posts/{id}")
+   Post getPost(@PathVariable("id") int id);
+}
 
 @SpringBootApplication
 @EnableExchangeClients
@@ -97,12 +101,6 @@ public class App {
         PostApi postApi = ctx.getBean(PostApi.class);
         Post post = postApi.getPost(1);
     }
-}
-
-@HttpExchange("https://my-json-server.typicode.com")
-interface PostApi {
-    @GetExchange("/typicode/demo/posts/{id}")
-    Post getPost(@PathVariable("id") int id);
 }
 ```
 
