@@ -10,9 +10,9 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
-import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
@@ -20,7 +20,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.support.RestClientAdapter;
+import org.springframework.web.client.support.RestTemplateAdapter;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -35,6 +37,23 @@ class ExchangeClientCreator {
     private static final Logger log = LoggerFactory.getLogger(ExchangeClientCreator.class);
 
     private static final boolean REACTOR_PRESENT = ClassUtils.isPresent("reactor.core.publisher.Mono", null);
+
+    private static final Field exchangeAdapterField;
+    private static final Field customArgumentResolversField;
+    private static final Field conversionServiceField;
+    private static final Field embeddedValueResolverField;
+
+    static {
+        try {
+            Class<HttpServiceProxyFactory.Builder> clz = HttpServiceProxyFactory.Builder.class;
+            exchangeAdapterField = clz.getDeclaredField("exchangeAdapter");
+            customArgumentResolversField = clz.getDeclaredField("customArgumentResolvers");
+            conversionServiceField = clz.getDeclaredField("conversionService");
+            embeddedValueResolverField = clz.getDeclaredField("embeddedValueResolver");
+        } catch (NoSuchFieldException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     private final ConfigurableBeanFactory beanFactory;
     private final Environment environment;
@@ -92,21 +111,26 @@ class ExchangeClientCreator {
                 .getBeanProvider(HttpServiceProxyFactory.Builder.class)
                 .getIfUnique(HttpServiceProxyFactory::builder);
 
-        switch (channelConfig.getBackend()) {
-            case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
-            case WEB_CLIENT -> {
-                if (REACTOR_PRESENT) {
-                    builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
-                } else {
-                    log.warn("Reactor is not present, fall back backends to REST_CLIENT");
-                    builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+        HttpExchangeAdapter exchangeAdapter = getFieldValue(builder, exchangeAdapterField);
+        if (exchangeAdapter == null) {
+            switch (channelConfig.getBackend()) {
+                case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+                case REST_TEMPLATE -> builder.exchangeAdapter(
+                        RestTemplateAdapter.create(buildRestTemplate(channelConfig)));
+                case WEB_CLIENT -> {
+                    if (REACTOR_PRESENT) {
+                        builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
+                    } else {
+                        log.warn("Reactor is not present, fall back backends to REST_CLIENT");
+                        builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+                    }
                 }
+                default -> throw new IllegalStateException("Unexpected value: " + channelConfig.getBackend());
             }
-            default -> throw new IllegalStateException("Unexpected value: " + channelConfig.getBackend());
         }
 
         // String value resolver, need to support ${} placeholder
-        StringValueResolver resolver = Optional.ofNullable(getFieldValue(builder, "embeddedValueResolver"))
+        StringValueResolver resolver = Optional.ofNullable(getFieldValue(builder, embeddedValueResolverField))
                 .map(StringValueResolver.class::cast)
                 .map(r -> UrlPlaceholderStringValueResolver.create(environment, r))
                 .orElseGet(() -> UrlPlaceholderStringValueResolver.create(environment, null));
@@ -121,6 +145,23 @@ class ExchangeClientCreator {
         return builder;
     }
 
+    private RestTemplate buildRestTemplate(HttpClientsProperties.Channel channelConfig) {
+        RestTemplateBuilder builder =
+                beanFactory.getBeanProvider(RestTemplateBuilder.class).getIfUnique(RestTemplateBuilder::new);
+        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
+            builder.rootUri(channelConfig.getBaseUrl());
+        } else {
+            warnNoBaseUrl();
+        }
+        if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
+            channelConfig
+                    .getHeaders()
+                    .forEach(header -> builder.defaultHeader(
+                            header.getKey(), header.getValues().toArray(String[]::new)));
+        }
+        return builder.build();
+    }
+
     private WebClient buildWebClient(HttpClientsProperties.Channel channelConfig) {
         WebClient.Builder builder =
                 beanFactory.getBeanProvider(WebClient.Builder.class).getIfUnique(WebClient::builder);
@@ -131,7 +172,7 @@ class ExchangeClientCreator {
             }
             builder.baseUrl(baseUrl);
         } else {
-            log.warn("No base-url configuration found for client: {}", clientType.getName());
+            warnNoBaseUrl();
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
             channelConfig
@@ -152,7 +193,7 @@ class ExchangeClientCreator {
             }
             builder.baseUrl(baseUrl);
         } else {
-            log.warn("No base-url configuration found for client: {}", clientType.getName());
+            warnNoBaseUrl();
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
             channelConfig
@@ -164,11 +205,11 @@ class ExchangeClientCreator {
     }
 
     static ShadedHttpServiceProxyFactory.Builder shadedProxyFactory(HttpServiceProxyFactory.Builder proxyFactory) {
-        HttpExchangeAdapter exchangeAdapter = getFieldValue(proxyFactory, "exchangeAdapter");
+        HttpExchangeAdapter exchangeAdapter = getFieldValue(proxyFactory, exchangeAdapterField);
         List<HttpServiceArgumentResolver> customArgumentResolvers =
-                getFieldValue(proxyFactory, "customArgumentResolvers");
-        ConversionService conversionService = getFieldValue(proxyFactory, "conversionService");
-        StringValueResolver embeddedValueResolver = getFieldValue(proxyFactory, "embeddedValueResolver");
+                getFieldValue(proxyFactory, customArgumentResolversField);
+        ConversionService conversionService = getFieldValue(proxyFactory, conversionServiceField);
+        StringValueResolver embeddedValueResolver = getFieldValue(proxyFactory, embeddedValueResolverField);
 
         ShadedHttpServiceProxyFactory.Builder builder = ShadedHttpServiceProxyFactory.builder();
         Optional.ofNullable(exchangeAdapter).ifPresent(builder::exchangeAdapter);
@@ -180,10 +221,12 @@ class ExchangeClientCreator {
         return builder;
     }
 
+    private void warnNoBaseUrl() {
+        log.warn("No base-url configuration found for client: {}", clientType.getName());
+    }
+
     @SuppressWarnings("unchecked")
-    private static <T> T getFieldValue(Object obj, String fieldName) {
-        Field field = ReflectionUtils.findField(obj.getClass(), fieldName);
-        Assert.notNull(field, "Field '" + fieldName + "' not found");
+    private static <T> T getFieldValue(Object obj, Field field) {
         ReflectionUtils.makeAccessible(field);
         return (T) ReflectionUtils.getField(field, obj);
     }

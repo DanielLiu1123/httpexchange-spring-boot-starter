@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -183,6 +184,10 @@ public class HttpClientsProperties implements InitializingBean {
         /**
          * Use {@link WebClient} as backend.
          */
-        WEB_CLIENT
+        WEB_CLIENT,
+        /**
+         * Use {@link RestTemplate} as backend.
+         */
+        REST_TEMPLATE
     }
 }
