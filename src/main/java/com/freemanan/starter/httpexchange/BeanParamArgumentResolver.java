@@ -57,8 +57,8 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
                 || argument instanceof HttpMethod // HttpMethodArgumentResolver
                 || argument instanceof MultipartFile // MultipartFileArgumentResolver
                 || BeanUtils.isSimpleValueType(argument.getClass())) {
-            // if there is @RequestParam, @PathVariable, @RequestHeader, @CookieValue, etc,
-            // we can not convert Java bean to request parameters,
+            // if there is @RequestParam, @PathVariable, @RequestHeader, @CookieValue, etc.,
+            // we cannot convert Java bean to request parameters,
             // it will be resolved by other ArgumentResolver.
             return false;
         }
