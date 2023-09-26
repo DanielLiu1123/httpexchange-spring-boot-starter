@@ -294,10 +294,9 @@ Auto-detect `HttpServiceProxyFactory.Builder` bean in the application context, a
 
 ## Version
 
-This project should work with any version of Spring Boot 3.
+The version of this project is kept in sync with Spring Boot 3,
+if you are using Spring Boot 3.1.3, then `httpexchange-spring-boot-starter` 3.1.3 should be used.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.x         | 3.1.3                            |
-
-> Please always use the latest version!
+| 3.1.3       | 3.1.3                            |

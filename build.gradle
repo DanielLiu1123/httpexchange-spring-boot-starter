@@ -82,4 +82,11 @@ spotbugs {
     omitVisitors.addAll('FindReturnRef', 'MethodReturnCheck')
 }
 
+tasks.register('installGitHook', Copy) {
+    from "$rootProject.rootDir/.githooks"
+    into { new File(rootProject.rootDir, '.git/hooks') }
+    fileMode 0775
+}
+build.dependsOn installGitHook
+
 apply from: "${rootDir}/deploy.gradle"
