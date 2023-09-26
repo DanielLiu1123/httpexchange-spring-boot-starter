@@ -222,6 +222,7 @@ class ExchangeClientCreator {
     }
 
     private void warnNoBaseUrl() {
+        // TODO(Freeman): maybe not warning? But @GetExchange("http://xx/xxx") is very rare :)
         log.warn("No base-url configuration found for client: {}", clientType.getName());
     }
 
