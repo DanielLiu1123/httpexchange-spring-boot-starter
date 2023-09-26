@@ -2,7 +2,6 @@ package com.freemanan.starter.httpexchange;
 
 import static java.util.stream.Collectors.toMap;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 /**
  * Http Clients Configuration Properties.
@@ -40,12 +38,6 @@ public class HttpClientsProperties implements InitializingBean {
      */
     private String baseUrl;
     /**
-     * Default response timeout, in milliseconds, default value is {@code 5000}.
-     *
-     * @see HttpServiceProxyFactory.Builder#blockTimeout(Duration)
-     */
-    private Long responseTimeout = 5000L;
-    /**
      * Default headers will be added to all the requests.
      */
     private List<Header> headers = new ArrayList<>();
@@ -67,6 +59,15 @@ public class HttpClientsProperties implements InitializingBean {
      * @see Backend
      */
     private Backend backend = Backend.REST_CLIENT;
+    /**
+     * whether to process {@link org.springframework.web.bind.annotation.RequestMapping} based annotation,
+     * default {@code false}.
+     *
+     * <p color="red"> Recommending to use {@link org.springframework.web.service.annotation.HttpExchange} instead of {@link org.springframework.web.bind.annotation.RequestMapping}.
+     *
+     * @since 3.2.0
+     */
+    private boolean supportRequestMapping = false;
 
     @Data
     @NoArgsConstructor
@@ -95,9 +96,6 @@ public class HttpClientsProperties implements InitializingBean {
             if (chan.getBaseUrl() == null) {
                 chan.setBaseUrl(baseUrl);
             }
-            if (chan.getResponseTimeout() == null) {
-                chan.setResponseTimeout(responseTimeout);
-            }
             // defaultHeaders + chan.headers
             LinkedHashMap<String, List<String>> total = headers.stream()
                     .collect(toMap(Header::getKey, Header::getValues, (oldV, newV) -> oldV, LinkedHashMap::new));
@@ -115,22 +113,21 @@ public class HttpClientsProperties implements InitializingBean {
     }
 
     HttpClientsProperties.Channel defaultClient() {
-        return new Channel(baseUrl, responseTimeout, headers, List.of(), List.of(), backend);
+        return new Channel(null, baseUrl, headers, List.of(), List.of(), backend);
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Channel {
-        // TODO(Freeman): add name property to identify channel?
+        /**
+         * Optional channel name.
+         */
+        private String name;
         /**
          * Base url, use {@link HttpClientsProperties#baseUrl} if not set.
          */
         private String baseUrl;
-        /**
-         * Response timeout, in milliseconds, use {@link HttpClientsProperties#responseTimeout} if not set.
-         */
-        private Long responseTimeout;
         /**
          * Default headers, will be merged with {@link HttpClientsProperties#headers}.
          */

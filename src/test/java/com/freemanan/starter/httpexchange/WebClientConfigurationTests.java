@@ -87,7 +87,7 @@ class WebClientConfigurationTests {
 
         @Bean
         HttpServiceProxyFactory.Builder httpServiceProxyFactory(WebClient.Builder builder) {
-            return HttpServiceProxyFactory.builder().clientAdapter(WebClientAdapter.forClient(builder.build()));
+            return HttpServiceProxyFactory.builder().exchangeAdapter(WebClientAdapter.create(builder.build()));
         }
 
         @Override

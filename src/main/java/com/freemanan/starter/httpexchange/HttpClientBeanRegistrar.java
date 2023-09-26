@@ -86,16 +86,16 @@ class HttpClientBeanRegistrar {
             throw new IllegalArgumentException(className + " is not an interface");
         }
 
-        boolean hasClientSideAnnotation = hasClientSideAnnotation(clz);
+        boolean usingNeutralAnnotation = hasHttpExchangeAnnotation(clz);
 
-        if (!hasClientSideAnnotation && !hasServerSideAnnotation(clz)) {
+        if (!usingNeutralAnnotation && !hasRequestMappingAnnotation(clz)) {
             return;
         }
 
         Assert.isInstanceOf(ConfigurableBeanFactory.class, registry);
 
         ExchangeClientCreator creator =
-                new ExchangeClientCreator((ConfigurableBeanFactory) registry, clz, hasClientSideAnnotation);
+                new ExchangeClientCreator((ConfigurableBeanFactory) registry, clz, usingNeutralAnnotation);
 
         AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, creator::create)
                 .getBeanDefinition();
@@ -142,7 +142,7 @@ class HttpClientBeanRegistrar {
                         || am.hasAnnotatedMethods(RequestMapping.class.getName()));
     }
 
-    private static boolean hasServerSideAnnotation(Class<?> clz) {
+    private static boolean hasRequestMappingAnnotation(Class<?> clz) {
         if (AnnotationUtils.findAnnotation(clz, RequestMapping.class) != null) {
             return true;
         }
@@ -155,7 +155,7 @@ class HttpClientBeanRegistrar {
         return false;
     }
 
-    private static boolean hasClientSideAnnotation(Class<?> clz) {
+    private static boolean hasHttpExchangeAnnotation(Class<?> clz) {
         if (AnnotationUtils.findAnnotation(clz, HttpExchange.class) != null) {
             return true;
         }

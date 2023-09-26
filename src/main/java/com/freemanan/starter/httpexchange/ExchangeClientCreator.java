@@ -4,7 +4,6 @@ import static com.freemanan.starter.httpexchange.Util.findMatchedConfig;
 
 import com.freemanan.starter.httpexchange.shaded.ShadedHttpServiceProxyFactory;
 import java.lang.reflect.Field;
-import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -40,13 +39,13 @@ class ExchangeClientCreator {
     private final ConfigurableBeanFactory beanFactory;
     private final Environment environment;
     private final Class<?> clientType;
-    private final boolean usingClientSideAnnotation;
+    private final boolean usingNeutralAnnotation;
 
-    ExchangeClientCreator(ConfigurableBeanFactory beanFactory, Class<?> clientType, boolean usingClientSideAnnotation) {
+    ExchangeClientCreator(ConfigurableBeanFactory beanFactory, Class<?> clientType, boolean usingNeutralAnnotation) {
         this.beanFactory = beanFactory;
         this.environment = beanFactory.getBean(Environment.class);
         this.clientType = clientType;
-        this.usingClientSideAnnotation = usingClientSideAnnotation;
+        this.usingNeutralAnnotation = usingNeutralAnnotation;
     }
 
     /**
@@ -62,11 +61,15 @@ class ExchangeClientCreator {
                 .getIfUnique(() -> Util.getProperties(environment));
         HttpClientsProperties.Channel chan =
                 findMatchedConfig(clientType, httpClientsProperties).orElseGet(httpClientsProperties::defaultClient);
-        if (usingClientSideAnnotation) {
+        if (usingNeutralAnnotation) {
             HttpServiceProxyFactory factory = buildFactory(chan);
             T result = (T) factory.createClient(clientType);
             Cache.addClient(result);
             return result;
+        }
+        if (!httpClientsProperties.isSupportRequestMapping()) {
+            throw new IllegalStateException(
+                    "You're using @RequestMapping based annotation, please migrate to @HttpExchange or set 'http-exchange.support-request-mapping=true' to support processing @RequestMapping.");
         }
         ShadedHttpServiceProxyFactory shadedFactory = buildShadedFactory(chan);
         T result = (T) shadedFactory.createClient(clientType);
@@ -93,7 +96,7 @@ class ExchangeClientCreator {
             case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
             case WEB_CLIENT -> {
                 if (REACTOR_PRESENT) {
-                    builder.exchangeAdapter(WebClientAdapter.forClient(buildWebClient(channelConfig)));
+                    builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
                 } else {
                     log.warn("Reactor is not present, fall back backends to REST_CLIENT");
                     builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
@@ -102,16 +105,18 @@ class ExchangeClientCreator {
             default -> throw new IllegalStateException("Unexpected value: " + channelConfig.getBackend());
         }
 
-        // String value resolver, support ${} placeholder by default
+        // String value resolver, need to support ${} placeholder
         StringValueResolver resolver = Optional.ofNullable(getFieldValue(builder, "embeddedValueResolver"))
                 .map(StringValueResolver.class::cast)
+                .map(r -> UrlPlaceholderStringValueResolver.create(environment, r))
                 .orElseGet(() -> UrlPlaceholderStringValueResolver.create(environment, null));
         builder.embeddedValueResolver(resolver);
 
-        // Response timeout
-        Optional.ofNullable(channelConfig.getResponseTimeout())
-                .map(Duration::ofMillis)
-                .ifPresent(builder::blockTimeout);
+        // custom HttpServiceArgumentResolver
+        beanFactory
+                .getBeanProvider(HttpServiceArgumentResolver.class)
+                .orderedStream()
+                .forEach(builder::customArgumentResolver);
 
         return builder;
     }
@@ -158,8 +163,7 @@ class ExchangeClientCreator {
         return builder.build();
     }
 
-    private static ShadedHttpServiceProxyFactory.Builder shadedProxyFactory(
-            HttpServiceProxyFactory.Builder proxyFactory) {
+    static ShadedHttpServiceProxyFactory.Builder shadedProxyFactory(HttpServiceProxyFactory.Builder proxyFactory) {
         HttpExchangeAdapter exchangeAdapter = getFieldValue(proxyFactory, "exchangeAdapter");
         List<HttpServiceArgumentResolver> customArgumentResolvers =
                 getFieldValue(proxyFactory, "customArgumentResolvers");

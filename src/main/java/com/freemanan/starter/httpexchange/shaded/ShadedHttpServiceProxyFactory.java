@@ -47,7 +47,6 @@ import org.springframework.web.service.invoker.HttpClientAdapter;
 import org.springframework.web.service.invoker.HttpExchangeAdapter;
 import org.springframework.web.service.invoker.HttpMethodArgumentResolver;
 import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
-import org.springframework.web.service.invoker.MultipartFileArgumentResolver;
 import org.springframework.web.service.invoker.PathVariableArgumentResolver;
 import org.springframework.web.service.invoker.RequestAttributeArgumentResolver;
 import org.springframework.web.service.invoker.RequestBodyArgumentResolver;
@@ -287,7 +286,6 @@ public final class ShadedHttpServiceProxyFactory {
             // Specific type
             resolvers.add(new UrlArgumentResolver());
             resolvers.add(new HttpMethodArgumentResolver());
-            resolvers.add(new MultipartFileArgumentResolver());
 
             return resolvers;
         }

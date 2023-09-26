@@ -26,12 +26,11 @@ public class UrlPlaceholderStringValueResolver implements StringValueResolver {
 
     @Override
     public String resolveStringValue(String strVal) {
-        String resolved;
+        String resolved = strVal;
         try {
             resolved = environment.resolvePlaceholders(strVal);
         } catch (Exception e) {
             log.warn("Failed to resolve placeholders in '{}'", strVal, e);
-            resolved = strVal;
         }
         return delegate != null ? delegate.resolveStringValue(resolved) : resolved;
     }
