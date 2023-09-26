@@ -4,7 +4,9 @@ import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,7 +32,7 @@ public class HttpClientsProperties implements InitializingBean {
     /**
      * Base packages to scan, use {@link EnableExchangeClients#basePackages} first if configured.
      */
-    private List<String> basePackages = new ArrayList<>();
+    private Set<String> basePackages = new LinkedHashSet<>();
     /**
      * Default base url.
      *

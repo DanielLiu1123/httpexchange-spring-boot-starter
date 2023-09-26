@@ -2,7 +2,7 @@ package com.freemanan.starter.httpexchange;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -63,8 +63,9 @@ class HttpClientBeanRegistrar {
      * @param basePackages base packages to scan
      */
     public void register(String... basePackages) {
-        List<String> packages =
-                !ObjectUtils.isEmpty(basePackages) ? Arrays.asList(basePackages) : properties.getBasePackages();
+        Set<String> packages = !ObjectUtils.isEmpty(basePackages)
+                ? Set.copyOf(Arrays.asList(basePackages))
+                : properties.getBasePackages();
         registerBeans4BasePackages(packages);
     }
 
@@ -168,7 +169,7 @@ class HttpClientBeanRegistrar {
         return false;
     }
 
-    private void registerBeans4BasePackages(List<String> basePackages) {
+    private void registerBeans4BasePackages(Collection<String> basePackages) {
         for (String pkg : basePackages) {
             Set<BeanDefinition> beanDefinitions = scanner.findCandidateComponents(pkg);
             for (BeanDefinition bd : beanDefinitions) {
