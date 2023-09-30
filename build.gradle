@@ -82,4 +82,4 @@ tasks.register('installGitHook', Copy) {
 }
 build.dependsOn installGitHook
 
-apply from: "${rootDir}/deploy.gradle"
+apply from: "${rootDir}/gradle/deploy.gradle"
