@@ -72,7 +72,7 @@ public class HttpClientsAutoConfiguration implements CommandLineRunner, Disposab
         int s = channel.getClasses().size();
         for (int j = 0; j < s; j++) {
             Class<?> clazz = channel.getClasses().get(j);
-            if (!classes.contains(clazz)) {
+            if (classes.stream().noneMatch(clazz::isAssignableFrom)) {
                 log.warn(
                         "The configuration item '{}.channels[{}].classes[{}]={}' doesn't take effect, please remove it!",
                         HttpClientsProperties.PREFIX,
