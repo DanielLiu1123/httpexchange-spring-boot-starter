@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.freemanan.cr.core.anno.Action;
 import com.freemanan.cr.core.anno.ClasspathReplacer;
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -28,7 +28,7 @@ class ClassesConfigTests {
         @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)
     })
     void clientClassConfig() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(FooController.class)
                 .profiles("ClassesConfigTests")
                 .properties("server.port=" + port)

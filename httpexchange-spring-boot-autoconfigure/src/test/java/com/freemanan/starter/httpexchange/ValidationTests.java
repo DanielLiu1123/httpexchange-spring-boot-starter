@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.freemanan.cr.core.anno.Action;
 import com.freemanan.cr.core.anno.ClasspathReplacer;
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -38,7 +38,7 @@ class ValidationTests {
         @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-validation:" + springBootVersion)
     })
     void worksFine_whenSpringBootGreater3_0_3() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(ValidateController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)
@@ -59,7 +59,7 @@ class ValidationTests {
         @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-validation:3.0.2")
     })
     void notWork_whenSpringBootLessThan3_0_3(CapturedOutput output) {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(ValidateController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)

@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.freemanan.cr.core.anno.Action;
 import com.freemanan.cr.core.anno.ClasspathReplacer;
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import io.netty.handler.timeout.ReadTimeoutException;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ class WebClientConfigurationTests {
 
     @Test
     void testNotSetTimeout() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(TimeoutController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)
@@ -47,7 +47,7 @@ class WebClientConfigurationTests {
 
     @Test
     void testTimeoutExceed() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(TimeoutController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)

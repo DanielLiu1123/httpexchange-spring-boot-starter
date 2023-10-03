@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.freemanan.cr.core.anno.Action;
 import com.freemanan.cr.core.anno.ClasspathReplacer;
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -29,7 +29,7 @@ class ExtendTests {
         @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)
     })
     void userApiFirst_whenHaveControllerAndApiBeans() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(FooController.class)
                 .profiles("ControllerApiTests")
                 .properties("server.port=" + port)
