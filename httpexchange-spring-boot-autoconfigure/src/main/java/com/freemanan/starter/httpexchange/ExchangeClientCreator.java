@@ -13,6 +13,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
+import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
@@ -150,14 +151,16 @@ class ExchangeClientCreator {
     private RestTemplate buildRestTemplate(HttpClientsProperties.Channel channelConfig) {
         RestTemplateBuilder builder =
                 beanFactory.getBeanProvider(RestTemplateBuilder.class).getIfUnique(RestTemplateBuilder::new);
-        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
-            builder.rootUri(getRealBaseUrl(channelConfig));
+        // see org.springframework.boot.web.client.RestTemplateBuilder#rootUri
+        String rootUri = getFieldValue(builder, "rootUri");
+        if (!StringUtils.hasText(rootUri) && StringUtils.hasText(channelConfig.getBaseUrl())) {
+            builder = builder.rootUri(getRealBaseUrl(channelConfig));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
-            channelConfig
-                    .getHeaders()
-                    .forEach(header -> builder.defaultHeader(
-                            header.getKey(), header.getValues().toArray(String[]::new)));
+            for (HttpClientsProperties.Header header : channelConfig.getHeaders()) {
+                builder = builder.defaultHeader(
+                        header.getKey(), header.getValues().toArray(String[]::new));
+            }
         }
         return builder.build();
     }
@@ -165,7 +168,9 @@ class ExchangeClientCreator {
     private WebClient buildWebClient(HttpClientsProperties.Channel channelConfig) {
         WebClient.Builder builder =
                 beanFactory.getBeanProvider(WebClient.Builder.class).getIfUnique(WebClient::builder);
-        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
+        // see org.springframework.web.reactive.function.client.DefaultWebClientBuilder#baseUrl
+        String baseUrl = getFieldValue(builder, "baseUrl");
+        if (!StringUtils.hasText(baseUrl) && StringUtils.hasText(channelConfig.getBaseUrl())) {
             builder.baseUrl(getRealBaseUrl(channelConfig));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
@@ -180,7 +185,9 @@ class ExchangeClientCreator {
     private RestClient buildRestClient(HttpClientsProperties.Channel channelConfig) {
         RestClient.Builder builder =
                 beanFactory.getBeanProvider(RestClient.Builder.class).getIfUnique(RestClient::builder);
-        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
+        // see org.springframework.web.client.DefaultRestClientBuilder#baseUrl
+        String baseUrl = getFieldValue(builder, "baseUrl");
+        if (!StringUtils.hasText(baseUrl) && StringUtils.hasText(channelConfig.getBaseUrl())) {
             builder.baseUrl(getRealBaseUrl(channelConfig));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
@@ -218,5 +225,11 @@ class ExchangeClientCreator {
     private static <T> T getFieldValue(Object obj, Field field) {
         ReflectionUtils.makeAccessible(field);
         return (T) ReflectionUtils.getField(field, obj);
+    }
+
+    private static <T> T getFieldValue(Object obj, String fieldName) {
+        Field field = ReflectionUtils.findField(obj.getClass(), fieldName);
+        Assert.notNull(field, "No such field '" + fieldName + "' in " + obj.getClass());
+        return getFieldValue(obj, field);
     }
 }
