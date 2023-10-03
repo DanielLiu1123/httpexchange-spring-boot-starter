@@ -51,7 +51,7 @@ public class HttpClientsProperties implements InitializingBean {
     /**
      * Whether to convert Java bean to query parameters, default value is {@code false}.
      */
-    private boolean beanToQuery = false;
+    private boolean beanToQueryEnabled = false;
     /**
      * Refresh configuration.
      */
@@ -70,7 +70,7 @@ public class HttpClientsProperties implements InitializingBean {
      *
      * @since 3.2.0
      */
-    private boolean supportRequestMapping = false;
+    private boolean requestMappingSupportEnabled = false;
 
     @Data
     @NoArgsConstructor

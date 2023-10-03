@@ -86,7 +86,7 @@ class ExchangeClientCreator {
             Cache.addClient(result);
             return result;
         }
-        if (!httpClientsProperties.isSupportRequestMapping()) {
+        if (!httpClientsProperties.isRequestMappingSupportEnabled()) {
             throw new IllegalStateException(
                     "You're using @RequestMapping based annotation, please migrate to @HttpExchange or set 'http-exchange.support-request-mapping=true' to support processing @RequestMapping.");
         }

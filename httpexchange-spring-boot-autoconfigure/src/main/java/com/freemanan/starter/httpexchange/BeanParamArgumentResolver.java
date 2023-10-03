@@ -69,7 +69,7 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
         }
 
         // Not enable bean to query feature.
-        if (!properties.isBeanToQuery()) {
+        if (!properties.isBeanToQueryEnabled()) {
             return false;
         }
         return process(argument, requestValues);

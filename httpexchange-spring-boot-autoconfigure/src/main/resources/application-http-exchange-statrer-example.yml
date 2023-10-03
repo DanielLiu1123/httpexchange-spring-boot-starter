@@ -1,8 +1,8 @@
 http-exchange:
   base-packages: [com.example.api]
   base-url: http://api-gateway
-  bean-to-query: false
-  support-request-mapping: false
+  bean-to-query-enabled: false
+  request-mapping-support-enabled: false
   headers:
     - key: X-App-Name
       values: ${spring.application.name}
