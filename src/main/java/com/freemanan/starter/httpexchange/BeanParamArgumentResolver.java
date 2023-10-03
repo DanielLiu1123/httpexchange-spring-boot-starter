@@ -20,7 +20,6 @@ import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.service.invoker.HttpRequestValues;
 import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
 
@@ -55,7 +54,6 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
                 || hasWebBindPackageAnnotation(parameter)
                 || argument instanceof URI // UrlArgumentResolver
                 || argument instanceof HttpMethod // HttpMethodArgumentResolver
-                || argument instanceof MultipartFile // MultipartFileArgumentResolver
                 || BeanUtils.isSimpleValueType(argument.getClass())) {
             // if there is @RequestParam, @PathVariable, @RequestHeader, @CookieValue, etc.,
             // we cannot convert Java bean to request parameters,
