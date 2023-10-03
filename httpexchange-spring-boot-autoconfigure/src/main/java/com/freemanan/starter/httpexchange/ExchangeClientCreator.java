@@ -121,7 +121,9 @@ class ExchangeClientCreator {
                     if (REACTOR_PRESENT) {
                         builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
                     } else {
-                        log.warn("Reactor is not present, fall back backends to REST_CLIENT");
+                        log.warn(
+                                "Reactor is not present, fall back backends to {}",
+                                HttpClientsProperties.Backend.REST_CLIENT.name());
                         builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
                     }
                 }
@@ -149,9 +151,7 @@ class ExchangeClientCreator {
         RestTemplateBuilder builder =
                 beanFactory.getBeanProvider(RestTemplateBuilder.class).getIfUnique(RestTemplateBuilder::new);
         if (StringUtils.hasText(channelConfig.getBaseUrl())) {
-            builder.rootUri(channelConfig.getBaseUrl());
-        } else {
-            warnNoBaseUrl();
+            builder.rootUri(getRealBaseUrl(channelConfig));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
             channelConfig
@@ -166,13 +166,7 @@ class ExchangeClientCreator {
         WebClient.Builder builder =
                 beanFactory.getBeanProvider(WebClient.Builder.class).getIfUnique(WebClient::builder);
         if (StringUtils.hasText(channelConfig.getBaseUrl())) {
-            String baseUrl = channelConfig.getBaseUrl();
-            if (!baseUrl.contains("://")) {
-                baseUrl = "http://" + baseUrl;
-            }
-            builder.baseUrl(baseUrl);
-        } else {
-            warnNoBaseUrl();
+            builder.baseUrl(getRealBaseUrl(channelConfig));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
             channelConfig
@@ -187,13 +181,7 @@ class ExchangeClientCreator {
         RestClient.Builder builder =
                 beanFactory.getBeanProvider(RestClient.Builder.class).getIfUnique(RestClient::builder);
         if (StringUtils.hasText(channelConfig.getBaseUrl())) {
-            String baseUrl = channelConfig.getBaseUrl();
-            if (!baseUrl.contains("://")) {
-                baseUrl = "http://" + baseUrl;
-            }
-            builder.baseUrl(baseUrl);
-        } else {
-            warnNoBaseUrl();
+            builder.baseUrl(getRealBaseUrl(channelConfig));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
             channelConfig
@@ -202,6 +190,11 @@ class ExchangeClientCreator {
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
         return builder.build();
+    }
+
+    private static String getRealBaseUrl(HttpClientsProperties.Channel channelConfig) {
+        String baseUrl = channelConfig.getBaseUrl();
+        return baseUrl.contains("://") ? baseUrl : "http://" + baseUrl;
     }
 
     static ShadedHttpServiceProxyFactory.Builder shadedProxyFactory(HttpServiceProxyFactory.Builder proxyFactory) {
@@ -219,11 +212,6 @@ class ExchangeClientCreator {
         Optional.ofNullable(conversionService).ifPresent(builder::conversionService);
         Optional.ofNullable(embeddedValueResolver).ifPresent(builder::embeddedValueResolver);
         return builder;
-    }
-
-    private void warnNoBaseUrl() {
-        // TODO(Freeman): maybe not warning? But @GetExchange("http://xx/xxx") is very rare :)
-        log.warn("No base-url configuration found for client: {}", clientType.getName());
     }
 
     @SuppressWarnings("unchecked")
