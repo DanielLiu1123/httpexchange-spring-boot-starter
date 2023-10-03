@@ -9,8 +9,8 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
-@HttpExchange("/user")
 @Validated
+@HttpExchange("/user")
 public interface UserApi {
 
     @GetExchange("/{id}")

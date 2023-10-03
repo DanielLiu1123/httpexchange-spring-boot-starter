@@ -2,7 +2,7 @@ spring:
   application:
     name: quick-start
 server:
-  port: 8080
+  port: 50001
 http-exchange:
   channels:
     - name: localhost
