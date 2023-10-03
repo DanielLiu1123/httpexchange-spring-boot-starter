@@ -2,6 +2,7 @@ package com.freemanan.starter.httpexchange;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.core.env.Environment;
@@ -40,6 +41,10 @@ class Util {
     }
 
     private static boolean match(String name, Class<?> clz) {
+        return isMatched(name, clz) || Stream.of(clz.getInterfaces()).anyMatch(it -> isMatched(name, it));
+    }
+
+    private static boolean isMatched(String name, Class<?> clz) {
         String nameToUse = name.replace("-", "");
         return nameToUse.equalsIgnoreCase(clz.getSimpleName())
                 || nameToUse.equalsIgnoreCase(clz.getName())
