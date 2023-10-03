@@ -240,7 +240,7 @@ public interface PostApi {
 
 > This feature needs `spring-boot` version >= 3.0.3,
 > see [issue](https://github.com/spring-projects/spring-framework/issues/29782)
-> and [tests](src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
+> and [tests](httpexchange-spring-boot-autoconfigure/src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
 
 ### Convert Java Bean to Query
 

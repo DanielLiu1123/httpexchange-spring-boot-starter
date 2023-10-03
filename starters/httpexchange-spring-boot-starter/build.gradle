@@ -1,0 +1,5 @@
+dependencies {
+    api(project(":httpexchange-spring-boot-autoconfigure"))
+}
+
+apply from: "${rootDir}/gradle/deploy.gradle"
