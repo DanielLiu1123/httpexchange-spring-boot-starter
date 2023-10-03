@@ -6,5 +6,5 @@ server:
 http-exchange:
   channels:
     - base-url: http://localhost:${server.port}
-      classes:
-        - com.example.api.UserApi
+      clients:
+        - com.example.api.*Api
