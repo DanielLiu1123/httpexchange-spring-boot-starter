@@ -2,7 +2,7 @@ package com.freemanan.starter.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.WebApplicationType;
@@ -28,7 +28,7 @@ class ClientsConfigShadedTests {
                 "com.**",
             })
     void notThrow_whenClientMatchesCanonicalClassName(String client) {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(Cfg.class)
                 .web(WebApplicationType.NONE)
                 .properties("server.port=" + port)

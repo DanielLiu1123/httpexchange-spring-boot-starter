@@ -3,7 +3,7 @@ package com.freemanan.starter.httpexchange;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -26,7 +26,7 @@ class ValidationShadedTests {
 
     @Test
     void worksFine_whenSpringBootGreater3_0_3() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(ValidateController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)

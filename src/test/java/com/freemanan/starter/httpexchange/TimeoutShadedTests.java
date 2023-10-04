@@ -3,7 +3,7 @@ package com.freemanan.starter.httpexchange;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -19,7 +19,7 @@ class TimeoutShadedTests {
 
     @Test
     void testDefaultTimeout_whenExceed() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".response-timeout=200")
@@ -36,7 +36,7 @@ class TimeoutShadedTests {
 
     @Test
     void testDefaultTimeout_whenNotExceed() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".response-timeout=200")
@@ -51,7 +51,7 @@ class TimeoutShadedTests {
 
     @Test
     void testTimeout_whenExceed() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".response-timeout=200")

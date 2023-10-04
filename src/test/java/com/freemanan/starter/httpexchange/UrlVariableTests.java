@@ -3,7 +3,7 @@ package com.freemanan.starter.httpexchange;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import com.freemanan.starter.Post;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 class UrlVariableTests {
     @Test
     void testUrlVariable() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(UrlVariableController.class)
                 .properties("server.port=" + port)
                 .run("--api.url=http://localhost:" + port);

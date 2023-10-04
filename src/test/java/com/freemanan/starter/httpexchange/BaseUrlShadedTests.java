@@ -2,7 +2,7 @@ package com.freemanan.starter.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -19,7 +19,7 @@ class BaseUrlShadedTests {
 
     @Test
     void testDefaultBaseUrl() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(BaseUrlController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)
@@ -33,7 +33,7 @@ class BaseUrlShadedTests {
 
     @Test
     void testNoBaseUrl() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(BaseUrlController.class)
                 .properties("server.port=" + port)
                 .run();
@@ -48,7 +48,7 @@ class BaseUrlShadedTests {
 
     @Test
     void testBaseUrl_whenClientHasBaseUrl_thenOverrideDefaultBaseUrl() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(BaseUrlController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)

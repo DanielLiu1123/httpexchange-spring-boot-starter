@@ -2,7 +2,7 @@ package com.freemanan.starter.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -26,7 +26,7 @@ class WebClientCustomizerTests {
 
     @Test
     void testAddInterceptor(CapturedOutput output) {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)

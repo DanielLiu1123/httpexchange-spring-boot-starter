@@ -6,9 +6,9 @@ import java.net.ServerSocket;
 /**
  * @author Freeman
  */
-public final class PortFinder {
+public final class PortGetter {
 
-    private PortFinder() {}
+    private PortGetter() {}
 
     /**
      * Get an available port.

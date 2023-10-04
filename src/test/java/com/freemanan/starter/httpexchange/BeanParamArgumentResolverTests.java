@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.freemanan.starter.PortFinder;
+import com.freemanan.starter.PortGetter;
 import java.net.URI;
 import java.util.Date;
 import java.util.List;
@@ -35,7 +35,7 @@ class BeanParamArgumentResolverTests {
 
     @Test
     void convertObjectPropertiesToRequestParameters() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(FooController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=http://localhost:" + port)
@@ -88,7 +88,7 @@ class BeanParamArgumentResolverTests {
 
     @Test
     void hasQueryMapArgumentResolverBean_whenDefaultConfig() {
-        int port = PortFinder.availablePort();
+        int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(FooController.class)
                 .web(WebApplicationType.NONE)
                 .properties("server.port=" + port)
