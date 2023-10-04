@@ -1,25 +1,20 @@
 package com.freemanan.starter.httpexchange;
 
-import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import com.freemanan.cr.core.anno.Action;
-import com.freemanan.cr.core.anno.ClasspathReplacer;
 import com.freemanan.starter.PortGetter;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.service.annotation.GetExchange;
 
 /**
  * @author Freeman
  */
-@ClasspathReplacer(@Action("org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion))
 class BaseUrlTests {
 
     @Test
@@ -45,8 +40,8 @@ class BaseUrlTests {
         BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
 
         assertThatCode(() -> api.delay(10))
-                .isInstanceOf(WebClientRequestException.class)
-                .hasMessageContaining("Connection refused:");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("URI is not absolute");
 
         ctx.close();
     }
@@ -62,7 +57,7 @@ class BaseUrlTests {
                 .run();
         BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
 
-        assertThatCode(() -> api.delay(10)).isInstanceOf(RuntimeException.class);
+        assertThatCode(() -> api.delay(10)).isInstanceOf(ResourceAccessException.class);
 
         ctx.close();
     }
@@ -73,7 +68,6 @@ class BaseUrlTests {
     @RestController
     static class BaseUrlController implements BaseUrlApi {
         @Override
-        @GetMapping("/delay/{delay}")
         public String delay(int delay) {
             try {
                 Thread.sleep(delay);

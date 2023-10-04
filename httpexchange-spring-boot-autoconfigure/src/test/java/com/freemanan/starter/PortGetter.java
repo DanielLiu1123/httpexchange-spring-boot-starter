@@ -8,7 +8,7 @@ import lombok.experimental.UtilityClass;
  * @author Freeman
  */
 @UtilityClass
-public final class PortGetter {
+public class PortGetter {
 
     /**
      * Get an available port.

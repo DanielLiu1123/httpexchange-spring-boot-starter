@@ -16,21 +16,16 @@ class ShadedHttpServiceProxyFactoryTest {
      * Because the code uses reflection to obtain the attribute values of {@link HttpServiceProxyFactory.Builder},
      * when upgrading the Spring Boot version, this test is necessary for discovering the property changes of {@link HttpServiceProxyFactory.Builder}.
      *
-     * @see ShadedHttpServiceProxyFactory.Builder#Builder(HttpServiceProxyFactory.Builder)
+     * @see ShadedHttpServiceProxyFactory.Builder
      */
     @Test
     void testHttpServiceProxyFactoryBuilderProperties() {
         Class<HttpServiceProxyFactory.Builder> clz = HttpServiceProxyFactory.Builder.class;
         Field[] fields = clz.getDeclaredFields();
 
-        assertThat(fields).hasSize(6);
+        assertThat(fields).hasSize(4);
         assertThat(Arrays.stream(fields).map(Field::getName))
                 .containsExactlyInAnyOrder(
-                        "clientAdapter",
-                        "customArgumentResolvers",
-                        "conversionService",
-                        "embeddedValueResolver",
-                        "reactiveAdapterRegistry",
-                        "blockTimeout");
+                        "exchangeAdapter", "customArgumentResolvers", "conversionService", "embeddedValueResolver");
     }
 }

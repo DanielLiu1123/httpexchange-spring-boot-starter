@@ -1,13 +1,9 @@
 package com.freemanan.starter.httpexchange;
 
-import static com.freemanan.cr.core.anno.Verb.ADD;
-import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.freemanan.cr.core.anno.Action;
-import com.freemanan.cr.core.anno.ClasspathReplacer;
 import com.freemanan.starter.PortGetter;
 import java.net.URI;
 import java.util.Date;
@@ -18,10 +14,6 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,15 +30,12 @@ import org.springframework.web.service.annotation.PutExchange;
 class BeanParamArgumentResolverTests {
 
     @Test
-    @ClasspathReplacer({
-        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)
-    })
     void convertObjectPropertiesToRequestParameters() {
         int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(FooController.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=http://localhost:" + port)
-                .properties(HttpClientsProperties.PREFIX + ".bean-to-query=true")
+                .properties(HttpClientsProperties.PREFIX + ".bean-to-query-enabled=true")
                 .run();
 
         FooApi fooApi = ctx.getBean(FooApi.class);
@@ -72,24 +61,14 @@ class BeanParamArgumentResolverTests {
                 .isThrownBy(() -> fooApi.findAll(Map.of()))
                 .withMessageContaining("No suitable resolver");
 
-        // known issue, empty bean will not be resolved by BeanToQueryArgumentResolver,
-        // don't plan to support this case.
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> fooApi.findAll(new EmptyBean()))
-                .withMessageContaining("No suitable resolver");
+        assertThatCode(() -> fooApi.findAll(new EmptyBean())).doesNotThrowAnyException();
 
         Date date = new Date();
         FooWithArrProp resp = fooApi.testArrProp(new FooWithArrProp(
-                "1",
-                new String[] {"a", "b"},
-                List.of(1, 2),
-                List.of(new Foo("1", "foo1")),
-                date,
-                URI.create("http://localhost:8080")));
+                "1", new String[] {"a", "b"}, List.of(1, 2), date, URI.create("http://localhost:8080")));
         assertThat(resp.id()).isEqualTo("1");
         assertThat(resp.arr()).isEqualTo(new String[] {"a", "b"});
         assertThat(resp.list()).isEqualTo(List.of(1, 2));
-        assertThat(resp.foos()).isNull();
         assertThat(resp.date()).isNotNull();
         assertThat(resp.date()).isNotEqualTo(date); // FIXME(Freeman): known issue, loss milliseconds
         assertThat(resp.url()).isEqualTo(URI.create("http://localhost:8080"));
@@ -112,7 +91,7 @@ class BeanParamArgumentResolverTests {
 
     record Foo(String id, String name) {}
 
-    record FooWithArrProp(String id, String[] arr, List<Integer> list, List<Foo> foos, Date date, URI url) {}
+    record FooWithArrProp(String id, String[] arr, List<Integer> list, Date date, URI url) {}
 
     record EmptyBean() {}
 
@@ -157,54 +136,46 @@ class BeanParamArgumentResolverTests {
     static class FooController implements FooApi {
 
         @Override
-        @GetMapping("/foo")
         public List<Foo> findAll(Foo foo) {
             return List.of(foo);
         }
 
         @Override
-        @GetMapping("/FooWithArrProp")
         public FooWithArrProp testArrProp(FooWithArrProp foo) {
             return foo;
         }
 
         @Override
-        @PostMapping("/foo")
         public Foo post(Foo foo) {
             return foo;
         }
 
         @Override
-        @PutMapping("/foo")
         public Foo put(Foo foo) {
             return foo;
         }
 
         @Override
-        @DeleteMapping("/foo")
         public Foo delete(Foo foo) {
             return foo;
         }
 
-        @PostMapping("/foo/complex")
+        @Override
         public List<Foo> complex(Foo foo, Foo foo2) {
             return List.of(foo, foo2);
         }
 
         @Override
-        @GetMapping("/foo/by-map")
         public List<Foo> findAll(Map<String, Object> map) {
             return List.of(new Foo("1", "dummy"));
         }
 
         @Override
-        @GetMapping("/foo/testBeanParam")
         public Foo testBeanParam(Foo foo) {
             return foo;
         }
 
         @Override
-        @GetMapping("/foo/testRequestParamForMap")
         public Map<String, String> testRequestParamForMap(Map<String, String> map) {
             return map;
         }

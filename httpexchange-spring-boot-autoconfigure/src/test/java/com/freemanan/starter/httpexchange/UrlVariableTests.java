@@ -1,11 +1,8 @@
 package com.freemanan.starter.httpexchange;
 
-import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import com.freemanan.cr.core.anno.Action;
-import com.freemanan.cr.core.anno.ClasspathReplacer;
 import com.freemanan.starter.PortGetter;
 import com.freemanan.starter.Post;
 import java.util.List;
@@ -14,7 +11,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -24,7 +20,6 @@ import org.springframework.web.service.annotation.HttpExchange;
  */
 class UrlVariableTests {
     @Test
-    @ClasspathReplacer(@Action("org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion))
     void testUrlVariable() {
         int port = PortGetter.availablePort();
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(UrlVariableController.class)
@@ -51,10 +46,11 @@ class UrlVariableTests {
     @EnableAutoConfiguration
     @EnableExchangeClients(clients = UrlVariableApi.class)
     @RestController
+    @HttpExchange
     static class UrlVariableController implements UrlVariableApi {
 
         @Override
-        @GetMapping("/posts")
+        @GetExchange("/posts")
         public List<Post> getPosts() {
             return List.of();
         }

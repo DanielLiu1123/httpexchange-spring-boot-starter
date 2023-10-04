@@ -1,6 +1,7 @@
 package com.freemanan.starter.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.freemanan.starter.PortGetter;
 import org.junit.jupiter.api.Test;
@@ -14,59 +15,53 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.service.annotation.GetExchange;
-import org.springframework.web.service.annotation.HttpExchange;
 
 /**
  * @author Freeman
  */
 @ExtendWith(OutputCaptureExtension.class)
-class WebClientCustomizerTests {
+class RestClientConfigurationTests {
 
     @Test
-    void testAddInterceptor(CapturedOutput output) {
+    void testNotSetTimeout(CapturedOutput output) {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(Cfg.class)
+        var ctx = new SpringApplicationBuilder(Controller.class)
                 .properties("server.port=" + port)
                 .properties(HttpClientsProperties.PREFIX + ".base-url=localhost:" + port)
                 .run();
+        Api api = ctx.getBean(Api.class);
 
-        String resp = ctx.getBean(FooApi.class).get();
-
-        assertThat(resp).isEqualTo("Hello World!");
-        assertThat(output).contains("Response status: 200 OK");
+        assertThatCode(api::get).doesNotThrowAnyException();
+        assertThat(output).contains("Intercepted!");
 
         ctx.close();
     }
 
+    interface Api {
+        @GetExchange("/get")
+        String get();
+    }
+
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableExchangeClients(clients = FooApi.class)
+    @EnableExchangeClients(clients = Api.class)
     @RestController
-    static class Cfg implements FooApi {
-        private static final Logger log = LoggerFactory.getLogger(Cfg.class);
-
-        @Bean
-        RestClientCustomizer loggingCustomizer2() {
-            return builder -> builder.requestInterceptor((request, body, execution) -> {
-                ClientHttpResponse response = execution.execute(request, body);
-                log.info("Response status: {}", response.getStatusCode());
-                return response;
-            });
-        }
+    static class Controller implements Api {
+        private static final Logger log = LoggerFactory.getLogger(Controller.class);
 
         @Override
         public String get() {
-            return "Hello World!";
+            return "OK";
         }
-    }
 
-    @HttpExchange("/foo")
-    interface FooApi {
-
-        @GetExchange
-        String get();
+        @Bean
+        RestClientCustomizer restClientCustomizer() {
+            return builder -> builder.requestInterceptor((request, body, execution) -> {
+                log.info("Intercepted!");
+                return execution.execute(request, body);
+            });
+        }
     }
 }
