@@ -6,8 +6,6 @@ import com.freemanan.starter.httpexchange.shaded.ShadedHttpServiceProxyFactory;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
@@ -25,7 +23,6 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
  * @author Freeman
  */
 class ExchangeClientCreator {
-    private static final Logger log = LoggerFactory.getLogger(ExchangeClientCreator.class);
 
     private final ConfigurableBeanFactory beanFactory;
     private final Environment environment;
@@ -118,9 +115,6 @@ class ExchangeClientCreator {
                 baseUrl = "http://" + baseUrl;
             }
             builder.baseUrl(baseUrl);
-        } else {
-            // TODO(Freeman): maybe not warning? But @GetExchange("http://xx/xxx") is very rare :)
-            log.warn("No base-url configuration found for client: {}", clientType.getName());
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
             channelConfig
