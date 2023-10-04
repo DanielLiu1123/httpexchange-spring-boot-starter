@@ -1,5 +1,9 @@
 dependencies {
     api(project(":httpexchange-spring-boot-autoconfigure"))
+
+    optionalSupportApi("org.springframework:spring-webflux")
+    optionalSupportApi("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    optionalSupportApi("org.springframework.cloud:spring-cloud-context")
 }
 
 apply from: "${rootDir}/gradle/deploy.gradle"
