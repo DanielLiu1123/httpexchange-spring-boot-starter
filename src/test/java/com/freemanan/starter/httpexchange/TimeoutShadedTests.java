@@ -1,12 +1,8 @@
 package com.freemanan.starter.httpexchange;
 
-import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.freemanan.cr.core.anno.Action;
-import com.freemanan.cr.core.anno.ClasspathReplacer;
-import com.freemanan.cr.core.anno.Verb;
 import com.freemanan.starter.PortFinder;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -19,8 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * @author Freeman
  */
-@ClasspathReplacer(
-        @Action(verb = Verb.ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion))
 class TimeoutShadedTests {
 
     @Test

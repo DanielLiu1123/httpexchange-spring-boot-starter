@@ -1,7 +1,6 @@
 package com.freemanan.starter.httpexchange;
 
 import static com.freemanan.cr.core.anno.Verb.ADD;
-import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -33,10 +32,6 @@ import org.springframework.web.service.annotation.GetExchange;
 class ValidationTests {
 
     @Test
-    @ClasspathReplacer({
-        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion),
-        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-validation:" + springBootVersion)
-    })
     void worksFine_whenSpringBootGreater3_0_3() {
         int port = PortFinder.availablePort();
         var ctx = new SpringApplicationBuilder(ValidateController.class)

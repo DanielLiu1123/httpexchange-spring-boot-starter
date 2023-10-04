@@ -1,10 +1,7 @@
 package com.freemanan.starter.httpexchange;
 
-import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.freemanan.cr.core.anno.Action;
-import com.freemanan.cr.core.anno.ClasspathReplacer;
 import com.freemanan.starter.PortFinder;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -21,7 +18,6 @@ import org.springframework.web.service.annotation.GetExchange;
 class DynamicRefreshTests {
 
     @Test
-    @ClasspathReplacer({@Action("org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)})
     void testDynamicRefresh() {
         int port = PortFinder.availablePort();
         var ctx = new SpringApplicationBuilder(Cfg.class)

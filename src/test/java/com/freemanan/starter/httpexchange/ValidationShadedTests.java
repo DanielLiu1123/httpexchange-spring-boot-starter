@@ -1,12 +1,8 @@
 package com.freemanan.starter.httpexchange;
 
-import static com.freemanan.cr.core.anno.Verb.ADD;
-import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.freemanan.cr.core.anno.Action;
-import com.freemanan.cr.core.anno.ClasspathReplacer;
 import com.freemanan.starter.PortFinder;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.Max;
@@ -29,10 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 class ValidationShadedTests {
 
     @Test
-    @ClasspathReplacer({
-        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion),
-        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-validation:" + springBootVersion)
-    })
     void worksFine_whenSpringBootGreater3_0_3() {
         int port = PortFinder.availablePort();
         var ctx = new SpringApplicationBuilder(ValidateController.class)

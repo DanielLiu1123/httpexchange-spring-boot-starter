@@ -18,7 +18,6 @@ import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.service.invoker.HttpRequestValues;
@@ -94,15 +93,6 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
             return false;
         }
         Map<String, Object> nameToValue = getPropertyValueMap(argument);
-        if (CollectionUtils.isEmpty(nameToValue)) {
-            // means Java bean has no property,
-            // don't plan to support this case, just mark it as not resolved.
-            log.warn(
-                    "class '{}' has no property, will not try to convert it to request parameters",
-                    argument.getClass().getSimpleName());
-            return false;
-        }
-
         nameToValue.forEach((k, v) -> {
             if (v == null) {
                 return;

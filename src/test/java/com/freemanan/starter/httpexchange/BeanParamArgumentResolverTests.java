@@ -1,13 +1,9 @@
 package com.freemanan.starter.httpexchange;
 
-import static com.freemanan.cr.core.anno.Verb.ADD;
-import static com.freemanan.starter.Dependencies.springBootVersion;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.freemanan.cr.core.anno.Action;
-import com.freemanan.cr.core.anno.ClasspathReplacer;
 import com.freemanan.starter.PortFinder;
 import java.net.URI;
 import java.util.Date;
@@ -38,9 +34,6 @@ import org.springframework.web.service.annotation.PutExchange;
 class BeanParamArgumentResolverTests {
 
     @Test
-    @ClasspathReplacer({
-        @Action(verb = ADD, value = "org.springframework.boot:spring-boot-starter-webflux:" + springBootVersion)
-    })
     void convertObjectPropertiesToRequestParameters() {
         int port = PortFinder.availablePort();
         var ctx = new SpringApplicationBuilder(FooController.class)
@@ -72,11 +65,7 @@ class BeanParamArgumentResolverTests {
                 .isThrownBy(() -> fooApi.findAll(Map.of()))
                 .withMessageContaining("No suitable resolver");
 
-        // known issue, empty bean will not be resolved by BeanToQueryArgumentResolver,
-        // don't plan to support this case.
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> fooApi.findAll(new EmptyBean()))
-                .withMessageContaining("No suitable resolver");
+        assertThatCode(() -> fooApi.findAll(new EmptyBean())).doesNotThrowAnyException();
 
         Date date = new Date();
         FooWithArrProp resp = fooApi.testArrProp(new FooWithArrProp(
@@ -207,6 +196,13 @@ class BeanParamArgumentResolverTests {
         @GetMapping("/foo/testRequestParamForMap")
         public Map<String, String> testRequestParamForMap(Map<String, String> map) {
             return map;
+        }
+
+        // TODO(Freeman): remove this after spring boot 3.2.0
+        @Override
+        @GetMapping("/foo/emtpy-bean")
+        public List<Foo> findAll(EmptyBean emptyBean) {
+            return List.of();
         }
     }
 }
