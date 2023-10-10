@@ -124,7 +124,7 @@ class ExchangeClientCreator {
                     } else {
                         log.warn(
                                 "Reactor is not present, fall back backends to {}",
-                                HttpClientsProperties.Backend.REST_CLIENT.name());
+                                ExchangeClientBackend.REST_CLIENT.name());
                         builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
                     }
                 }

@@ -8,6 +8,7 @@ http-exchange:
       values: ${spring.application.name}
   refresh:
     enabled: true
+  backend: rest_client
   channels:
     - base-url: http://order
       headers:

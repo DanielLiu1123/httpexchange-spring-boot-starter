@@ -12,9 +12,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
 
 /**
  * Http Clients Configuration Properties.
@@ -57,11 +54,11 @@ public class HttpClientsProperties implements InitializingBean {
      */
     private Refresh refresh = new Refresh();
     /**
-     * Backend type, default {@link Backend#REST_CLIENT}.
+     * Backend type, default {@link ExchangeClientBackend#REST_CLIENT}.
      *
-     * @see Backend
+     * @see ExchangeClientBackend
      */
-    private Backend backend = Backend.REST_CLIENT;
+    private ExchangeClientBackend backend = ExchangeClientBackend.REST_CLIENT;
     /**
      * whether to process {@link org.springframework.web.bind.annotation.RequestMapping} based annotation,
      * default {@code false}.
@@ -160,9 +157,9 @@ public class HttpClientsProperties implements InitializingBean {
         /**
          * Backend type, use {@link HttpClientsProperties#backend} if not set.
          *
-         * @see Backend
+         * @see ExchangeClientBackend
          */
-        private Backend backend;
+        private ExchangeClientBackend backend;
     }
 
     @Data
@@ -174,20 +171,5 @@ public class HttpClientsProperties implements InitializingBean {
          * <p> NOTE: this feature needs {@code spring-cloud-context} dependency in the classpath.
          */
         private boolean enabled = false;
-    }
-
-    public enum Backend {
-        /**
-         * Use {@link RestClient} as backend.
-         */
-        REST_CLIENT,
-        /**
-         * Use {@link WebClient} as backend.
-         */
-        WEB_CLIENT,
-        /**
-         * Use {@link RestTemplate} as backend.
-         */
-        REST_TEMPLATE
     }
 }
