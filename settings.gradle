@@ -2,6 +2,7 @@ rootProject.name = 'httpexchange-spring-boot-starter'
 
 include(":examples:quick-start")
 
+include(":httpexchange-apt")
 include(":httpexchange-spring-boot-autoconfigure")
 
 include(":starters:httpexchange-spring-boot-starter")

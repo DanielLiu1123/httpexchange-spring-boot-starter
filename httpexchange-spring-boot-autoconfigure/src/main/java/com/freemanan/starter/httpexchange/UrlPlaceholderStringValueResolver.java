@@ -1,9 +1,9 @@
 package com.freemanan.starter.httpexchange;
 
+import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
-import org.springframework.lang.Nullable;
 import org.springframework.util.StringValueResolver;
 
 /**
