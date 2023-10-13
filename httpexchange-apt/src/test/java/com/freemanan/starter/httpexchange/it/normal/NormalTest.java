@@ -27,5 +27,12 @@ class NormalTest {
             Class.forName("com.freemanan.starter.httpexchange.it.normal.Api4Base")
                     .getDeclaredMethod("get");
         });
+        assertDoesNotThrow(() -> {
+            Class.forName("com.freemanan.starter.httpexchange.it.normal.InnerApiBase")
+                    .getDeclaredMethod("get");
+        });
+        assertThrows(ClassNotFoundException.class, () -> {
+            Class.forName("com.freemanan.starter.httpexchange.it.normal.InnerApi2Base");
+        });
     }
 }

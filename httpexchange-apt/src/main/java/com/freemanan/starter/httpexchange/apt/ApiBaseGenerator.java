@@ -59,6 +59,9 @@ public class ApiBaseGenerator extends AbstractProcessor {
             if (enclosedElement.getKind() == ElementKind.METHOD) {
                 isNeedGenerateJavaFile =
                         processMethodElement(annotations, classBuilder, enclosedElement) || isNeedGenerateJavaFile;
+            } else if (enclosedElement.getKind() == ElementKind.INTERFACE) {
+                // process inner interface
+                processInterfaceElement(annotations, enclosedElement);
             }
         }
 

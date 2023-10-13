@@ -15,4 +15,9 @@ public interface Api4 {
         @HttpExchange("/innerApi")
         String get();
     }
+
+    interface InnerApi2 {
+
+        String get();
+    }
 }
