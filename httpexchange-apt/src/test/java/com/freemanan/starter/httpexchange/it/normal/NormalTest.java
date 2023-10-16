@@ -13,6 +13,10 @@ class NormalTest {
             Class.forName("com.freemanan.starter.httpexchange.it.normal.ApiBase")
                     .getDeclaredMethod("get");
         });
+        assertThrows(NoSuchMethodException.class, () -> {
+            Class.forName("com.freemanan.starter.httpexchange.it.normal.ApiBase")
+                    .getDeclaredMethod("post");
+        });
 
         assertThrows(ClassNotFoundException.class, () -> {
             Class.forName("com.freemanan.starter.httpexchange.it.normal.Api2Base");
