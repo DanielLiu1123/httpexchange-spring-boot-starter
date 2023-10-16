@@ -34,5 +34,17 @@ class NormalTest {
         assertThrows(ClassNotFoundException.class, () -> {
             Class.forName("com.freemanan.starter.httpexchange.it.normal.InnerApi2Base");
         });
+
+        assertDoesNotThrow(() -> {
+            Class.forName("com.freemanan.starter.httpexchange.it.normal.Api6Base")
+                    .getDeclaredMethod("get");
+        });
+        assertThrows(NoSuchMethodException.class, () -> {
+            Class.forName("com.freemanan.starter.httpexchange.it.normal.Api7Base")
+                    .getDeclaredMethod("get");
+        });
+        assertThrows(ClassNotFoundException.class, () -> {
+            Class.forName("com.freemanan.starter.httpexchange.it.normal.Api8Base");
+        });
     }
 }

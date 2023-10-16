@@ -1,6 +1,7 @@
 dependencies {
     implementation("org.springframework:spring-core")
     implementation("org.springframework:spring-web")
+    implementation("net.bytebuddy:byte-buddy")
 
     testImplementation("org.junit.jupiter:junit-jupiter")
     testAnnotationProcessor(project(":httpexchange-apt"))

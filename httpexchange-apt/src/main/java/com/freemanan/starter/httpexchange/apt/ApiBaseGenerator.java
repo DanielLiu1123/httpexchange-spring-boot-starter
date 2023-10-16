@@ -1,6 +1,26 @@
 package com.freemanan.starter.httpexchange.apt;
 
-import java.util.Set;
+import lombok.SneakyThrows;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
+import net.bytebuddy.implementation.FixedValue;
+import net.bytebuddy.matcher.ElementMatchers;
+import org.springframework.http.HttpStatus;
+import org.springframework.javapoet.JavaFile;
+import org.springframework.javapoet.MethodSpec;
+import org.springframework.javapoet.ParameterSpec;
+import org.springframework.javapoet.TypeName;
+import org.springframework.javapoet.TypeSpec;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.service.annotation.DeleteExchange;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PatchExchange;
+import org.springframework.web.service.annotation.PostExchange;
+import org.springframework.web.service.annotation.PutExchange;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
@@ -13,46 +33,79 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import lombok.SneakyThrows;
-import org.springframework.http.HttpStatus;
-import org.springframework.javapoet.JavaFile;
-import org.springframework.javapoet.MethodSpec;
-import org.springframework.javapoet.ParameterSpec;
-import org.springframework.javapoet.TypeName;
-import org.springframework.javapoet.TypeSpec;
-import org.springframework.web.server.ResponseStatusException;
+import java.util.Set;
 
 /**
  * @author Freeman
  */
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 @SupportedAnnotationTypes({
-    "org.springframework.web.service.annotation.HttpExchange",
-    "org.springframework.web.service.annotation.GetExchange",
-    "org.springframework.web.service.annotation.PostExchange",
-    "org.springframework.web.service.annotation.PutExchange",
-    "org.springframework.web.service.annotation.DeleteExchange",
-    "org.springframework.web.service.annotation.PatchExchange",
+        "org.springframework.web.service.annotation.HttpExchange",
+        "org.springframework.web.service.annotation.GetExchange",
+        "org.springframework.web.service.annotation.PostExchange",
+        "org.springframework.web.service.annotation.PutExchange",
+        "org.springframework.web.service.annotation.DeleteExchange",
+        "org.springframework.web.service.annotation.PatchExchange",
 })
 public class ApiBaseGenerator extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element element : roundEnv.getRootElements()) {
-            if (isInterface(element)) {
-                processInterfaceElement(annotations, element);
+            // TODO(Freeman): perhaps we just need to process the interfaces to enhance compile performance?
+            processElement(annotations, element);
+            //
+        }
+
+        for (TypeElement typeElement : annotations) {
+            for (Element element : roundEnv.getElementsAnnotatedWith(typeElement)) {
+                if (element.getKind() == ElementKind.METHOD &&
+                    (element.getAnnotation(HttpExchange.class) != null
+                     || element.getAnnotation(GetExchange.class) != null
+                     || element.getAnnotation(PostExchange.class) != null
+                     || element.getAnnotation(PutExchange.class) != null
+                     || element.getAnnotation(DeleteExchange.class) != null
+                     || element.getAnnotation(PatchExchange.class) != null)
+                ) {
+                    ExecutableElement methodElement = (ExecutableElement) element;
+                    modifyMethodWithByteBuddy(methodElement);
+                }
             }
         }
         return true;
+    }
+
+    private void modifyMethodWithByteBuddy(ExecutableElement executableElement) {
+        try (DynamicType.Unloaded<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V17)
+                .redefine(executableElement.getEnclosingElement().asType())
+                .method(ElementMatchers.named(executableElement.getSimpleName().toString()))
+                .intercept(FixedValue.value("throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);"))
+                .make()) {
+            dynamicType
+                    .load(getClass().getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+        }
     }
 
     private boolean isInterface(Element element) {
         return element.getKind() == ElementKind.INTERFACE;
     }
 
-    private void processInterfaceElement(Set<? extends TypeElement> annotations, Element element) {
-        TypeSpec.Builder classBuilder = createClassBuilder(element);
+    private void processElement(Set<? extends TypeElement> annotations, Element element) {
+        if (isInterface(element)) {
+            processAnnotations(annotations, element);
+        } else {
+            processNonInterfaceElement(annotations, element);
+        }
+    }
 
+    private void processNonInterfaceElement(Set<? extends TypeElement> annotations, Element element) {
+        for (Element enclosedElement : element.getEnclosedElements()) {
+            processElement(annotations, enclosedElement);
+        }
+    }
+
+    private void processAnnotations(Set<? extends TypeElement> annotations, Element element) {
+        TypeSpec.Builder classBuilder = createClassBuilder(element);
         boolean isNeedGenerateJavaFile = hasAnnotationMatched(annotations, element);
 
         for (Element enclosedElement : element.getEnclosedElements()) {
@@ -60,8 +113,7 @@ public class ApiBaseGenerator extends AbstractProcessor {
                 isNeedGenerateJavaFile =
                         processMethodElement(annotations, classBuilder, enclosedElement) || isNeedGenerateJavaFile;
             } else if (enclosedElement.getKind() == ElementKind.INTERFACE) {
-                // process inner interface
-                processInterfaceElement(annotations, enclosedElement);
+                processElement(annotations, enclosedElement);
             }
         }
 
