@@ -3,7 +3,7 @@ dependencies {
     implementation("org.springframework:spring-web")
 
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testAnnotationProcessor(project(":httpexchange-apt"))
+    testAnnotationProcessor(project(":httpexchange-processor"))
 }
 
 apply from: "${rootDir}/gradle/deploy.gradle"

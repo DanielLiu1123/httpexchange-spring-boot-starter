@@ -16,6 +16,7 @@
 
 package com.freemanan.starter.httpexchange.shaded;
 
+import jakarta.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.Arrays;
@@ -35,7 +36,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;

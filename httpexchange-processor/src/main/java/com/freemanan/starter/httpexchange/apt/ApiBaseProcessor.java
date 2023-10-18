@@ -96,10 +96,10 @@ public class ApiBaseProcessor extends AbstractProcessor {
                 .addSuperinterface(TypeName.get(element.asType()))
                 .addJavadoc(
                         """
-                                Server side base implementation.
+                                Provides the default implementation of {@link $L} for the server-side.
 
                                 <p>
-                                Usage:
+                                How to use:
                                 <pre>{@code
                                 @RestController
                                 public class $L extends $L {
@@ -107,6 +107,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
                                 }
                                 }</pre>
                                 """,
+                        element.getSimpleName(),
                         element.getSimpleName() + "Controller",
                         element.getSimpleName() + "Base");
         if (element.getModifiers().contains(Modifier.PUBLIC)) {
