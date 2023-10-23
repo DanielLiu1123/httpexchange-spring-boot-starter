@@ -80,7 +80,7 @@ Add dependency:
 <dependency>
     <groupId>com.freemanan</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.1.4</version>
+    <version>3.1.5</version>
 </dependency>
 ```
 
@@ -278,11 +278,11 @@ Auto-detect all of the `HttpServiceArgumentResolver` beans, then apply them to b
 ## Version
 
 The version of this project is kept in sync with Spring Boot 3,
-if you are using Spring Boot 3.1.4, then `httpexchange-spring-boot-starter` 3.1.4 should be used.
+if you are using Spring Boot 3.1.5, then `httpexchange-spring-boot-starter` 3.1.5 should be used.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.1.4       | 3.1.4                            |
+| 3.1.5       | 3.1.5                            |
 
 ## License
 
