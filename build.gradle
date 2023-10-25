@@ -72,7 +72,7 @@ spotless {
 
 spotbugs {
     spotbugsTest.enabled = false
-    omitVisitors.addAll('FindReturnRef', 'MethodReturnCheck')
+    omitVisitors.addAll('FindReturnRef', 'DontReusePublicIdentifiers')
 }
 
 tasks.register('installGitHook', Copy) {
@@ -80,6 +80,6 @@ tasks.register('installGitHook', Copy) {
     into { new File(rootProject.rootDir, '.git/hooks') }
     fileMode 0775
 }
-build.dependsOn installGitHook
+compileJava.dependsOn installGitHook
 
 apply from: "${rootDir}/gradle/deploy.gradle"
