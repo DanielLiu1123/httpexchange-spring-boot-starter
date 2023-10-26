@@ -123,7 +123,7 @@ class ExchangeClientCreator {
                         builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
                     } else {
                         log.warn(
-                                "Reactor is not present, fall back backend to {}",
+                                "Reactor is not present, fall back backend to '{}'",
                                 ExchangeClientBackend.REST_CLIENT.name());
                         builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
                     }

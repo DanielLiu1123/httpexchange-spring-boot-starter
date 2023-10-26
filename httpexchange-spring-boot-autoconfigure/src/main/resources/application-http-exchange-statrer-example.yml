@@ -24,3 +24,4 @@ http-exchange:
       classes:
         - com.example.api.UserApi
         - com.example.api.UserDetailApi
+      backend: rest_template
