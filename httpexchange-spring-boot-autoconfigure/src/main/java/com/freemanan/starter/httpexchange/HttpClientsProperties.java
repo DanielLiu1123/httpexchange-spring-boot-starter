@@ -113,7 +113,7 @@ public class HttpClientsProperties implements InitializingBean {
     }
 
     HttpClientsProperties.Channel defaultClient() {
-        return new Channel(null, baseUrl, headers, List.of(), List.of(), backend);
+        return new Channel(null, baseUrl, headers, backend, List.of(), List.of());
     }
 
     @Data
@@ -132,6 +132,12 @@ public class HttpClientsProperties implements InitializingBean {
          * Default headers, will be merged with {@link HttpClientsProperties#headers}.
          */
         private List<Header> headers = new ArrayList<>();
+        /**
+         * Backend type, use {@link HttpClientsProperties#backend} if not set.
+         *
+         * @see ExchangeClientBackend
+         */
+        private ExchangeClientBackend backend;
         /**
          * Exchange Clients to apply this channel.
          *
@@ -154,12 +160,6 @@ public class HttpClientsProperties implements InitializingBean {
          * <p> This is a more IDE-friendly alternative to {@link HttpClientsProperties.Channel#clients}.
          */
         private List<Class<?>> classes = new ArrayList<>();
-        /**
-         * Backend type, use {@link HttpClientsProperties#backend} if not set.
-         *
-         * @see ExchangeClientBackend
-         */
-        private ExchangeClientBackend backend;
     }
 
     @Data

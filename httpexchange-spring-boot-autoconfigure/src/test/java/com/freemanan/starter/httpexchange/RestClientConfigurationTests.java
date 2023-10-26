@@ -25,7 +25,7 @@ import org.springframework.web.service.annotation.GetExchange;
 class RestClientConfigurationTests {
 
     @Test
-    void testNotSetTimeout(CapturedOutput output) {
+    void testRestClientCustomizer(CapturedOutput output) {
         int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(Controller.class)
                 .properties("server.port=" + port)
