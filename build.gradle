@@ -1,19 +1,12 @@
 plugins {
-    id 'java'
     id 'com.diffplug.spotless' version "${spotlessVersion}" apply false
     id 'com.github.spotbugs' version "${spotbugsVersion}" apply false
     id 'io.spring.dependency-management' version "${springDependencyManagementVersion}" apply false
 }
 
-subprojects {
+allprojects {
     apply plugin: 'java'
     apply plugin: 'java-library'
-
-    java {
-        registerFeature('optionalSupport') {
-            usingSourceSet(sourceSets.main)
-        }
-    }
 
     repositories {
         mavenCentral()
@@ -22,6 +15,12 @@ subprojects {
         }
         maven {
             url "https://repo.spring.io/milestone"
+        }
+    }
+
+    java {
+        registerFeature('optionalSupport') {
+            usingSourceSet(sourceSets.main)
         }
     }
 
