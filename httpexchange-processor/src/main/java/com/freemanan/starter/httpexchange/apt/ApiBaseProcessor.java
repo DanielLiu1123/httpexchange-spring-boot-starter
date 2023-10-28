@@ -36,6 +36,8 @@ import org.springframework.web.server.ResponseStatusException;
 })
 public class ApiBaseProcessor extends AbstractProcessor {
 
+    private static final String GENERATED_CLASS_SUFFIX = "Base";
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element element : roundEnv.getRootElements()) {
@@ -91,7 +93,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
     }
 
     private TypeSpec.Builder createClassBuilder(Element element) {
-        TypeSpec.Builder result = TypeSpec.classBuilder(element.getSimpleName() + "Base")
+        TypeSpec.Builder result = TypeSpec.classBuilder(element.getSimpleName() + GENERATED_CLASS_SUFFIX)
                 .addModifiers(Modifier.ABSTRACT)
                 .addSuperinterface(TypeName.get(element.asType()))
                 .addJavadoc(
