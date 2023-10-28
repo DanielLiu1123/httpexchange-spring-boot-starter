@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -49,29 +48,15 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
 
     @Override
     public boolean resolve(Object argument, MethodParameter parameter, HttpRequestValues.Builder requestValues) {
-        if (argument == null
-                || hasWebBindPackageAnnotation(parameter)
-                || argument instanceof URI // UrlArgumentResolver
-                || argument instanceof HttpMethod // HttpMethodArgumentResolver
-                || BeanUtils.isSimpleValueType(argument.getClass())) {
-            // if there is @RequestParam, @PathVariable, @RequestHeader, @CookieValue, etc.,
-            // we cannot convert Java bean to request parameters,
-            // it will be resolved by other ArgumentResolver.
+        if (isNonResolvableArgument(argument, parameter)) {
             return false;
         }
 
-        Optional<Annotation> annotation = Arrays.stream(parameter.getParameterAnnotations())
-                .filter(anno -> anno.annotationType() == BeanParam.class)
-                .findFirst();
-        if (annotation.isPresent()) {
+        if (hasAnnotation(parameter, BeanParam.class)) {
             return process(argument, requestValues);
         }
 
-        // Not enable bean to query feature.
-        if (!properties.isBeanToQueryEnabled()) {
-            return false;
-        }
-        return process(argument, requestValues);
+        return properties.isBeanToQueryEnabled() && process(argument, requestValues);
     }
 
     private static boolean process(Object argument, HttpRequestValues.Builder requestValues) {
@@ -91,6 +76,55 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
             return false;
         }
         Map<String, Object> nameToValue = getPropertyValueMap(argument);
+        populateRequestValuesFromMap(requestValues, nameToValue);
+        return true;
+    }
+
+    @Override
+    public int getOrder() {
+        return ORDER;
+    }
+
+    private static boolean isNonResolvableArgument(Object argument, MethodParameter parameter) {
+        // If there is @RequestParam, @PathVariable, @RequestHeader, @CookieValue, etc.,
+        // we cannot convert Java bean to request parameters,
+        // it will be resolved by other ArgumentResolver.
+        return argument == null
+                || argument instanceof URI // UrlArgumentResolver
+                || argument instanceof HttpMethod // HttpMethodArgumentResolver
+                || BeanUtils.isSimpleValueType(argument.getClass())
+                || hasWebBindPackageAnnotation(parameter);
+    }
+
+    private static boolean hasAnnotation(MethodParameter parameter, Class<? extends Annotation> annotationClass) {
+        for (Annotation anno : parameter.getParameterAnnotations()) {
+            if (anno.annotationType() == annotationClass) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static Map<String, Object> getPropertyValueMap(Object source) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        try {
+            BeanWrapper src = new BeanWrapperImpl(source);
+            PropertyDescriptor[] pds = src.getPropertyDescriptors();
+            for (PropertyDescriptor pd : pds) {
+                String name = pd.getName();
+                Object srcValue = src.getPropertyValue(name);
+                if (!Objects.equals(name, "class")) {
+                    result.put(name, srcValue);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to convert object[{}] to request parameters", source.getClass(), e);
+        }
+        return result;
+    }
+
+    private static void populateRequestValuesFromMap(
+            HttpRequestValues.Builder requestValues, Map<String, Object> nameToValue) {
         nameToValue.forEach((k, v) -> {
             if (v == null) {
                 return;
@@ -118,43 +152,9 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
                 }
             }
         });
-        return true;
     }
 
-    @Override
-    public int getOrder() {
-        return ORDER;
-    }
-
-    /**
-     * Get property name to value map.
-     *
-     * @param source Java bean
-     * @return property name to value map
-     */
-    @SuppressWarnings("unchecked")
-    protected static Map<String, Object> getPropertyValueMap(Object source) {
-        if (source instanceof Map) {
-            return (Map<String, Object>) source;
-        }
-        Map<String, Object> result = new LinkedHashMap<>();
-        try {
-            BeanWrapper src = new BeanWrapperImpl(source);
-            PropertyDescriptor[] pds = src.getPropertyDescriptors();
-            for (PropertyDescriptor pd : pds) {
-                String name = pd.getName();
-                Object srcValue = src.getPropertyValue(name);
-                if (!"class".equals(name)) {
-                    result.put(name, srcValue);
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Failed to convert object[{}] to request parameters", source.getClass(), e);
-        }
-        return result;
-    }
-
-    protected static boolean hasWebBindPackageAnnotation(MethodParameter parameter) {
+    private static boolean hasWebBindPackageAnnotation(MethodParameter parameter) {
         for (Annotation annotation : parameter.getParameterAnnotations()) {
             if (annotation.annotationType().getPackageName().startsWith(WEB_BIND_ANNOTATION_PACKAGE)) {
                 return true;
