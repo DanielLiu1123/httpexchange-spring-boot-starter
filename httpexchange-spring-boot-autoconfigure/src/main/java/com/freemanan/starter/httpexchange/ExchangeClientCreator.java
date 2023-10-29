@@ -98,12 +98,12 @@ class ExchangeClientCreator {
     }
 
     private HttpServiceProxyFactory buildFactory(HttpClientsProperties.Channel channelConfig) {
-        HttpServiceProxyFactory.Builder builder = factoryBuilder(channelConfig);
+        HttpServiceProxyFactory.Builder builder = Cache.getOrSupply(channelConfig, () -> factoryBuilder(channelConfig));
         return builder.build();
     }
 
     private ShadedHttpServiceProxyFactory buildShadedFactory(HttpClientsProperties.Channel channelConfig) {
-        HttpServiceProxyFactory.Builder b = factoryBuilder(channelConfig);
+        HttpServiceProxyFactory.Builder b = Cache.getOrSupply(channelConfig, () -> factoryBuilder(channelConfig));
         return shadedProxyFactory(b).build();
     }
 
