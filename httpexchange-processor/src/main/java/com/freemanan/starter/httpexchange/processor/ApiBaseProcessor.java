@@ -1,4 +1,4 @@
-package com.freemanan.starter.httpexchange.apt;
+package com.freemanan.starter.httpexchange.processor;
 
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
