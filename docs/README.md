@@ -71,7 +71,7 @@ Add dependency:
 
 ```xml
 <dependency>
-    <groupId>com.freemanan</groupId>
+    <groupId>io.github.danielliu1123</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
     <version>3.1.4</version>
 </dependency>
