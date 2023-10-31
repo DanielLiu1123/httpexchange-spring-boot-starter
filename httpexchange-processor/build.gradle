@@ -1,5 +1,4 @@
 dependencies {
-    implementation("org.springframework:spring-core")
     implementation("org.springframework:spring-web")
 
     testImplementation("org.junit.jupiter:junit-jupiter")
