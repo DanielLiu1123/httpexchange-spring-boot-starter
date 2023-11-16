@@ -56,7 +56,10 @@ public class HttpExchangeProperties implements InitializingBean {
     /**
      * Backend type, default {@link ExchangeClientBackend#REST_CLIENT}.
      *
+     * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ExchangeClientBackend#WEB_CLIENT}.
+     *
      * @see ExchangeClientBackend
+     * @since 3.2.0
      */
     private ExchangeClientBackend backend = ExchangeClientBackend.REST_CLIENT;
     /**
@@ -68,6 +71,20 @@ public class HttpExchangeProperties implements InitializingBean {
      * @since 3.2.0
      */
     private boolean requestMappingSupportEnabled = false;
+    /**
+     * Connect timeout duration, specified in milliseconds.
+     * Negative, zero, or null values indicate that the timeout is not set.
+     *
+     * @since 3.2.0
+     */
+    private Integer connectTimeout;
+    /**
+     * Read timeout duration, specified in milliseconds.
+     * Negative, zero, or null values indicate that the timeout is not set.
+     *
+     * @since 3.2.0
+     */
+    private Integer readTimeout;
 
     @Data
     @NoArgsConstructor
@@ -109,11 +126,17 @@ public class HttpExchangeProperties implements InitializingBean {
             if (chan.getBackend() == null) {
                 chan.setBackend(backend);
             }
+            if (chan.getConnectTimeout() == null) {
+                chan.setConnectTimeout(connectTimeout);
+            }
+            if (chan.getReadTimeout() == null) {
+                chan.setReadTimeout(readTimeout);
+            }
         }
     }
 
     HttpExchangeProperties.Channel defaultClient() {
-        return new Channel(null, baseUrl, headers, backend, List.of(), List.of());
+        return new Channel(null, baseUrl, headers, backend, connectTimeout, readTimeout, List.of(), List.of());
     }
 
     @Data
@@ -135,9 +158,29 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Backend type, use {@link HttpExchangeProperties#backend} if not set.
          *
+         * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ExchangeClientBackend#WEB_CLIENT}.
+         *
          * @see ExchangeClientBackend
          */
         private ExchangeClientBackend backend;
+        /**
+         * Connection timeout duration, specified in milliseconds.
+         * Negative, zero, or null values indicate that the timeout is not set.
+         *
+         * <p> Use {@link HttpExchangeProperties#connectTimeout} if not set.
+         *
+         * @since 3.2.0
+         */
+        private Integer connectTimeout;
+        /**
+         * Read timeout duration, specified in milliseconds.
+         * Negative, zero, or null values indicate that the timeout is not set.
+         *
+         * <p> Use {@link HttpExchangeProperties#readTimeout} if not set.
+         *
+         * @since 3.2.0
+         */
+        private Integer readTimeout;
         /**
          * Exchange Clients to apply this channel.
          *

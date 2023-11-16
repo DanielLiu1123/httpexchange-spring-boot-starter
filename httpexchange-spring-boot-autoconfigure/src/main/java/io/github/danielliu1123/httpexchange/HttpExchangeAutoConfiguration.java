@@ -15,7 +15,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 
 /**
- * Http Clients Auto Configuration.
+ * Http Exchange Auto Configuration.
  *
  * @author Freeman
  */

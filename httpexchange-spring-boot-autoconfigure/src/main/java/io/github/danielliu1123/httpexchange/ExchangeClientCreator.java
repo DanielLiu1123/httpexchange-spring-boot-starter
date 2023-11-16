@@ -4,15 +4,22 @@ import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
 
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.ssl.SslBundle;
+import org.springframework.boot.web.client.ClientHttpRequestFactories;
+import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -162,7 +169,32 @@ class ExchangeClientCreator {
                         header.getKey(), header.getValues().toArray(String[]::new));
             }
         }
+        if (channelConfig.getConnectTimeout() != null) {
+            builder = builder.setConnectTimeout(Duration.ofMillis(channelConfig.getConnectTimeout()));
+        }
+        if (channelConfig.getReadTimeout() != null) {
+            builder = builder.setReadTimeout(Duration.ofMillis(channelConfig.getReadTimeout()));
+        }
+        builder = builder.requestFactory(() -> getRequestFactory(channelConfig));
         return builder.build();
+    }
+
+    private ClientHttpRequestFactory getRequestFactory(HttpExchangeProperties.Channel channelConfig) {
+        ClientHttpRequestFactorySettings settings = new ClientHttpRequestFactorySettings(
+                Optional.ofNullable(channelConfig.getConnectTimeout())
+                        .map(Duration::ofMillis)
+                        .orElse(null),
+                Optional.ofNullable(channelConfig.getReadTimeout())
+                        .map(Duration::ofMillis)
+                        .orElse(null),
+                (SslBundle) null);
+        ClientHttpRequestFactory requestFactory =
+                beanFactory.getBeanProvider(ClientHttpRequestFactory.class).getIfUnique();
+        return requestFactory != null
+                ? ClientHttpRequestFactories.get(
+                        AopProxyUtils.ultimateTargetClass(requestFactory).asSubclass(ClientHttpRequestFactory.class),
+                        settings)
+                : ClientHttpRequestFactories.get(JdkClientHttpRequestFactory.class, settings);
     }
 
     private WebClient buildWebClient(HttpExchangeProperties.Channel channelConfig) {
@@ -196,6 +228,7 @@ class ExchangeClientCreator {
                     .forEach(header -> builder.defaultHeader(
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
+        builder.requestFactory(getRequestFactory(channelConfig));
         return builder.build();
     }
 
