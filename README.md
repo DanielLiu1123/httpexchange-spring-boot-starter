@@ -80,7 +80,7 @@ Add dependency:
 <dependency>
     <groupId>io.github.danielliu1123</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.1.5</version>
+    <version>3.2.0</version>
 </dependency>
 ```
 
@@ -138,6 +138,45 @@ You can also specify the clients and the packages to scan at the same time.
 
 > `Spring Cloud OpenFeign` does not support using `basePackages` and `clients` at the same time.
 
+### Generate Base Implementation for Server
+
+Generate base implementation for server, you can use the base implementation to implement the server side.
+
+```groovy
+annotationProcessor("io.github.danielliu1123:httpexchange-processor:3.2.0")
+```
+
+```java
+@HttpExchange("/user")
+public interface UserApi {
+    @GetExchange("/{id}")
+    UserDTO getUser(@PathVariable("id") String id);
+}
+```
+
+Generated base implementation:
+
+```java
+public abstract class UserApiBase implements UserApi {
+   @Override
+   public UserDTO getUser(String id) {
+      throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+   }
+}
+```
+
+Use the base implementation to implement the server side:
+
+```java
+@RestController
+public class UserController extends UserApiBase {
+   @Override
+   public UserDTO getUser(String id) {
+      return new UserDTO(id, "Freeman");
+   }
+}
+```
+
 ### Spring Web Annotations Support
 
 Support to use spring web annotations to generate HTTP client, e.g. `@RequestMapping`, `@GetMapping`, `@PostMapping`
@@ -150,6 +189,11 @@ public interface PostApi {
     Post getPost(@PathVariable int id);
 }
 ```
+
+> Since 3.2.x, `@RequestMapping` support is disabled by default, 
+> you can set `http-exchange.request-mapping-support-enabled=true` to enable it.
+> 
+> Consider using `@HttpExchange` instead of `@RequestMapping` if possible.
 
 ### Dynamic Refresh Configuration
 
@@ -177,12 +221,16 @@ You can configure the `base-url`, `timeout` and `headers` for each channel, and 
 ```yaml
 http-exchange:
   base-url: http://api-gateway          # global base-url
-  response-timeout: 10000               # global timeout
+  connect-timeout: 1000                 # global connect-timeout
+  read-timeout: 10000                   # global read-timeout
   headers:                              # global headers
     - key: X-App-Name
       values: ${spring.application.name}
   refresh:
     enabled: true                       # enable dynamic refresh configuration
+  warn-unused-config: true              # warn unused configuration
+  backend: REST_CLIENT                  # use RestClient as backend
+  bean-to-query-enabled: false          # disable bean to query feature
   channels:
     - base-url: http://order            # client specific base-url, will override global base-url
       response-timeout: 1000            # client specific timeout, will override global timeout
@@ -191,7 +239,7 @@ http-exchange:
           values: [value1, value2]
       clients:                          # client to apply this channel
         - OrderApi             
-    - base-url: user
+    - base-url: user                    # schema 'http' can be omitted
       response-timeout: 2000
       clients:
         - UserApi
@@ -264,7 +312,9 @@ Auto convert **non-null simple values** fields of `condition` to query string.
 
 > Simple values: primitive/wrapper types, String, Date, etc.
 
-### Customize Resolvers
+### Customization
+
+#### Add a custom HttpServiceArgumentResolver
 
 ```java
 @Bean
@@ -275,14 +325,25 @@ HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
 
 Auto-detect all of the `HttpServiceArgumentResolver` beans, then apply them to build the `HttpServiceProxyFactory`.
 
+#### Change ClientHttpRequestFactory implementation
+
+Change the `ClientHttpRequestFactory` implementation, e.g. use `OkHttp` instead of `HttpClient`. 
+
+```java
+@Bean
+ClientHttpRequestFactory okHttpClientHttpRequestFactory() {
+   return ClientHttpRequestFactories.get(OkHttp3ClientHttpRequestFactory.class, ClientHttpRequestFactorySettings.DEFAULTS);
+}
+```
+
 ## Version
 
 The version of this project is kept in sync with Spring Boot 3,
-if you are using Spring Boot 3.1.5, then `httpexchange-spring-boot-starter` 3.1.5 should be used.
+if you are using Spring Boot 3.2.0, then `httpexchange-spring-boot-starter` 3.2.0 should be used.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.1.5       | 3.1.5                            |
+| 3.2.0       | 3.2.0                            |
 
 ## License
 

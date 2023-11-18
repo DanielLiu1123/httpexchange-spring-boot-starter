@@ -39,7 +39,7 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Environ
 
         // Shouldn't scan base packages when using clients property
         // see https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/1
-        Class<?>[] clientClasses = (Class<?>[]) attrs.getOrDefault("clients", new Class<?>[0]);
+        Class<?>[] clientClasses = getClients(attrs);
         String[] basePackages = getBasePackages(attrs);
         if (clientClasses.length > 0) {
             registerClassesAsHttpExchange(registry, clientClasses);
@@ -58,6 +58,11 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Environ
         }
 
         registrar.register(basePackages);
+    }
+
+    private Class<?>[] getClients(Map<String, Object> attrs) {
+        Class<?>[] clients = (Class<?>[]) attrs.getOrDefault("clients", new Class<?>[0]);
+        return !ObjectUtils.isEmpty(clients) ? clients : properties.getClients().toArray(new Class<?>[0]);
     }
 
     private String[] getBasePackages(Map<String, Object> attrs) {

@@ -32,6 +32,10 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     private Set<String> basePackages = new LinkedHashSet<>();
     /**
+     * Exchange client interfaces to register as beans, use {@link EnableExchangeClients#clients} first if configured.
+     */
+    private Set<Class<?>> clients = new LinkedHashSet<>();
+    /**
      * Default base url.
      *
      * <p> e.g. {@code localhost:8080}, {@code http://localhost:8080}, {@code https://localhost:8080}
