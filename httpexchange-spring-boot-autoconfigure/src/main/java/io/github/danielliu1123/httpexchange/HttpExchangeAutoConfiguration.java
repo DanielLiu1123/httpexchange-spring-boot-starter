@@ -12,10 +12,14 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.client.ClientHttpRequestFactories;
+import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 
 /**
- * Http Clients Auto Configuration.
+ * Http Exchange Auto Configuration.
  *
  * @author Freeman
  */
@@ -40,6 +44,16 @@ public class HttpExchangeAutoConfiguration implements CommandLineRunner, Disposa
     @ConditionalOnMissingBean
     public BeanParamArgumentResolver beanParamArgumentResolver(HttpExchangeProperties properties) {
         return new BeanParamArgumentResolver(properties);
+    }
+
+    /**
+     * Using {@link java.net.http.HttpClient} as default.
+     */
+    @Bean
+    @ConditionalOnMissingBean(ClientHttpRequestFactory.class)
+    public ClientHttpRequestFactory httpExchangeClientHttpRequestFactory() {
+        return ClientHttpRequestFactories.get(
+                JdkClientHttpRequestFactory.class, ClientHttpRequestFactorySettings.DEFAULTS);
     }
 
     @Override

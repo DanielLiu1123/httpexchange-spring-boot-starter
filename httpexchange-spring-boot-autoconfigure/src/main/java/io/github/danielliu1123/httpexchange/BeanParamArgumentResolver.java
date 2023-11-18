@@ -18,8 +18,10 @@ import org.springframework.core.MethodParameter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.service.invoker.HttpRequestValues;
 import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
+import org.springframework.web.util.UriBuilderFactory;
 
 /**
  * {@link BeanParamArgumentResolver} used to convert Java bean to request parameters.
@@ -92,6 +94,8 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
         return argument == null
                 || argument instanceof URI // UrlArgumentResolver
                 || argument instanceof HttpMethod // HttpMethodArgumentResolver
+                || argument instanceof UriBuilderFactory // UriBuilderFactoryArgumentResolver
+                || argument instanceof MultipartFile // RequestPartArgumentResolver
                 || BeanUtils.isSimpleValueType(argument.getClass())
                 || hasWebBindPackageAnnotation(parameter);
     }
