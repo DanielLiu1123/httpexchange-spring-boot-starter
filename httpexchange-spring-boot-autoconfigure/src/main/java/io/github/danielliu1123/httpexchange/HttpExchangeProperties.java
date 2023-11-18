@@ -85,6 +85,10 @@ public class HttpExchangeProperties implements InitializingBean {
      * @since 3.2.0
      */
     private Integer readTimeout;
+    /**
+     * Whether to check unused configuration, default {@code true}.
+     */
+    private boolean warnUnusedConfig = true;
 
     @Data
     @NoArgsConstructor
