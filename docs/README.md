@@ -73,7 +73,7 @@ Add dependency:
 <dependency>
     <groupId>io.github.danielliu1123</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.1.4</version>
+    <version>3.1.5</version>
 </dependency>
 ```
 
@@ -295,8 +295,8 @@ Auto-detect `HttpServiceProxyFactory.Builder` bean in the application context, a
 ## Version
 
 The version of this project is kept in sync with Spring Boot 3,
-if you are using Spring Boot 3.1.4, then `httpexchange-spring-boot-starter` 3.1.4 should be used.
+if you are using Spring Boot 3.1.5, then `httpexchange-spring-boot-starter` 3.1.5 should be used.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.1.4       | 3.1.4                            |
+| 3.1.5       | 3.1.5                            |
