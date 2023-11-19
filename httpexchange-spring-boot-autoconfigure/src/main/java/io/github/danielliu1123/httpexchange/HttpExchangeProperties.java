@@ -36,7 +36,7 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     private Set<Class<?>> clients = new LinkedHashSet<>();
     /**
-     * Default base url.
+     * Default base url, 'http' scheme can be omitted.
      *
      * <p> e.g. {@code localhost:8080}, {@code http://localhost:8080}, {@code https://localhost:8080}
      */
@@ -156,7 +156,7 @@ public class HttpExchangeProperties implements InitializingBean {
          */
         private String name;
         /**
-         * Base url, use {@link HttpExchangeProperties#baseUrl} if not set.
+         * Base url, 'http' scheme can be omitted, use {@link HttpExchangeProperties#baseUrl} if not set.
          */
         private String baseUrl;
         /**

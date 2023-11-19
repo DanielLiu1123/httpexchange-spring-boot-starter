@@ -1,10 +1,10 @@
 package io.github.danielliu1123.httpexchange;
 
+import java.util.Set;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 import org.springframework.util.ObjectUtils;
@@ -24,12 +24,18 @@ class HttpClientBeanDefinitionRegistry implements BeanDefinitionRegistryPostProc
         if (HttpClientBeanRegistrar.hasRegistered(registry)) {
             return;
         }
-        String[] packages = getBasePackages(environment);
-        if (ObjectUtils.isEmpty(packages)) {
-            return;
+
+        this.properties = (properties == null ? Util.getProperties(environment) : properties);
+        this.registrar = (registrar == null ? new HttpClientBeanRegistrar(properties, registry) : registrar);
+
+        String[] basePackages = properties.getBasePackages().toArray(String[]::new);
+        if (!ObjectUtils.isEmpty(basePackages)) {
+            registrar.register(basePackages);
         }
-        init(registry);
-        registrar.register(packages);
+        Set<Class<?>> clients = properties.getClients();
+        if (!ObjectUtils.isEmpty(clients)) {
+            registrar.register(clients.toArray(Class<?>[]::new));
+        }
     }
 
     @Override
@@ -40,16 +46,5 @@ class HttpClientBeanDefinitionRegistry implements BeanDefinitionRegistryPostProc
     @Override
     public void setEnvironment(Environment environment) {
         this.environment = environment;
-    }
-
-    private void init(BeanDefinitionRegistry registry) {
-        this.properties = (properties == null ? Util.getProperties(environment) : properties);
-        this.registrar = (registrar == null ? new HttpClientBeanRegistrar(properties, registry) : registrar);
-    }
-
-    private static String[] getBasePackages(Environment environment) {
-        return Binder.get(environment)
-                .bind(HttpExchangeProperties.PREFIX + ".base-packages", String[].class)
-                .orElse(new String[0]);
     }
 }

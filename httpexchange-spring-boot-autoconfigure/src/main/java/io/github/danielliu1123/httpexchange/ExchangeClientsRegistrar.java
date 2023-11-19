@@ -31,7 +31,8 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Environ
             return;
         }
 
-        init(registry);
+        this.properties = (properties == null ? Util.getProperties(environment) : properties);
+        this.registrar = (registrar == null ? new HttpClientBeanRegistrar(properties, registry) : registrar);
 
         Map<String, Object> attrs = Optional.ofNullable(
                         metadata.getAnnotationAttributes(EnableExchangeClients.class.getName()))
@@ -39,10 +40,10 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Environ
 
         // Shouldn't scan base packages when using clients property
         // see https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/1
-        Class<?>[] clientClasses = getClients(attrs);
         String[] basePackages = getBasePackages(attrs);
+        Class<?>[] clientClasses = getClients(attrs);
         if (clientClasses.length > 0) {
-            registerClassesAsHttpExchange(registry, clientClasses);
+            registrar.register(clientClasses);
             if (basePackages.length > 0) {
                 // @EnableExchangeClients(basePackages = "com.example.api", clients = {UserHobbyApi.class})
                 // should scan basePackages and register specified clients
@@ -70,16 +71,5 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Environ
         return !ObjectUtils.isEmpty(basePackages)
                 ? basePackages
                 : properties.getBasePackages().toArray(new String[0]);
-    }
-
-    private void init(BeanDefinitionRegistry registry) {
-        this.properties = (properties == null ? Util.getProperties(environment) : properties);
-        this.registrar = (registrar == null ? new HttpClientBeanRegistrar(properties, registry) : registrar);
-    }
-
-    private void registerClassesAsHttpExchange(BeanDefinitionRegistry registry, Class<?>[] classes) {
-        for (Class<?> clz : classes) {
-            registrar.registerHttpClientBean(registry, clz.getName());
-        }
     }
 }

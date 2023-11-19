@@ -24,7 +24,6 @@ import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -63,10 +62,14 @@ class HttpClientBeanRegistrar {
      * @param basePackages base packages to scan
      */
     public void register(String... basePackages) {
-        Set<String> packages = !ObjectUtils.isEmpty(basePackages)
-                ? Set.copyOf(Arrays.asList(basePackages))
-                : properties.getBasePackages();
+        Set<String> packages = Set.copyOf(Arrays.asList(basePackages));
         registerBeans4BasePackages(packages);
+    }
+
+    public void register(Class<?>... clients) {
+        for (Class<?> client : clients) {
+            registerHttpClientBean(registry, client.getName());
+        }
     }
 
     /**
@@ -75,7 +78,7 @@ class HttpClientBeanRegistrar {
      * @param registry  {@link BeanDefinitionRegistry}
      * @param className class name of HTTP client interface
      */
-    public void registerHttpClientBean(BeanDefinitionRegistry registry, String className) {
+    private void registerHttpClientBean(BeanDefinitionRegistry registry, String className) {
         Class<?> clz;
         try {
             clz = Class.forName(className);
