@@ -59,7 +59,7 @@ _**So what is the problem? 🤔**_
    There's no autoconfiguration for the clients, you need to create client beans manually.
    This is excruciating if you have many clients.
 
-   If you are familiar with `Spring Cloud OpenFeign`, you will find `@EnableFeignClients` is very useful, it reduces a
+   If you are familiar with `Spring Cloud OpenFeign`, you will find `@EnableFeignClients` is beneficial, it reduces a
    lot of boilerplate code.
 
 2. Not support Spring web annotations
@@ -138,6 +138,19 @@ You can also specify the clients and the packages to scan at the same time.
 
 > `Spring Cloud OpenFeign` does not support using `basePackages` and `clients` at the same time.
 
+If you don't want to introduce external classes, you can achieve the same functionality using configuration:
+
+```yaml
+http-exchange:
+   base-packages: com.example
+   clients:
+     - com.foo.PostApi
+     - com.bar.UserApi
+```
+
+> If both configuration and annotations are used, the annotation value will be used first.
+
+
 ### Generate Base Implementation for Server
 
 Generate base implementation for server, you can use the base implementation to implement the server side.
@@ -164,6 +177,8 @@ public abstract class UserApiBase implements UserApi {
    }
 }
 ```
+
+> Generated abstract class name is the interface name with suffix `Base`.
 
 Use the base implementation to implement the server side:
 
@@ -263,7 +278,7 @@ http-exchange:
       classes: [com.example.PostApi] # Class canonical name    
 ```
 
-> configuration `clients` is more flexible, it supports Ant-style pattern, `classes` is more IDE-friendly and efficient.
+> Configuration `clients` is more flexible, it supports Ant-style pattern, `classes` is more IDE-friendly and efficient.
 
 ### Url Variables
 
@@ -327,14 +342,28 @@ Auto-detect all of the `HttpServiceArgumentResolver` beans, then apply them to b
 
 #### Change ClientHttpRequestFactory implementation
 
-Change the `ClientHttpRequestFactory` implementation, e.g. use `OkHttp` instead of `HttpClient`. 
+There are many built-in implementations of `ClientHttpRequestFactory`, we use `JdkClientHttpRequestFactory` by default.
+You can change it another implementation, such as `ReactorNettyClientRequestFactory`.
 
 ```java
 @Bean
 ClientHttpRequestFactory okHttpClientHttpRequestFactory() {
-   return ClientHttpRequestFactories.get(OkHttp3ClientHttpRequestFactory.class, ClientHttpRequestFactorySettings.DEFAULTS);
+   return ClientHttpRequestFactories.get(ReactorNettyClientRequestFactory.class, ClientHttpRequestFactorySettings.DEFAULTS);
 }
 ```
+
+#### Change Http Client Implementation
+
+There are three adapters for HttpExchange client: `RestClientAdapter`,
+`WebClientAdapter` and `RestTemplateAdapter`, we use `REST_CLIENT` by default,
+you can change it to `WEB_CLIENT` or `REST_TEMPLATE`.
+
+```yaml
+http-exchange:
+  backend: REST_CLIENT
+```
+
+> ⚠️ **Warning**: The `connectTimeout` and `readTimeout` settings are not supported by `WEB_CLIENT`.
 
 ## Version
 
