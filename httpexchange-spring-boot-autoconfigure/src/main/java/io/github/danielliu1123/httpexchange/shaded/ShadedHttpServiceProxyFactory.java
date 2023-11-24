@@ -53,6 +53,7 @@ import org.springframework.web.service.invoker.RequestBodyArgumentResolver;
 import org.springframework.web.service.invoker.RequestHeaderArgumentResolver;
 import org.springframework.web.service.invoker.RequestParamArgumentResolver;
 import org.springframework.web.service.invoker.RequestPartArgumentResolver;
+import org.springframework.web.service.invoker.UriBuilderFactoryArgumentResolver;
 import org.springframework.web.service.invoker.UrlArgumentResolver;
 import reactor.core.publisher.Mono;
 
@@ -64,10 +65,10 @@ import reactor.core.publisher.Mono;
  * {@link Builder Builder}.
  *
  * @author Rossen Stoyanchev
- * @since 6.0
  * @see org.springframework.web.client.support.RestClientAdapter
  * @see org.springframework.web.reactive.function.client.support.WebClientAdapter
  * @see org.springframework.web.client.support.RestTemplateAdapter
+ * @since 6.0
  */
 public final class ShadedHttpServiceProxyFactory {
 
@@ -91,8 +92,9 @@ public final class ShadedHttpServiceProxyFactory {
     /**
      * Return a proxy that implements the given HTTP service interface to perform
      * HTTP requests and retrieve responses through an HTTP client.
+     *
      * @param serviceType the HTTP service to create a proxy for
-     * @param <S> the HTTP service type
+     * @param <S>         the HTTP service type
      * @return the created proxy
      */
     public <S> S createClient(Class<S> serviceType) {
@@ -119,6 +121,7 @@ public final class ShadedHttpServiceProxyFactory {
 
     /**
      * Return a builder that's initialized with the given client.
+     *
      * @since 6.1
      */
     public static Builder builderFor(HttpExchangeAdapter exchangeAdapter) {
@@ -127,6 +130,7 @@ public final class ShadedHttpServiceProxyFactory {
 
     /**
      * Return a builder that's initialized with the given client.
+     *
      * @deprecated in favor of {@link #builderFor(HttpExchangeAdapter)};
      * to be removed in 6.2.
      */
@@ -148,7 +152,7 @@ public final class ShadedHttpServiceProxyFactory {
      */
     public static final class Builder {
 
-        //        @Nullable
+        @Nullable
         private HttpExchangeAdapter exchangeAdapter;
 
         private final List<HttpServiceArgumentResolver> customArgumentResolvers = new ArrayList<>();
@@ -163,6 +167,7 @@ public final class ShadedHttpServiceProxyFactory {
 
         /**
          * Provide the HTTP client to perform requests through.
+         *
          * @param adapter a client adapted to {@link HttpExchangeAdapter}
          * @return this same builder instance
          * @since 6.1
@@ -174,6 +179,7 @@ public final class ShadedHttpServiceProxyFactory {
 
         /**
          * Provide the HTTP client to perform requests through.
+         *
          * @param clientAdapter a client adapted to {@link HttpClientAdapter}
          * @return this same builder instance
          * @deprecated in favor of {@link #exchangeAdapter(HttpExchangeAdapter)};
@@ -188,6 +194,7 @@ public final class ShadedHttpServiceProxyFactory {
 
         /**
          * Register a custom argument resolver, invoked ahead of default resolvers.
+         *
          * @param resolver the resolver to add
          * @return this same builder instance
          */
@@ -200,6 +207,7 @@ public final class ShadedHttpServiceProxyFactory {
          * Set the {@link ConversionService} to use where input values need to
          * be formatted as Strings.
          * <p>By default this is {@link DefaultFormattingConversionService}.
+         *
          * @return this same builder instance
          */
         public Builder conversionService(ConversionService conversionService) {
@@ -210,6 +218,7 @@ public final class ShadedHttpServiceProxyFactory {
         /**
          * Set the {@link StringValueResolver} to use for resolving placeholders
          * and expressions embedded in {@link HttpExchange#url()}.
+         *
          * @param embeddedValueResolver the resolver to use
          * @return this same builder instance
          */
@@ -222,6 +231,7 @@ public final class ShadedHttpServiceProxyFactory {
          * Set the {@link ReactiveAdapterRegistry} to use to support different
          * asynchronous types for HTTP service method return values.
          * <p>By default this is {@link ReactiveAdapterRegistry#getSharedInstance()}.
+         *
          * @return this same builder instance
          * @deprecated in favor of setting the same directly on the {@link HttpExchangeAdapter}
          */
@@ -240,6 +250,7 @@ public final class ShadedHttpServiceProxyFactory {
          * connection and request timeout settings of the underlying HTTP client.
          * We recommend configuring timeout values directly on the underlying HTTP
          * client, which provides more control over such settings.
+         *
          * @param blockTimeout the timeout value
          * @return this same builder instance
          * @deprecated in favor of setting the same directly on the {@link HttpExchangeAdapter}
@@ -285,6 +296,7 @@ public final class ShadedHttpServiceProxyFactory {
 
             // Specific type
             resolvers.add(new UrlArgumentResolver());
+            resolvers.add(new UriBuilderFactoryArgumentResolver());
             resolvers.add(new HttpMethodArgumentResolver());
 
             return resolvers;
