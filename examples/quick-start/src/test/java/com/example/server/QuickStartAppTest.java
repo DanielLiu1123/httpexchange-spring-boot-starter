@@ -31,7 +31,7 @@ class QuickStartAppTest {
     void testGetUser_whenArgIsInvalid() {
         assertThatCode(() -> userApi.getById("111111"))
                 .isInstanceOf(ConstraintViolationException.class)
-                .hasMessage("getUser.id: length must be between 0 and 5");
+                .hasMessage("getById.id: length must be between 0 and 5");
     }
 
     @Test
