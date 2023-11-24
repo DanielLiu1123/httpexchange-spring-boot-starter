@@ -1,78 +1,80 @@
 plugins {
-    id 'java-library'
-    id 'com.diffplug.spotless' version "${spotlessVersion}"
-    id 'com.github.spotbugs' version "${spotbugsVersion}"
+    id 'com.diffplug.spotless' version "${spotlessVersion}" apply false
+    id 'com.github.spotbugs' version "${spotbugsVersion}" apply false
+    id 'io.spring.dependency-management' version "${springDependencyManagementVersion}" apply false
 }
 
-repositories {
-    mavenCentral()
-    maven {
-        url "https://repo.spring.io/snapshot"
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'java-library'
+
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://repo.spring.io/snapshot"
+        }
+        maven {
+            url "https://repo.spring.io/milestone"
+        }
     }
-    maven {
-        url "https://repo.spring.io/milestone"
-    }
-}
 
-dependencies {
-    api(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
-    annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
-    compileOnly(platform("org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"))
-    testImplementation(platform("org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"))
-
-    api("org.springframework.boot:spring-boot-starter")
-    api("org.springframework:spring-webflux")
-
-    // dynamic refresh configuration for exchange clients
-    compileOnly("org.springframework.cloud:spring-cloud-context")
-
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("com.freemanan:classpath-replacer-junit5:${classpathReplacerVersion}")
-
-    testCompileOnly("org.springframework.boot:spring-boot-starter-web")
-    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
-    testImplementation("org.springframework.boot:spring-boot-starter-validation")
-    testImplementation("org.springframework.cloud:spring-cloud-context")
-}
-
-compileJava {
-    options.encoding = 'UTF-8'
-    options.compilerArgs << '-parameters'
-}
-
-compileTestJava {
-    options.encoding = 'UTF-8'
-    options.compilerArgs << '-parameters'
-}
-
-test {
-    useJUnitPlatform()
-}
-
-spotless {
-    encoding 'UTF-8'
     java {
-        toggleOffOn()
-        removeUnusedImports()
-        trimTrailingWhitespace()
-        endWithNewline()
-        palantirJavaFormat()
-
-        custom('Refuse wildcard imports', {
-            if (it =~ /\nimport .*\*;/) {
-                throw new IllegalStateException("Do not use wildcard imports, 'spotlessApply' cannot resolve this issue, please fix it manually.")
-            }
-        } as Closure<String>)
+        registerFeature('optionalSupport') {
+            usingSourceSet(sourceSets.main)
+        }
     }
-}
 
-spotbugs {
-    spotbugsTest.enabled = false
-    omitVisitors.addAll('FindReturnRef', 'DontReusePublicIdentifiers')
+    apply plugin: 'io.spring.dependency-management'
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
+    }
+    dependencies {
+        compileOnly("org.projectlombok:lombok")
+        annotationProcessor("org.projectlombok:lombok")
+        testCompileOnly("org.projectlombok:lombok")
+        testAnnotationProcessor("org.projectlombok:lombok")
+    }
+
+    compileJava {
+        options.encoding = 'UTF-8'
+        options.compilerArgs << '-parameters'
+    }
+
+    compileTestJava {
+        options.encoding = 'UTF-8'
+        options.compilerArgs << '-parameters'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+    apply plugin: 'com.diffplug.spotless'
+    spotless {
+        encoding 'UTF-8'
+        java {
+            toggleOffOn()
+            removeUnusedImports()
+            trimTrailingWhitespace()
+            endWithNewline()
+            palantirJavaFormat()
+
+            custom('Refuse wildcard imports', {
+                if (it =~ /\nimport .*\*;/) {
+                    throw new IllegalStateException("Do not use wildcard imports, 'spotlessApply' cannot resolve this issue, please fix it manually.")
+                }
+            } as Closure<String>)
+        }
+    }
+
+    apply plugin: 'com.github.spotbugs'
+    spotbugs {
+        spotbugsTest.enabled = false
+        omitVisitors.addAll('FindReturnRef', 'DontReusePublicIdentifiers')
+    }
 }
 
 tasks.register('installGitHook', Copy) {
@@ -81,5 +83,3 @@ tasks.register('installGitHook', Copy) {
     fileMode 0775
 }
 compileJava.dependsOn installGitHook
-
-apply from: "${rootDir}/gradle/deploy.gradle"

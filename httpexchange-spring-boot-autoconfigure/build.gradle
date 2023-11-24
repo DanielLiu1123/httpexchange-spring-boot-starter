@@ -1,0 +1,24 @@
+dependencies {
+    api("org.springframework.boot:spring-boot-starter")
+    api("org.springframework:spring-web")
+    compileOnly("org.springframework:spring-webflux")
+
+    compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+
+    // dynamic refresh configuration for exchange clients
+    compileOnly("org.springframework.cloud:spring-cloud-context")
+
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
+    testImplementation("org.springframework:spring-webflux")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("com.freemanan:classpath-replacer-junit5:${classpathReplacerVersion}")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-web")
+    testImplementation("org.springframework.boot:spring-boot-starter-validation")
+    testImplementation("org.springframework.cloud:spring-cloud-context")
+}
+
+apply from: "${rootDir}/gradle/deploy.gradle"

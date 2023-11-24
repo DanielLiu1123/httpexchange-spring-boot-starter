@@ -71,9 +71,9 @@ Add dependency:
 
 ```xml
 <dependency>
-    <groupId>com.freemanan</groupId>
+    <groupId>io.github.danielliu1123</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.1.5</version>
+    <version>3.2.0</version>
 </dependency>
 ```
 
@@ -221,6 +221,18 @@ public interface PostApi {
 }
 ```
 
+Using `UrlPlaceholderStringValueResolver` to resolve the placeholder by default if `HttpServiceProxyFactory.Builder` bean does not configure `StringValueResolver`.
+
+If You want to customize the `StringValueResolver` and still use the placeholder resolution feature, you can wrap your `StringValueResolver` with `UrlPlaceholderStringValueResolver` and set it to `HttpServiceProxyFactory.Builder`.
+
+```java
+@Bean
+public HttpServiceProxyFactory.Builder httpServiceProxyFactoryBuilder(Environment env) {
+    return HttpServiceProxyFactory.builder()
+            .embeddedValueResolver(UrlPlaceholderStringValueResolver.create(env, new MyStringValueResolver()));
+}
+```
+
 ### Validation
 
 ```java
@@ -245,7 +257,7 @@ default. In `Spring Cloud OpenFeign` you need `@SpringQueryMap` to achieve this 
 `httpexhange-spring-boot-starter` supports this feature, and you don't need any additional annotations.
 
 > In order not to change the default behavior of Spring, this feature is disabled by default,
-> you can set `http-exchange.bean-to-query=true` to enable it.
+> you can set `http-exchange.bean-to-query-enabled=true` to enable it.
 
 ```java
 public interface PostApi {
@@ -256,30 +268,35 @@ public interface PostApi {
 
 Auto convert **non-null simple values** fields of `condition` to query string.
 
-> Simple values: primitive/wrapper types, String, Date, etc.
-
-### Customize Resolvers
+If you don't want to enable this feature globally, you can use `@BeanParam` annotation to enable it for specific parameter.
 
 ```java
-@Bean
-HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
-  return new YourHttpServiceArgumentResolver();
-}
-
-@Bean
-StringValueResolver yourStringValueResolver() {
-  return new YourStringValueResolver();
+public interface PostApi {
+  @GetExchange
+  List<Post> findAll(@BeanParam Post condition);
 }
 ```
 
-Auto-detect all of the `HttpServiceArgumentResolver` beans and `StringValueResolver` (only one), then apply them to build
-the `HttpServiceProxyFactory`.
+> Simple values: primitive/wrapper types, String, Date, etc.
+
+### Customize HttpServiceProxyFactory.Builder
+
+```java
+@Bean
+public HttpServiceProxyFactory.Builder httpServiceProxyFactoryBuilder() {
+    return HttpServiceProxyFactory.builder()
+            .argumentResolver(new MyHttpServiceArgumentResolver())
+            .stringValueResolver(new MyStringValueResolver());
+}
+```
+
+Auto-detect `HttpServiceProxyFactory.Builder` bean in the application context, and use it to build the proxy beans.
 
 ## Version
 
 The version of this project is kept in sync with Spring Boot 3,
-if you are using Spring Boot 3.1.5, then `httpexchange-spring-boot-starter` 3.1.5 should be used.
+if you are using Spring Boot 3.2.0, then `httpexchange-spring-boot-starter` 3.2.0 should be used.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.1.5       | 3.1.5                            |
+| 3.2.0       | 3.2.0                            |

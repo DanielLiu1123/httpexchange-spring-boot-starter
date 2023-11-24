@@ -1,7 +1,7 @@
 # Http Exchange Spring Boot Starter
 
 [![Build](https://img.shields.io/github/actions/workflow/status/DanielLiu1123/httpexchange-spring-boot-starter/build.yml?branch=main)](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/actions)
-[![Maven Central](https://img.shields.io/maven-central/v/com.freemanan/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/com.freemanan/httpexchange-spring-boot-starter)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.danielliu1123/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/io.github.danielliu1123/httpexchange-spring-boot-starter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [Documentation](https://danielliu1123.github.io/httpexchange-spring-boot-starter/)
@@ -59,7 +59,7 @@ _**So what is the problem? 🤔**_
    There's no autoconfiguration for the clients, you need to create client beans manually.
    This is excruciating if you have many clients.
 
-   If you are familiar with `Spring Cloud OpenFeign`, you will find `@EnableFeignClients` is very useful, it reduces a
+   If you are familiar with `Spring Cloud OpenFeign`, you will find `@EnableFeignClients` is beneficial, it reduces a
    lot of boilerplate code.
 
 2. Not support Spring web annotations
@@ -78,9 +78,9 @@ Add dependency:
 
 ```xml
 <dependency>
-    <groupId>com.freemanan</groupId>
+    <groupId>io.github.danielliu1123</groupId>
     <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.1.5</version>
+    <version>3.2.0</version>
 </dependency>
 ```
 
@@ -138,6 +138,60 @@ You can also specify the clients and the packages to scan at the same time.
 
 > `Spring Cloud OpenFeign` does not support using `basePackages` and `clients` at the same time.
 
+If you don't want to introduce external classes, you can achieve the same functionality using configuration:
+
+```yaml
+http-exchange:
+   base-packages: com.example
+   clients:
+     - com.foo.PostApi
+     - com.bar.UserApi
+```
+
+> If both configuration and annotations are used, the annotation value will be used first.
+
+
+### Generate Base Implementation for Server
+
+Generate base implementation for server, you can use the base implementation to implement the server side.
+
+```groovy
+annotationProcessor("io.github.danielliu1123:httpexchange-processor:3.2.0")
+```
+
+```java
+@HttpExchange("/user")
+public interface UserApi {
+    @GetExchange("/{id}")
+    UserDTO getUser(@PathVariable("id") String id);
+}
+```
+
+Generated base implementation:
+
+```java
+public abstract class UserApiBase implements UserApi {
+   @Override
+   public UserDTO getUser(String id) {
+      throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+   }
+}
+```
+
+> Generated abstract class name is the interface name with suffix `Base`.
+
+Use the base implementation to implement the server side:
+
+```java
+@RestController
+public class UserController extends UserApiBase {
+   @Override
+   public UserDTO getUser(String id) {
+      return new UserDTO(id, "Freeman");
+   }
+}
+```
+
 ### Spring Web Annotations Support
 
 Support to use spring web annotations to generate HTTP client, e.g. `@RequestMapping`, `@GetMapping`, `@PostMapping`
@@ -150,6 +204,11 @@ public interface PostApi {
     Post getPost(@PathVariable int id);
 }
 ```
+
+> Since 3.2.x, `@RequestMapping` support is disabled by default, 
+> you can set `http-exchange.request-mapping-support-enabled=true` to enable it.
+> 
+> Consider using `@HttpExchange` instead of `@RequestMapping` if possible.
 
 ### Dynamic Refresh Configuration
 
@@ -177,12 +236,16 @@ You can configure the `base-url`, `timeout` and `headers` for each channel, and 
 ```yaml
 http-exchange:
   base-url: http://api-gateway          # global base-url
-  response-timeout: 10000               # global timeout
+  connect-timeout: 1000                 # global connect-timeout
+  read-timeout: 10000                   # global read-timeout
   headers:                              # global headers
     - key: X-App-Name
       values: ${spring.application.name}
   refresh:
     enabled: true                       # enable dynamic refresh configuration
+  warn-unused-config: true              # warn unused configuration
+  client-type: REST_CLIENT              # use RestClient 
+  bean-to-query-enabled: false          # disable bean to query feature
   channels:
     - base-url: http://order            # client specific base-url, will override global base-url
       response-timeout: 1000            # client specific timeout, will override global timeout
@@ -191,7 +254,7 @@ http-exchange:
           values: [value1, value2]
       clients:                          # client to apply this channel
         - OrderApi             
-    - base-url: user
+    - base-url: user                    # schema 'http' can be omitted
       response-timeout: 2000
       clients:
         - UserApi
@@ -215,7 +278,7 @@ http-exchange:
       classes: [com.example.PostApi] # Class canonical name    
 ```
 
-> configuration `clients` is more flexible, it supports Ant-style pattern, `classes` is more IDE-friendly and efficient.
+> Configuration `clients` is more flexible, it supports Ant-style pattern, `classes` is more IDE-friendly and efficient.
 
 ### Url Variables
 
@@ -240,7 +303,7 @@ public interface PostApi {
 
 > This feature needs `spring-boot` version >= 3.0.3,
 > see [issue](https://github.com/spring-projects/spring-framework/issues/29782)
-> and [tests](src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
+> and [tests](httpexchange-spring-boot-autoconfigure/src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
 
 ### Convert Java Bean to Query
 
@@ -251,7 +314,7 @@ default. In `Spring Cloud OpenFeign` you need `@SpringQueryMap` to achieve this 
 `httpexhange-spring-boot-starter` supports this feature, and you don't need any additional annotations.
 
 > In order not to change the default behavior of Spring, this feature is disabled by default, 
-> you can set `http-exchange.bean-to-query=true` to enable it.
+> you can set `http-exchange.bean-to-query-enabled=true` to enable it.
 
 ```java
 public interface PostApi {
@@ -264,7 +327,9 @@ Auto convert **non-null simple values** fields of `condition` to query string.
 
 > Simple values: primitive/wrapper types, String, Date, etc.
 
-### Customize Resolvers
+### Customization
+
+#### Add a custom HttpServiceArgumentResolver
 
 ```java
 @Bean
@@ -275,14 +340,39 @@ HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
 
 Auto-detect all of the `HttpServiceArgumentResolver` beans, then apply them to build the `HttpServiceProxyFactory`.
 
+#### Change ClientHttpRequestFactory implementation
+
+There are many built-in implementations of `ClientHttpRequestFactory`, we use `JdkClientHttpRequestFactory` by default.
+You can change it another implementation, such as `ReactorNettyClientRequestFactory`.
+
+```java
+@Bean
+ClientHttpRequestFactory okHttpClientHttpRequestFactory() {
+   return ClientHttpRequestFactories.get(ReactorNettyClientRequestFactory.class, ClientHttpRequestFactorySettings.DEFAULTS);
+}
+```
+
+#### Change Http Client Implementation
+
+There are three adapters for HttpExchange client: `RestClientAdapter`,
+`WebClientAdapter` and `RestTemplateAdapter`, we use `REST_CLIENT` by default,
+you can change it to `WEB_CLIENT` or `REST_TEMPLATE`.
+
+```yaml
+http-exchange:
+  client-type: REST_CLIENT
+```
+
+> ⚠️ **Warning**: The `connectTimeout` and `readTimeout` settings are not supported by `WEB_CLIENT`.
+
 ## Version
 
 The version of this project is kept in sync with Spring Boot 3,
-if you are using Spring Boot 3.1.5, then `httpexchange-spring-boot-starter` 3.1.5 should be used.
+if you are using Spring Boot 3.2.0, then `httpexchange-spring-boot-starter` 3.2.0 should be used.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.1.5       | 3.1.5                            |
+| 3.2.0       | 3.2.0                            |
 
 ## License
 

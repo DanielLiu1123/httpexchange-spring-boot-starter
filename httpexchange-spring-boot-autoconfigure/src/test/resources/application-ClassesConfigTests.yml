@@ -1,0 +1,5 @@
+http-exchange:
+  channels:
+    - base-url: localhost:${server.port}
+      classes:
+        - io.github.danielliu1123.httpexchange.ClassesConfigTests.FooApi

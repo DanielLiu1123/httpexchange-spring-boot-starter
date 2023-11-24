@@ -1,0 +1,9 @@
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation(project(":starters:httpexchange-spring-boot-starter"))
+
+    annotationProcessor(project(":httpexchange-processor"))
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
