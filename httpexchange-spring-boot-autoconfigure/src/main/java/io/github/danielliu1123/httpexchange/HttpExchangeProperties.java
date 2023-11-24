@@ -58,14 +58,14 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     private Refresh refresh = new Refresh();
     /**
-     * Backend type, default {@link ExchangeClientBackend#REST_CLIENT}.
+     * Client type, default {@link ClientType#REST_CLIENT}.
      *
-     * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ExchangeClientBackend#WEB_CLIENT}.
+     * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ClientType#WEB_CLIENT}.
      *
-     * @see ExchangeClientBackend
+     * @see ClientType
      * @since 3.2.0
      */
-    private ExchangeClientBackend backend = ExchangeClientBackend.REST_CLIENT;
+    private ClientType clientType = ClientType.REST_CLIENT;
     /**
      * whether to process {@link org.springframework.web.bind.annotation.RequestMapping} based annotation,
      * default {@code false}.
@@ -131,8 +131,8 @@ public class HttpExchangeProperties implements InitializingBean {
                     .map(e -> new Header(e.getKey(), e.getValue()))
                     .toList();
             chan.setHeaders(mergedHeaders);
-            if (chan.getBackend() == null) {
-                chan.setBackend(backend);
+            if (chan.getClientType() == null) {
+                chan.setClientType(clientType);
             }
             if (chan.getConnectTimeout() == null) {
                 chan.setConnectTimeout(connectTimeout);
@@ -144,7 +144,7 @@ public class HttpExchangeProperties implements InitializingBean {
     }
 
     HttpExchangeProperties.Channel defaultClient() {
-        return new Channel(null, baseUrl, headers, backend, connectTimeout, readTimeout, List.of(), List.of());
+        return new Channel(null, baseUrl, headers, clientType, connectTimeout, readTimeout, List.of(), List.of());
     }
 
     @Data
@@ -164,13 +164,13 @@ public class HttpExchangeProperties implements InitializingBean {
          */
         private List<Header> headers = new ArrayList<>();
         /**
-         * Backend type, use {@link HttpExchangeProperties#backend} if not set.
+         * Client type, use {@link HttpExchangeProperties#clientType} if not set.
          *
-         * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ExchangeClientBackend#WEB_CLIENT}.
+         * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ClientType#WEB_CLIENT}.
          *
-         * @see ExchangeClientBackend
+         * @see ClientType
          */
-        private ExchangeClientBackend backend;
+        private ClientType clientType;
         /**
          * Connection timeout duration, specified in milliseconds.
          * Negative, zero, or null values indicate that the timeout is not set.

@@ -244,7 +244,7 @@ http-exchange:
   refresh:
     enabled: true                       # enable dynamic refresh configuration
   warn-unused-config: true              # warn unused configuration
-  backend: REST_CLIENT                  # use RestClient as backend
+  client-type: REST_CLIENT              # use RestClient 
   bean-to-query-enabled: false          # disable bean to query feature
   channels:
     - base-url: http://order            # client specific base-url, will override global base-url
@@ -360,7 +360,7 @@ you can change it to `WEB_CLIENT` or `REST_TEMPLATE`.
 
 ```yaml
 http-exchange:
-  backend: REST_CLIENT
+  client-type: REST_CLIENT
 ```
 
 > ⚠️ **Warning**: The `connectTimeout` and `readTimeout` settings are not supported by `WEB_CLIENT`.

@@ -7,17 +7,17 @@ import org.springframework.web.reactive.function.client.WebClient;
 /**
  * @author Freeman
  */
-public enum ExchangeClientBackend {
+public enum ClientType {
     /**
-     * Use {@link RestClient} as backend.
+     * @see RestClient
      */
     REST_CLIENT,
     /**
-     * Use {@link WebClient} as backend.
+     * @see WebClient
      */
     WEB_CLIENT,
     /**
-     * Use {@link RestTemplate} as backend.
+     * @see RestTemplate
      */
     REST_TEMPLATE
 }

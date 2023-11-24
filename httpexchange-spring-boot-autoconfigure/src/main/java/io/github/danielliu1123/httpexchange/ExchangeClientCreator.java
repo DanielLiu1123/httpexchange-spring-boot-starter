@@ -121,7 +121,7 @@ class ExchangeClientCreator {
 
         HttpExchangeAdapter exchangeAdapter = getFieldValue(builder, exchangeAdapterField);
         if (exchangeAdapter == null) {
-            switch (channelConfig.getBackend()) {
+            switch (channelConfig.getClientType()) {
                 case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
                 case REST_TEMPLATE -> builder.exchangeAdapter(
                         RestTemplateAdapter.create(buildRestTemplate(channelConfig)));
@@ -130,12 +130,11 @@ class ExchangeClientCreator {
                         builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
                     } else {
                         log.warn(
-                                "Reactor is not present, fall back backend to '{}'",
-                                ExchangeClientBackend.REST_CLIENT.name());
+                                "Reactor is not present, fall back client-type to '{}'", ClientType.REST_CLIENT.name());
                         builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
                     }
                 }
-                default -> throw new IllegalStateException("Unexpected value: " + channelConfig.getBackend());
+                default -> throw new IllegalStateException("Unexpected value: " + channelConfig.getClientType());
             }
         }
 

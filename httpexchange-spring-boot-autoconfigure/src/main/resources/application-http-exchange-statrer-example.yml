@@ -10,7 +10,7 @@ http-exchange:
       values: ${spring.application.name}
   refresh:
     enabled: true
-  backend: rest_client
+  client-type: rest_client
   warn-unused-config: true
   channels:
     - base-url: http://order
@@ -27,6 +27,6 @@ http-exchange:
       classes:
         - com.example.api.UserApi
         - com.example.api.UserDetailApi
-      backend: rest_template
+      client-type: rest_template
       connect-timeout: 1000
       read-timeout: 5000

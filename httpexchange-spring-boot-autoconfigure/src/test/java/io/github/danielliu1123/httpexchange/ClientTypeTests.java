@@ -15,15 +15,15 @@ import org.springframework.web.service.annotation.HttpExchange;
 /**
  * @author Freeman
  */
-class BackendTests {
+class ClientTypeTests {
 
     @ParameterizedTest
     @ValueSource(strings = {"rest_client", "web_client", "rest_template"})
-    void testRestClient(String backend) {
+    void testRestClient(String clientType) {
         int port = availablePort();
         var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
-                .properties("http-exchange.backend=" + backend)
+                .properties("http-exchange.client-type=" + clientType)
                 .properties("http-exchange.base-url=localhost:" + port)
                 .run();
 
