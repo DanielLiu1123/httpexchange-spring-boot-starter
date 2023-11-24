@@ -104,7 +104,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
                         .build())
                 .addJavadoc(
                         """
-                                Generated default implementation of {@link $L} for the server-side.
+                                Generated default implementation for the server-side.
 
                                 <p>
                                 How to use:
@@ -115,8 +115,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
                                 }
                                 }</pre>
                                 """,
-                        element.getSimpleName(),
-                        element.getSimpleName() + "Controller",
+                        element.getSimpleName() + "Impl",
                         element.getSimpleName() + "Base");
         if (element.getModifiers().contains(Modifier.PUBLIC)) {
             result.addModifiers(Modifier.PUBLIC);
