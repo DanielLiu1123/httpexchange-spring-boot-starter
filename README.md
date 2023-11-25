@@ -76,12 +76,8 @@ clients and support Spring web annotations (`@GetMapping`, `@PostMapping`).**
 
 Add dependency:
 
-```xml
-<dependency>
-    <groupId>io.github.danielliu1123</groupId>
-    <artifactId>httpexchange-spring-boot-starter</artifactId>
-    <version>3.2.0</version>
-</dependency>
+```groovy
+implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.2.0")
 ```
 
 Write a classic Spring Boot application:
@@ -229,39 +225,34 @@ http-exchange:
 
 ### Configuration Driven
 
-Providing a lot of configuration properties to customize the behavior of the client.
+Providing a lot of configuration properties to customize the behavior of the client. 
+You can configure the `base-url`, `read-timeout` for each channel, and each channel can apply to multiple clients.
 
-You can configure the `base-url`, `timeout` and `headers` for each channel, and each channel can apply to multiple clients.
+#### Basic Usage
 
 ```yaml
 http-exchange:
-  base-url: http://api-gateway          # global base-url
-  connect-timeout: 1000                 # global connect-timeout
-  read-timeout: 10000                   # global read-timeout
-  headers:                              # global headers
-    - key: X-App-Name
-      values: ${spring.application.name}
-  refresh:
-    enabled: true                       # enable dynamic refresh configuration
-  warn-unused-config: true              # warn unused configuration
-  client-type: REST_CLIENT              # use RestClient 
-  bean-to-query-enabled: false          # disable bean to query feature
+  read-timeout: 5000
   channels:
-    - base-url: http://order            # client specific base-url, will override global base-url
-      response-timeout: 1000            # client specific timeout, will override global timeout
-      headers:                          # client specific headers, will merge with global headers
-        - key: X-Key
-          values: [value1, value2]
-      clients:                          # client to apply this channel
-        - OrderApi             
-    - base-url: user                    # schema 'http' can be omitted
-      response-timeout: 2000
+    - base-url: http://user
+      read-timeout: 3000
       clients:
-        - UserApi
-        - com.example.**.api.*          # Ant-style pattern
-    - base-url: service-foo.namespace
-      classes: [com.example.FooApi]     # client class to apply this channel
+        - com.example.user.api.*Api
+    - base-url: http://order
+      clients:
+        - com.example.order.api.*Api
 ```
+
+Explanation:
+
+Set the global `read-timeout` to 5000ms.
+
+Set first channel `base-url` to `http://user` and `read-timeout` to 3000ms(override global `read-timeout`), 
+apply to clients that satisfy the pattern `com.example.user.api.*Api`.
+
+Set second channel `base-url` to `http://order`, apply to clients that satisfy the pattern `com.example.order.api.*Api`.
+
+#### Client Matching Rules
 
 Using property `clients` or `classes` to identify the client, use `classes` first if configured, otherwise use `clients`.
 
@@ -279,6 +270,8 @@ http-exchange:
 ```
 
 > Configuration `clients` is more flexible, it supports Ant-style pattern, `classes` is more IDE-friendly and efficient.
+
+See [example configuration](httpexchange-spring-boot-autoconfigure/src/main/resources/application-http-exchange-statrer-example.yml) and [HttpExchangeProperties](httpexchange-spring-boot-autoconfigure/src/main/java/io/github/danielliu1123/httpexchange/HttpExchangeProperties.java) for more details.
 
 ### Url Variables
 
@@ -301,9 +294,7 @@ public interface PostApi {
 }
 ```
 
-> This feature needs `spring-boot` version >= 3.0.3,
-> see [issue](https://github.com/spring-projects/spring-framework/issues/29782)
-> and [tests](httpexchange-spring-boot-autoconfigure/src/test/java/com/freemanan/starter/httpexchange/ValidationTests.java)
+> ⚠️ **Warning**: This feature needs `spring-boot` version >= 3.0.3, see [issue](https://github.com/spring-projects/spring-framework/issues/29782).
 
 ### Convert Java Bean to Query
 
@@ -325,7 +316,7 @@ public interface PostApi {
 
 Auto convert **non-null simple values** fields of `condition` to query string.
 
-> Simple values: primitive/wrapper types, String, Date, etc.
+> Simple values: primitive/wrapper types, String, etc.
 
 ### Customization
 
