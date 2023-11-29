@@ -2,6 +2,7 @@ dependencies {
     api("org.springframework.boot:spring-boot-starter")
     api("org.springframework:spring-web")
     compileOnly("org.springframework:spring-webflux")
+    compileOnly("org.springframework.cloud:spring-cloud-starter-loadbalancer")
 
     compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 

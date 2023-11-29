@@ -33,12 +33,22 @@ public class HttpExchangeProperties implements InitializingBean {
     private Set<String> basePackages = new LinkedHashSet<>();
     /**
      * Exchange client interfaces to register as beans, use {@link EnableExchangeClients#clients} first if configured.
+     *
+     * @since 3.2.0
      */
     private Set<Class<?>> clients = new LinkedHashSet<>();
     /**
      * Default base url, 'http' scheme can be omitted.
      *
-     * <p> e.g. {@code localhost:8080}, {@code http://localhost:8080}, {@code https://localhost:8080}
+     * <p> If loadbalancer is enabled, this value means the service id.
+     *
+     * <ul>
+     *     <li>localhost:8080</li>
+     *     <li>http://localhost:8080</li>
+     *     <li>https://localhost:8080</li>
+     *     <li>localhost:8080/api</li>
+     *     <li>user(service id)</li>
+     * </ul>
      */
     private String baseUrl;
     /**
@@ -62,8 +72,8 @@ public class HttpExchangeProperties implements InitializingBean {
      *
      * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ClientType#WEB_CLIENT}.
      *
-     * @see ClientType
      * @since 3.2.0
+     * @see ClientType
      */
     private ClientType clientType = ClientType.REST_CLIENT;
     /**
@@ -94,7 +104,19 @@ public class HttpExchangeProperties implements InitializingBean {
      *
      * @since 3.2.0
      */
-    private boolean warnUnusedConfig = true;
+    private boolean warnUnusedConfigEnabled = true;
+    /**
+     * Whether to enable loadbalancer, default {@code true}.
+     *
+     * <p> Prerequisites:
+     * <ul>
+     *     <li> {@code spring-cloud-starter-loadbalancer} dependency in the classpath.</li>
+     *     <li> {@code spring.cloud.loadbalancer.enabled=true}</li>
+     * </ul>
+     *
+     * @since 3.2.0
+     */
+    private boolean loadBalancerEnabled = true;
 
     @Data
     @NoArgsConstructor
@@ -142,11 +164,23 @@ public class HttpExchangeProperties implements InitializingBean {
             if (chan.getReadTimeout() == null) {
                 chan.setReadTimeout(readTimeout);
             }
+            if (chan.getLoadBalancerEnabled() == null) {
+                chan.setLoadBalancerEnabled(loadBalancerEnabled);
+            }
         }
     }
 
     HttpExchangeProperties.Channel defaultClient() {
-        return new Channel(null, baseUrl, headers, clientType, connectTimeout, readTimeout, List.of(), List.of());
+        return new Channel(
+                null,
+                baseUrl,
+                headers,
+                clientType,
+                connectTimeout,
+                readTimeout,
+                loadBalancerEnabled,
+                List.of(),
+                List.of());
     }
 
     @Data
@@ -158,7 +192,7 @@ public class HttpExchangeProperties implements InitializingBean {
          */
         private String name;
         /**
-         * Base url, 'http' scheme can be omitted, use {@link HttpExchangeProperties#baseUrl} if not set.
+         * Base url, use {@link HttpExchangeProperties#baseUrl} if not set.
          */
         private String baseUrl;
         /**
@@ -180,6 +214,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * <p> Use {@link HttpExchangeProperties#connectTimeout} if not set.
          *
          * @since 3.2.0
+         * @see HttpExchangeProperties#connectTimeout
          */
         private Integer connectTimeout;
         /**
@@ -189,8 +224,16 @@ public class HttpExchangeProperties implements InitializingBean {
          * <p> Use {@link HttpExchangeProperties#readTimeout} if not set.
          *
          * @since 3.2.0
+         * @see HttpExchangeProperties#readTimeout
          */
         private Integer readTimeout;
+        /**
+         * Whether to enable loadbalancer, use {@link HttpExchangeProperties#loadBalancerEnabled} if not set.
+         *
+         * @since 3.2.0
+         * @see HttpExchangeProperties#loadBalancerEnabled
+         */
+        private Boolean loadBalancerEnabled;
         /**
          * Exchange Clients to apply this channel.
          *
@@ -224,5 +267,16 @@ public class HttpExchangeProperties implements InitializingBean {
          * <p> NOTE: this feature needs {@code spring-cloud-context} dependency in the classpath.
          */
         private boolean enabled = false;
+    }
+
+    @Data
+    public static class LoadBalancer {
+        public static final String PREFIX = HttpExchangeProperties.PREFIX + ".load-balancer";
+        /**
+         * Whether to enable loadbalancer, default {@code true}.
+         *
+         * <p> NOTE: this feature needs {@code spring-cloud-starter-loadbalancer} dependency in the classpath.
+         */
+        private boolean enabled = true;
     }
 }

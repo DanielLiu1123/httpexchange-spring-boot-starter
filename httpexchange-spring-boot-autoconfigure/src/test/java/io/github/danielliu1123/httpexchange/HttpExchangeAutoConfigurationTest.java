@@ -42,12 +42,14 @@ class HttpExchangeAutoConfigurationTest {
             assertThat(ctx).hasSingleBean(CommandLineRunner.class);
         });
 
-        runner.withPropertyValues("http-exchange.warn-unused-config=true").run(ctx -> {
-            assertThat(ctx).hasSingleBean(CommandLineRunner.class);
-        });
+        runner.withPropertyValues("http-exchange.warn-unused-config-enabled=true")
+                .run(ctx -> {
+                    assertThat(ctx).hasSingleBean(CommandLineRunner.class);
+                });
 
-        runner.withPropertyValues("http-exchange.warn-unused-config=false").run(ctx -> {
-            assertThat(ctx).doesNotHaveBean(CommandLineRunner.class);
-        });
+        runner.withPropertyValues("http-exchange.warn-unused-config-enabled=false")
+                .run(ctx -> {
+                    assertThat(ctx).doesNotHaveBean(CommandLineRunner.class);
+                });
     }
 }

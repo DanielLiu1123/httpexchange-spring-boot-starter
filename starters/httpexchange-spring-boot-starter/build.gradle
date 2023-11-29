@@ -4,6 +4,8 @@ dependencies {
     optionalSupportApi("org.springframework:spring-webflux")
     optionalSupportApi("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     optionalSupportApi("org.springframework.cloud:spring-cloud-context")
+
+    optionalSupportApi("org.springframework.cloud:spring-cloud-starter-loadbalancer")
 }
 
 apply from: "${rootDir}/gradle/deploy.gradle"
