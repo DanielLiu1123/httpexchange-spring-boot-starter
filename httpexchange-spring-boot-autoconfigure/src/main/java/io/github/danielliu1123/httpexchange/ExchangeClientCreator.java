@@ -52,6 +52,8 @@ class ExchangeClientCreator {
             ClassUtils.isPresent("org.springframework.web.reactive.function.client.WebClient", null);
     private static final boolean LOADBALANCER_PRESENT =
             ClassUtils.isPresent("org.springframework.cloud.client.loadbalancer.LoadBalancerClient", null);
+    private static final boolean SPRING_RETRY_PRESENT =
+            ClassUtils.isPresent("org.springframework.retry.support.RetryTemplate", null);
 
     private static final Field exchangeAdapterField;
     private static final Field customArgumentResolversField;
@@ -187,7 +189,7 @@ class ExchangeClientCreator {
         RestTemplate restTemplate = builder.build();
 
         if (isLoadBalancerEnabled(channelConfig)) {
-            if (isSpringRetryPresent() && isLoadBalancerRetryEnabled()) {
+            if (SPRING_RETRY_PRESENT && isLoadBalancerRetryEnabled()) {
                 RetryLoadBalancerInterceptor retryInterceptor = beanFactory
                         .getBeanProvider(RetryLoadBalancerInterceptor.class)
                         .getIfUnique();
@@ -246,7 +248,7 @@ class ExchangeClientCreator {
         builder.requestFactory(getRequestFactory(channelConfig));
         // If loadbalancer in the classpath, use LoadBalancerInterceptor.
         if (isLoadBalancerEnabled(channelConfig)) {
-            if (isSpringRetryPresent() && isLoadBalancerRetryEnabled()) {
+            if (SPRING_RETRY_PRESENT && isLoadBalancerRetryEnabled()) {
                 RetryLoadBalancerInterceptor retryInterceptor = beanFactory
                         .getBeanProvider(RetryLoadBalancerInterceptor.class)
                         .getIfUnique();
@@ -300,10 +302,6 @@ class ExchangeClientCreator {
                         .getBean(Environment.class)
                         .getProperty("spring.cloud.loadbalancer.enabled", Boolean.class, true)
                 && channelConfig.getLoadBalancerEnabled();
-    }
-
-    private static boolean isSpringRetryPresent() {
-        return ClassUtils.isPresent("org.springframework.retry.support.RetryTemplate", null);
     }
 
     private boolean isLoadBalancerRetryEnabled() {
