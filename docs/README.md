@@ -44,7 +44,7 @@ public class App {
 
 </details>
 
-_**So what is the problem? 🤔**_
+So what is the problem? 🤔
 
 1. No auto configuration
 
@@ -61,8 +61,10 @@ _**So what is the problem? 🤔**_
    `@GetMapping`, `@PostMapping`, etc., which is extremely painful for users that using `Spring Cloud OpenFeign` and want
    to migrate to Spring 6.x.
 
-**The main goal of this project is providing a `Spring Cloud OpenFeign` like experience for Spring 6.x declarative HTTP
-clients and support Spring web annotations (`@GetMapping`, `@PostMapping`).**
+The main goals of this project:
+- Promote the use of `@HttpExchange` as a neutral annotation to define API interfaces.
+- Provide a `Spring Cloud OpenFeign` like experience for Spring 6.x declarative HTTP clients.
+- Support Spring web annotations (`@RequestMapping`, `@GetMapping`).
 
 ## Quick Start
 
@@ -75,24 +77,49 @@ implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.2.0")
 Write a classic Spring Boot application:
 
 ```java
-@HttpExchange("https://my-json-server.typicode.com")
-interface PostApi {
-   @GetExchange("/typicode/demo/posts/{id}")
-   Post getPost(@PathVariable("id") int id);
+@HttpExchange("/typicode/demo")
+interface PostApi { 
+   record Post(Integer id, String title) {}     
+   
+   @GetExchange("/posts/{id}")
+   Post getPost(@PathVariable Integer id);
 }
 
 @SpringBootApplication
 @EnableExchangeClients
 public class App {
-    public static void main(String[] args) {
-        var ctx = SpringApplication.run(App.class, args);
-        PostApi postApi = ctx.getBean(PostApi.class);
-        Post post = postApi.getPost(1);
-    }
+   public static void main(String[] args) {
+      new SpringApplicationBuilder(QuickStartApp.class)
+              .properties("http-exchange.base-url=https://my-json-server.typicode.com")
+              .run(args);
+   }
+   
+   @Autowired
+   private PostApi api;
+   
+   @Bean
+   ApplicationRunner runner() {
+      return args -> api.getPost(1);
+   }
 }
 ```
 
 > No more boilerplate code! 🎉
+
+Configure the base URL for different clients:
+
+```yaml
+http-exchange:
+  channels:
+    - base-url: http://user-service
+      clients:
+        - com.example.user.api.**
+        - com.example.api.user.**
+    - base-url: http://order-service
+      clients:
+        - com.example.order.api.**
+        - com.example.api.order.**
+```
 
 ## Features
 
@@ -363,12 +390,12 @@ Auto-detect all of the `HttpServiceArgumentResolver` beans, then apply them to b
 
 #### Change ClientHttpRequestFactory implementation
 
-There are many built-in implementations of `ClientHttpRequestFactory`, we use `JdkClientHttpRequestFactory` by default.
+There are many built-in implementations of `ClientHttpRequestFactory`, use `JdkClientHttpRequestFactory` by default.
 You can change it another implementation, such as `ReactorNettyClientRequestFactory`.
 
 ```java
 @Bean
-ClientHttpRequestFactory okHttpClientHttpRequestFactory() {
+ClientHttpRequestFactory reactorNettyClientRequestFactory() {
    return ClientHttpRequestFactories.get(ReactorNettyClientRequestFactory.class, ClientHttpRequestFactorySettings.DEFAULTS);
 }
 ```
@@ -376,7 +403,7 @@ ClientHttpRequestFactory okHttpClientHttpRequestFactory() {
 #### Change Http Client Implementation
 
 There are three adapters for HttpExchange client: `RestClientAdapter`,
-`WebClientAdapter` and `RestTemplateAdapter`, we use `REST_CLIENT` by default,
+`WebClientAdapter` and `RestTemplateAdapter`, use `REST_CLIENT` by default,
 you can change it to `WEB_CLIENT` or `REST_TEMPLATE`.
 
 ```yaml

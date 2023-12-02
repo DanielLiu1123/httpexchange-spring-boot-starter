@@ -52,9 +52,9 @@ public class App {
 
 </details>
 
-_**So what is the problem? 🤔**_
+So what is the problem? 🤔
 
-1. No auto configuration
+- No auto configuration
 
    There's no autoconfiguration for the clients, you need to create client beans manually.
    This is excruciating if you have many clients.
@@ -62,15 +62,17 @@ _**So what is the problem? 🤔**_
    If you are familiar with `Spring Cloud OpenFeign`, you will find `@EnableFeignClients` is beneficial, it reduces a
    lot of boilerplate code.
 
-2. Not support Spring web annotations
+- Not support Spring web annotations
 
    Native support for declarative HTTP clients is great, but it introduces a whole new set of annotations, such as
    `@GetExchange`, `@PostExchange`, etc. And does not support Spring web annotations, such as
    `@GetMapping`, `@PostMapping`, etc., which is extremely painful for users that using `Spring Cloud OpenFeign` and want
    to migrate to Spring 6.x.
 
-**The main goal of this project is providing a `Spring Cloud OpenFeign` like experience for Spring 6.x declarative HTTP
-clients and support Spring web annotations (`@GetMapping`, `@PostMapping`).**
+The main goals of this project:
+- Promote the use of `@HttpExchange` as a neutral annotation to define API interfaces.
+- Provide a `Spring Cloud OpenFeign` like experience for Spring 6.x declarative HTTP clients.
+- Support Spring web annotations (`@RequestMapping`, `@GetMapping`).
 
 ## Quick Start
 
@@ -83,24 +85,49 @@ implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.2.0")
 Write a classic Spring Boot application:
 
 ```java
-@HttpExchange("https://my-json-server.typicode.com")
+@HttpExchange("/typicode/demo")
 interface PostApi {
-   @GetExchange("/typicode/demo/posts/{id}")
-   Post getPost(@PathVariable("id") int id);
+   record Post(Integer id, String title) {}
+
+   @GetExchange("/posts/{id}")
+   Post getPost(@PathVariable Integer id);
 }
 
 @SpringBootApplication
 @EnableExchangeClients
 public class App {
-    public static void main(String[] args) {
-        var ctx = SpringApplication.run(App.class, args);
-        PostApi postApi = ctx.getBean(PostApi.class);
-        Post post = postApi.getPost(1);
-    }
+   public static void main(String[] args) {
+      new SpringApplicationBuilder(QuickStartApp.class)
+              .properties("http-exchange.base-url=https://my-json-server.typicode.com")
+              .run(args);
+   }
+
+   @Autowired
+   private PostApi api;
+
+   @Bean
+   ApplicationRunner runner() {
+      return args -> api.getPost(1);
+   }
 }
 ```
 
 > No more boilerplate code! 🎉
+
+Configure the base URL for different clients:
+
+```yaml
+http-exchange:
+   channels:
+      - base-url: http://user-service
+        clients:
+           - com.example.user.api.**
+           - com.example.api.user.**
+      - base-url: http://order-service
+        clients:
+           - com.example.order.api.**
+           - com.example.api.order.**
+```
 
 ## Features
 
@@ -201,9 +228,9 @@ public interface PostApi {
 }
 ```
 
-> Since 3.2.x, `@RequestMapping` support is disabled by default, 
+> Since 3.2.x, `@RequestMapping` support is disabled by default,
 > you can set `http-exchange.request-mapping-support-enabled=true` to enable it.
-> 
+>
 > Consider using `@HttpExchange` instead of `@RequestMapping` if possible.
 
 ### Load Balancer Support
@@ -263,7 +290,7 @@ http-exchange:
 
 ### Configuration Driven
 
-Providing a lot of configuration properties to customize the behavior of the client. 
+Providing a lot of configuration properties to customize the behavior of the client.
 You can configure the `base-url`, `read-timeout` for each channel, and each channel can apply to multiple clients.
 
 #### Basic Usage
@@ -285,7 +312,7 @@ Explanation:
 
 Set the global `read-timeout` to 5000ms.
 
-Set first channel `base-url` to `http://user` and `read-timeout` to 3000ms(override global `read-timeout`), 
+Set first channel `base-url` to `http://user` and `read-timeout` to 3000ms(override global `read-timeout`),
 apply to clients that satisfy the pattern `com.example.user.api.*Api`.
 
 Set second channel `base-url` to `http://order`, apply to clients that satisfy the pattern `com.example.order.api.*Api`.
@@ -309,7 +336,7 @@ http-exchange:
 
 > Configuration `clients` is more flexible, it supports Ant-style pattern, `classes` is more IDE-friendly and efficient.
 
-See [example configuration](httpexchange-spring-boot-autoconfigure/src/main/resources/application-http-exchange-statrer-example.yml) and [HttpExchangeProperties](httpexchange-spring-boot-autoconfigure/src/main/java/io/github/danielliu1123/httpexchange/HttpExchangeProperties.java) for more details.
+See [example configuration](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/blob/main/httpexchange-spring-boot-autoconfigure/src/main/resources/application-http-exchange-statrer-example.yml) and [HttpExchangeProperties](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/blob/main/httpexchange-spring-boot-autoconfigure/src/main/java/io/github/danielliu1123/httpexchange/HttpExchangeProperties.java) for more details.
 
 ### Url Variables
 
@@ -342,7 +369,7 @@ default. In `Spring Cloud OpenFeign` you need `@SpringQueryMap` to achieve this 
 
 `httpexhange-spring-boot-starter` supports this feature, and you don't need any additional annotations.
 
-> In order not to change the default behavior of Spring, this feature is disabled by default, 
+> In order not to change the default behavior of Spring, this feature is disabled by default,
 > you can set `http-exchange.bean-to-query-enabled=true` to enable it.
 
 ```java
@@ -371,12 +398,12 @@ Auto-detect all of the `HttpServiceArgumentResolver` beans, then apply them to b
 
 #### Change ClientHttpRequestFactory implementation
 
-There are many built-in implementations of `ClientHttpRequestFactory`, we use `JdkClientHttpRequestFactory` by default.
+There are many built-in implementations of `ClientHttpRequestFactory`, use `JdkClientHttpRequestFactory` by default.
 You can change it another implementation, such as `ReactorNettyClientRequestFactory`.
 
 ```java
 @Bean
-ClientHttpRequestFactory okHttpClientHttpRequestFactory() {
+ClientHttpRequestFactory reactorNettyClientRequestFactory() {
    return ClientHttpRequestFactories.get(ReactorNettyClientRequestFactory.class, ClientHttpRequestFactorySettings.DEFAULTS);
 }
 ```
@@ -384,7 +411,7 @@ ClientHttpRequestFactory okHttpClientHttpRequestFactory() {
 #### Change Http Client Implementation
 
 There are three adapters for HttpExchange client: `RestClientAdapter`,
-`WebClientAdapter` and `RestTemplateAdapter`, we use `REST_CLIENT` by default,
+`WebClientAdapter` and `RestTemplateAdapter`, use `REST_CLIENT` by default,
 you can change it to `WEB_CLIENT` or `REST_TEMPLATE`.
 
 ```yaml

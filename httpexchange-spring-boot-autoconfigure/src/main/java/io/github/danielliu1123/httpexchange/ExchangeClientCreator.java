@@ -298,16 +298,12 @@ class ExchangeClientCreator {
 
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
         return LOADBALANCER_PRESENT
-                && beanFactory
-                        .getBean(Environment.class)
-                        .getProperty("spring.cloud.loadbalancer.enabled", Boolean.class, true)
+                && environment.getProperty("spring.cloud.loadbalancer.enabled", Boolean.class, true)
                 && channelConfig.getLoadBalancerEnabled();
     }
 
     private boolean isLoadBalancerRetryEnabled() {
-        return beanFactory
-                .getBean(Environment.class)
-                .getProperty("spring.cloud.loadbalancer.retry.enabled", Boolean.class, true);
+        return environment.getProperty("spring.cloud.loadbalancer.retry.enabled", Boolean.class, true);
     }
 
     private static String getRealBaseUrl(HttpExchangeProperties.Channel channelConfig) {
