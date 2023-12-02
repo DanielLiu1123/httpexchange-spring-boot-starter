@@ -206,6 +206,44 @@ public interface PostApi {
 > 
 > Consider using `@HttpExchange` instead of `@RequestMapping` if possible.
 
+### Load Balancer Support
+
+Support to work with `spring-cloud-starter-loadbalancer` to achieve client side load balancing.
+
+Add dependency:
+
+```groovy
+implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
+```
+
+```yaml
+http-exchange:
+  channels:
+    - base-url: user  # service id
+      clients:
+        - com.example.user.api.*Api
+```
+
+Load balancer will be enabled automatically when `spring-cloud-starter-loadbalancer` is in the classpath.
+
+Disable load balancer for all channels:
+
+```yaml
+http-exchange:
+  load-balancer-enabled: false # default is true
+```
+
+Disable load balancer for a specific channel:
+
+```yaml
+http-exchange:
+  channels:
+    - base-url: user
+      load-balancer-enabled: false
+      clients:
+        - com.example.user.api.*Api
+```
+
 ### Dynamic Refresh Configuration
 
 Support to dynamically refresh the configuration of clients, you can put the configuration in the configuration

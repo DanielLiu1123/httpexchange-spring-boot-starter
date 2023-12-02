@@ -4,6 +4,10 @@ on:
     branches:
       - main
       - 3.1.x
+  pull_request:
+    branches:
+      - main
+      - 3.1.x
 jobs:
   build:
     runs-on: ubuntu-latest

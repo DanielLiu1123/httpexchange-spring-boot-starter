@@ -11,7 +11,7 @@ http-exchange:
   refresh:
     enabled: true
   client-type: rest_client
-  warn-unused-config: true
+  warn-unused-config-enabled: true
   channels:
     - base-url: http://order
       headers:

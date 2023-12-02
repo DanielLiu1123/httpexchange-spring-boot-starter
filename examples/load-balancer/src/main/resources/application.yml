@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: load-balancer
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            user:
+              - host: localhost
+                port: ${server.port}
+              - host: localhost
+                port: ${random.int(50000,60000)} # Simulate an unavailable instance
+http-exchange:
+  channels:
+    - base-url: user # service id
+      clients:
+        - com.example.*Api
