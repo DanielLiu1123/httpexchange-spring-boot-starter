@@ -268,15 +268,4 @@ public class HttpExchangeProperties implements InitializingBean {
          */
         private boolean enabled = false;
     }
-
-    @Data
-    public static class LoadBalancer {
-        public static final String PREFIX = HttpExchangeProperties.PREFIX + ".load-balancer";
-        /**
-         * Whether to enable loadbalancer, default {@code true}.
-         *
-         * <p> NOTE: this feature needs {@code spring-cloud-starter-loadbalancer} dependency in the classpath.
-         */
-        private boolean enabled = true;
-    }
 }
