@@ -116,7 +116,7 @@ public class HttpExchangeProperties implements InitializingBean {
      *
      * @since 3.2.0
      */
-    private boolean loadBalancerEnabled = true;
+    private boolean loadbalancerEnabled = true;
 
     @Data
     @NoArgsConstructor
@@ -164,8 +164,8 @@ public class HttpExchangeProperties implements InitializingBean {
             if (chan.getReadTimeout() == null) {
                 chan.setReadTimeout(readTimeout);
             }
-            if (chan.getLoadBalancerEnabled() == null) {
-                chan.setLoadBalancerEnabled(loadBalancerEnabled);
+            if (chan.getLoadbalancerEnabled() == null) {
+                chan.setLoadbalancerEnabled(loadbalancerEnabled);
             }
         }
     }
@@ -178,7 +178,7 @@ public class HttpExchangeProperties implements InitializingBean {
                 clientType,
                 connectTimeout,
                 readTimeout,
-                loadBalancerEnabled,
+                loadbalancerEnabled,
                 List.of(),
                 List.of());
     }
@@ -228,12 +228,12 @@ public class HttpExchangeProperties implements InitializingBean {
          */
         private Integer readTimeout;
         /**
-         * Whether to enable loadbalancer, use {@link HttpExchangeProperties#loadBalancerEnabled} if not set.
+         * Whether to enable loadbalancer, use {@link HttpExchangeProperties#loadbalancerEnabled} if not set.
          *
          * @since 3.2.0
-         * @see HttpExchangeProperties#loadBalancerEnabled
+         * @see HttpExchangeProperties#loadbalancerEnabled
          */
-        private Boolean loadBalancerEnabled;
+        private Boolean loadbalancerEnabled;
         /**
          * Exchange Clients to apply this channel.
          *

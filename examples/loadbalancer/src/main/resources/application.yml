@@ -1,6 +1,6 @@
 spring:
   application:
-    name: load-balancer
+    name: loadbalancer
   cloud:
     discovery:
       client:

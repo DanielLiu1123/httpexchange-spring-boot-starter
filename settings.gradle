@@ -1,7 +1,7 @@
 rootProject.name = 'httpexchange-spring-boot-starter'
 
 include(":examples:quick-start")
-include(":examples:load-balancer")
+include(":examples:loadbalancer")
 
 include(":httpexchange-processor")
 include(":httpexchange-spring-boot-autoconfigure")

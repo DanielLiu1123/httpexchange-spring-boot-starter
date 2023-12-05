@@ -16,9 +16,6 @@ import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.cloud.client.loadbalancer.LoadBalancerInterceptor;
-import org.springframework.cloud.client.loadbalancer.RetryLoadBalancerInterceptor;
-import org.springframework.cloud.client.loadbalancer.reactive.DeferringLoadBalancerExchangeFilterFunction;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -35,6 +32,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.client.support.RestTemplateAdapter;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -52,8 +50,6 @@ class ExchangeClientCreator {
             ClassUtils.isPresent("org.springframework.web.reactive.function.client.WebClient", null);
     private static final boolean LOADBALANCER_PRESENT =
             ClassUtils.isPresent("org.springframework.cloud.client.loadbalancer.LoadBalancerClient", null);
-    private static final boolean SPRING_RETRY_PRESENT =
-            ClassUtils.isPresent("org.springframework.retry.support.RetryTemplate", null);
 
     private static final Field exchangeAdapterField;
     private static final Field customArgumentResolversField;
@@ -189,20 +185,9 @@ class ExchangeClientCreator {
         RestTemplate restTemplate = builder.build();
 
         if (isLoadBalancerEnabled(channelConfig)) {
-            if (SPRING_RETRY_PRESENT && isLoadBalancerRetryEnabled()) {
-                RetryLoadBalancerInterceptor retryInterceptor = beanFactory
-                        .getBeanProvider(RetryLoadBalancerInterceptor.class)
-                        .getIfUnique();
-                if (retryInterceptor != null) {
-                    addIfAbsent(restTemplate, retryInterceptor);
-                } else {
-                    log.warn(
-                            "Not found bean of type 'RetryLoadBalancerInterceptor', fallback to 'LoadBalancerInterceptor'");
-                    addIfAbsent(restTemplate, beanFactory.getBean(LoadBalancerInterceptor.class));
-                }
-            } else {
-                addIfAbsent(restTemplate, beanFactory.getBean(LoadBalancerInterceptor.class));
-            }
+            beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).stream()
+                    .filter(e -> !restTemplate.getInterceptors().contains(e))
+                    .forEach(restTemplate.getInterceptors()::add);
         }
 
         return restTemplate;
@@ -223,10 +208,9 @@ class ExchangeClientCreator {
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
         if (isLoadBalancerEnabled(channelConfig)) {
-            builder.filters(
-                    filters -> Optional.of(beanFactory.getBean(DeferringLoadBalancerExchangeFilterFunction.class))
-                            .filter(f -> !filters.contains(f))
-                            .ifPresent(filters::add));
+            builder.filters(it -> beanFactory.getBeanProvider(ExchangeFilterFunction.class).stream()
+                    .filter(e -> !it.contains(e))
+                    .forEach(it::add));
         }
         return builder.build();
     }
@@ -248,34 +232,12 @@ class ExchangeClientCreator {
         builder.requestFactory(getRequestFactory(channelConfig));
         // If loadbalancer in the classpath, use LoadBalancerInterceptor.
         if (isLoadBalancerEnabled(channelConfig)) {
-            if (SPRING_RETRY_PRESENT && isLoadBalancerRetryEnabled()) {
-                RetryLoadBalancerInterceptor retryInterceptor = beanFactory
-                        .getBeanProvider(RetryLoadBalancerInterceptor.class)
-                        .getIfUnique();
-                if (retryInterceptor != null) {
-                    addIfAbsent(builder, retryInterceptor);
-                } else {
-                    log.warn(
-                            "Not found bean of type 'RetryLoadBalancerInterceptor', fallback to 'LoadBalancerInterceptor'");
-                    addIfAbsent(builder, beanFactory.getBean(LoadBalancerInterceptor.class));
-                }
-            } else {
-                addIfAbsent(builder, beanFactory.getBean(LoadBalancerInterceptor.class));
-            }
+            builder.requestInterceptors(
+                    requestInterceptors -> beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).stream()
+                            .filter(e -> !requestInterceptors.contains(e))
+                            .forEach(requestInterceptors::add));
         }
         return builder.build();
-    }
-
-    private static void addIfAbsent(RestClient.Builder builder, ClientHttpRequestInterceptor retryInterceptor) {
-        builder.requestInterceptors(interceptors -> Optional.of(retryInterceptor)
-                .filter(f -> !interceptors.contains(f))
-                .ifPresent(interceptors::add));
-    }
-
-    private static void addIfAbsent(RestTemplate restTemplate, ClientHttpRequestInterceptor retryInterceptor) {
-        if (!restTemplate.getInterceptors().contains(retryInterceptor)) {
-            restTemplate.getInterceptors().add(retryInterceptor);
-        }
     }
 
     private ClientHttpRequestFactory getRequestFactory(HttpExchangeProperties.Channel channelConfig) {
@@ -299,11 +261,7 @@ class ExchangeClientCreator {
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
         return LOADBALANCER_PRESENT
                 && environment.getProperty("spring.cloud.loadbalancer.enabled", Boolean.class, true)
-                && channelConfig.getLoadBalancerEnabled();
-    }
-
-    private boolean isLoadBalancerRetryEnabled() {
-        return environment.getProperty("spring.cloud.loadbalancer.retry.enabled", Boolean.class, true);
+                && channelConfig.getLoadbalancerEnabled();
     }
 
     private static String getRealBaseUrl(HttpExchangeProperties.Channel channelConfig) {

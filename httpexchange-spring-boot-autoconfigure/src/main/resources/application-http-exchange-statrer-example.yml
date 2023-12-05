@@ -12,7 +12,7 @@ http-exchange:
     enabled: true
   client-type: rest_client
   warn-unused-config-enabled: true
-  load-balancer-enabled: true
+  loadbalancer-enabled: true
   channels:
     - base-url: http://order
       headers:

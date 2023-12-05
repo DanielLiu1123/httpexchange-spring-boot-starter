@@ -228,7 +228,7 @@ public interface PostApi {
 }
 ```
 
-> Since 3.2.x, `@RequestMapping` support is disabled by default,
+> Since 3.2.0, `@RequestMapping` support is disabled by default,
 > you can set `http-exchange.request-mapping-support-enabled=true` to enable it.
 >
 > Consider using `@HttpExchange` instead of `@RequestMapping` if possible.
@@ -257,7 +257,7 @@ Disable load balancer for all channels:
 
 ```yaml
 http-exchange:
-  load-balancer-enabled: false # default is true
+  loadbalancer-enabled: false # default is true
 ```
 
 Disable load balancer for a specific channel:
@@ -266,7 +266,7 @@ Disable load balancer for a specific channel:
 http-exchange:
   channels:
     - base-url: user
-      load-balancer-enabled: false
+      loadbalancer-enabled: false
       clients:
         - com.example.user.api.*Api
 ```
