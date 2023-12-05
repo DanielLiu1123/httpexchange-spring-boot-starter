@@ -232,10 +232,9 @@ class ExchangeClientCreator {
         builder.requestFactory(getRequestFactory(channelConfig));
         // If loadbalancer in the classpath, use LoadBalancerInterceptor.
         if (isLoadBalancerEnabled(channelConfig)) {
-            builder.requestInterceptors(
-                    requestInterceptors -> beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).stream()
-                            .filter(e -> !requestInterceptors.contains(e))
-                            .forEach(requestInterceptors::add));
+            builder.requestInterceptors(it -> beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).stream()
+                    .filter(e -> !it.contains(e))
+                    .forEach(it::add));
         }
         return builder.build();
     }
