@@ -16,8 +16,6 @@ import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.cloud.client.loadbalancer.LoadBalancerInterceptor;
-import org.springframework.cloud.client.loadbalancer.RetryLoadBalancerInterceptor;
 import org.springframework.cloud.client.loadbalancer.reactive.LoadBalancedExchangeFilterFunction;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
@@ -189,7 +187,6 @@ class ExchangeClientCreator {
 
         if (isLoadBalancerEnabled(channelConfig)) {
             beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).stream()
-                    .filter(ExchangeClientCreator::notLoadBalancedInterceptor)
                     .filter(e -> !restTemplate.getInterceptors().contains(e))
                     .forEach(restTemplate.getInterceptors()::add);
         }
@@ -238,16 +235,10 @@ class ExchangeClientCreator {
         // If loadbalancer in the classpath, use LoadBalancerInterceptor.
         if (isLoadBalancerEnabled(channelConfig)) {
             builder.requestInterceptors(it -> beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).stream()
-                    .filter(ExchangeClientCreator::notLoadBalancedInterceptor)
                     .filter(e -> !it.contains(e))
                     .forEach(it::add));
         }
         return builder.build();
-    }
-
-    private static boolean notLoadBalancedInterceptor(ClientHttpRequestInterceptor e) {
-        return !LoadBalancerInterceptor.class.isAssignableFrom(e.getClass())
-                && !RetryLoadBalancerInterceptor.class.isAssignableFrom(e.getClass());
     }
 
     private static boolean notLoadBalancedFilter(ExchangeFilterFunction e) {
