@@ -7,6 +7,9 @@
 [Documentation](https://danielliu1123.github.io/httpexchange-spring-boot-starter/)
    
 ## Introduction
+## Introduction
+## Introduction
+## Introduction
 
 `httpexchange-spring-boot-starter` is the missing starter for Spring 6.x declarative HTTP client.
 
@@ -432,4 +435,8 @@ if you are using Spring Boot 3.2.0, then `httpexchange-spring-boot-starter` 3.2.
 
 ## License
 
+The MIT License.
+The MIT License.
+The MIT License.
+The MIT License.
 The MIT License.
