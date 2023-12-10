@@ -137,7 +137,7 @@ class ExchangeClientCreator {
                     } else {
                         log.warn(
                                 "spring-webflux is not in the classpath, fall back client-type to '{}'",
-                                ClientType.REST_CLIENT);
+                                HttpExchangeProperties.ClientType.REST_CLIENT);
                         builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
                     }
                 }

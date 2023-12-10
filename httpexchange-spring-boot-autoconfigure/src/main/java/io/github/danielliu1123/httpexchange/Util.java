@@ -57,7 +57,7 @@ class Util {
         HttpExchangeProperties properties = Binder.get(environment)
                 .bind(HttpExchangeProperties.PREFIX, HttpExchangeProperties.class)
                 .orElseGet(HttpExchangeProperties::new);
-        properties.merge();
+        properties.afterPropertiesSet();
         return properties;
     }
 }

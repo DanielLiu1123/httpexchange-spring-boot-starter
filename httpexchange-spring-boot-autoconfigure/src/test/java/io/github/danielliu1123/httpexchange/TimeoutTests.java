@@ -46,7 +46,8 @@ class TimeoutTests {
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".read-timeout=200")
-                .properties(HttpExchangeProperties.PREFIX + ".client-type=" + ClientType.WEB_CLIENT)
+                .properties(
+                        HttpExchangeProperties.PREFIX + ".client-type=" + HttpExchangeProperties.ClientType.WEB_CLIENT)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .run();
         DelayApi api = ctx.getBean(DelayApi.class);
@@ -63,7 +64,8 @@ class TimeoutTests {
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".read-timeout=200")
-                .properties(HttpExchangeProperties.PREFIX + ".client-type=" + ClientType.WEB_CLIENT)
+                .properties(
+                        HttpExchangeProperties.PREFIX + ".client-type=" + HttpExchangeProperties.ClientType.WEB_CLIENT)
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].base-url=http://localhost:" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].clients[0]=DelayApi")
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].read-timeout=600")

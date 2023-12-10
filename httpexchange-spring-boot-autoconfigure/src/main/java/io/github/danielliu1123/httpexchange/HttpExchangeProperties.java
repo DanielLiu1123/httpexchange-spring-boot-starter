@@ -1,5 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
+import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayList;
@@ -12,6 +13,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 /**
  * Http Clients Configuration Properties.
@@ -72,8 +77,8 @@ public class HttpExchangeProperties implements InitializingBean {
      *
      * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ClientType#WEB_CLIENT}.
      *
-     * @since 3.2.0
      * @see ClientType
+     * @since 3.2.0
      */
     private ClientType clientType = ClientType.REST_CLIENT;
     /**
@@ -140,11 +145,19 @@ public class HttpExchangeProperties implements InitializingBean {
     /**
      * Merge default configuration to channels configuration.
      */
-    public void merge() {
+    void merge() {
+        PropertyMapper mapper = PropertyMapper.get().alwaysApplyingWhenNonNull();
         for (Channel chan : channels) {
-            if (chan.getBaseUrl() == null) {
-                chan.setBaseUrl(baseUrl);
-            }
+            mapper.from(baseUrl).when(e -> isNull(chan.getBaseUrl())).to(chan::setBaseUrl);
+            mapper.from(clientType).when(e -> isNull(chan.getClientType())).to(chan::setClientType);
+            mapper.from(connectTimeout)
+                    .when(e -> isNull(chan.getConnectTimeout()))
+                    .to(chan::setConnectTimeout);
+            mapper.from(readTimeout).when(e -> isNull(chan.getReadTimeout())).to(chan::setReadTimeout);
+            mapper.from(loadbalancerEnabled)
+                    .when(e -> isNull(chan.getLoadbalancerEnabled()))
+                    .to(chan::setLoadbalancerEnabled);
+
             // defaultHeaders + chan.headers
             LinkedHashMap<String, List<String>> total = headers.stream()
                     .collect(toMap(Header::getKey, Header::getValues, (oldV, newV) -> oldV, LinkedHashMap::new));
@@ -155,18 +168,6 @@ public class HttpExchangeProperties implements InitializingBean {
                     .map(e -> new Header(e.getKey(), e.getValue()))
                     .toList();
             chan.setHeaders(mergedHeaders);
-            if (chan.getClientType() == null) {
-                chan.setClientType(clientType);
-            }
-            if (chan.getConnectTimeout() == null) {
-                chan.setConnectTimeout(connectTimeout);
-            }
-            if (chan.getReadTimeout() == null) {
-                chan.setReadTimeout(readTimeout);
-            }
-            if (chan.getLoadbalancerEnabled() == null) {
-                chan.setLoadbalancerEnabled(loadbalancerEnabled);
-            }
         }
     }
 
@@ -213,8 +214,8 @@ public class HttpExchangeProperties implements InitializingBean {
          *
          * <p> Use {@link HttpExchangeProperties#connectTimeout} if not set.
          *
-         * @since 3.2.0
          * @see HttpExchangeProperties#connectTimeout
+         * @since 3.2.0
          */
         private Integer connectTimeout;
         /**
@@ -223,15 +224,15 @@ public class HttpExchangeProperties implements InitializingBean {
          *
          * <p> Use {@link HttpExchangeProperties#readTimeout} if not set.
          *
-         * @since 3.2.0
          * @see HttpExchangeProperties#readTimeout
+         * @since 3.2.0
          */
         private Integer readTimeout;
         /**
          * Whether to enable loadbalancer, use {@link HttpExchangeProperties#loadbalancerEnabled} if not set.
          *
-         * @since 3.2.0
          * @see HttpExchangeProperties#loadbalancerEnabled
+         * @since 3.2.0
          */
         private Boolean loadbalancerEnabled;
         /**
@@ -267,5 +268,20 @@ public class HttpExchangeProperties implements InitializingBean {
          * <p> NOTE: this feature needs {@code spring-cloud-context} dependency in the classpath.
          */
         private boolean enabled = false;
+    }
+
+    public enum ClientType {
+        /**
+         * @see RestClient
+         */
+        REST_CLIENT,
+        /**
+         * @see WebClient
+         */
+        WEB_CLIENT,
+        /**
+         * @see RestTemplate
+         */
+        REST_TEMPLATE
     }
 }
