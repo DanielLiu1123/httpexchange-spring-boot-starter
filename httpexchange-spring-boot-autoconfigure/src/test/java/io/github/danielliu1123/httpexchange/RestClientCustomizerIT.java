@@ -23,7 +23,7 @@ import org.springframework.web.service.annotation.HttpExchange;
  * @author Freeman
  */
 @ExtendWith(OutputCaptureExtension.class)
-class WebClientCustomizerTests {
+class RestClientCustomizerIT {
 
     @Test
     void testAddInterceptor(CapturedOutput output) {
