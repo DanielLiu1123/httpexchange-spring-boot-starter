@@ -80,7 +80,7 @@ The main goals of this project:
 Add dependency:
 
 ```groovy
-implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.2.0")
+implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.2.0-RC3")
 ```
 
 Write a classic Spring Boot application:
@@ -180,7 +180,7 @@ http-exchange:
 Generate base implementation for server, you can use the base implementation to implement the server side.
 
 ```groovy
-annotationProcessor("io.github.danielliu1123:httpexchange-processor:3.2.0")
+annotationProcessor("io.github.danielliu1123:httpexchange-processor:3.2.0-RC3")
 ```
 
 ```java
@@ -429,7 +429,7 @@ if you are using Spring Boot 3.2.0, then `httpexchange-spring-boot-starter` 3.2.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.2.0       | 3.2.0                            |
+| 3.2.0       | 3.2.0-RC3                            |
 
 ## License
 
