@@ -2,6 +2,7 @@ package io.github.danielliu1123.httpexchange;
 
 import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
 import java.lang.reflect.Field;
 import java.time.Duration;
@@ -74,6 +75,7 @@ class ExchangeClientCreator {
     private final Class<?> clientType;
     private final boolean usingNeutralAnnotation;
 
+    @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
     ExchangeClientCreator(ConfigurableBeanFactory beanFactory, Class<?> clientType, boolean usingNeutralAnnotation) {
         this.beanFactory = beanFactory;
         this.environment = beanFactory.getBean(Environment.class);

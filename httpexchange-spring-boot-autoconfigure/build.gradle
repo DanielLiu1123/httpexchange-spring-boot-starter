@@ -4,6 +4,8 @@ dependencies {
     compileOnly("org.springframework:spring-webflux")
     compileOnly("org.springframework.cloud:spring-cloud-starter-loadbalancer")
 
+    compileOnly("com.github.spotbugs:spotbugs-annotations:${spotbugsAnnotationsVersion}")
+
     compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
     // dynamic refresh configuration for exchange clients
