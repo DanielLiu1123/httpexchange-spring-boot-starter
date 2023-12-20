@@ -51,4 +51,18 @@ class NormalTest {
             Class.forName("io.github.danielliu1123.httpexchange.it.normal.Api8Base");
         });
     }
+
+    @Test
+    void whenInterfaceIsGeneric_thenNotGenerateBaseClass() {
+        assertThrows(ClassNotFoundException.class, () -> {
+            Class.forName("io.github.danielliu1123.httpexchange.it.normal.GenericTypeApiBase");
+        });
+    }
+
+    @Test
+    void whenHasInnerInterfaceInGenericType_thenShouldGenerateBaseClass() {
+        assertDoesNotThrow(() -> {
+            Class.forName("io.github.danielliu1123.httpexchange.it.normal.InnerInterfaceInGenericTypeApiBase");
+        });
+    }
 }

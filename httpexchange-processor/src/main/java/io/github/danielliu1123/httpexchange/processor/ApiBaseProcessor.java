@@ -49,12 +49,19 @@ public class ApiBaseProcessor extends AbstractProcessor {
         return true;
     }
 
-    private boolean isInterface(Element element) {
+    private static boolean isInterface(Element element) {
         return element.getKind() == ElementKind.INTERFACE;
     }
 
+    private static boolean isGenericType(Element element) {
+        if (element instanceof TypeElement te) {
+            return !te.getTypeParameters().isEmpty();
+        }
+        return false;
+    }
+
     private void processElement(Set<? extends TypeElement> annotations, Element element) {
-        if (isInterface(element)) {
+        if (isInterface(element) && !isGenericType(element)) {
             processAnnotations(annotations, element);
         } else {
             processNonInterfaceElement(annotations, element);
