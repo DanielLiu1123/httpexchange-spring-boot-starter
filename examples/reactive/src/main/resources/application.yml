@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: quick-start
+server:
+  port: 50002
+http-exchange:
+  base-packages: [ com.example.api ]
+  channels:
+    - base-url: http://localhost:${server.port}
+      classes:
+        - com.example.api.UserApi
+    - base-url: http://localhost:${server.port}
+      client-type: web_client
+      classes:
+        - com.example.api.UserReactiveApi

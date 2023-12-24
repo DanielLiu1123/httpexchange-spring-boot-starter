@@ -1,0 +1,6 @@
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation(project(":starters:httpexchange-spring-boot-starter"))
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
