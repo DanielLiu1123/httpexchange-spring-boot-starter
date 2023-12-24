@@ -73,14 +73,14 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     private Refresh refresh = new Refresh();
     /**
-     * Client type, default {@link ClientType#REST_CLIENT}.
+     * Client type, default {@link ClientType#WEB_CLIENT}.
      *
      * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ClientType#WEB_CLIENT}.
      *
      * @see ClientType
      * @since 3.2.0
      */
-    private ClientType clientType = ClientType.REST_CLIENT;
+    private ClientType clientType = ClientType.WEB_CLIENT;
     /**
      * whether to process {@link org.springframework.web.bind.annotation.RequestMapping} based annotation,
      * default {@code false}.
