@@ -1,14 +1,20 @@
 package io.github.danielliu1123.httpexchange;
 
+import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_CLIENT;
+import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.WEB_CLIENT;
 import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Flow;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.AopProxyUtils;
@@ -18,6 +24,7 @@ import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.cloud.client.loadbalancer.reactive.LoadBalancedExchangeFilterFunction;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -129,21 +136,34 @@ class ExchangeClientCreator {
 
         HttpExchangeAdapter exchangeAdapter = getFieldValue(builder, exchangeAdapterField);
         if (exchangeAdapter == null) {
-            switch (channelConfig.getClientType()) {
-                case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
-                case REST_TEMPLATE -> builder.exchangeAdapter(
-                        RestTemplateAdapter.create(buildRestTemplate(channelConfig)));
-                case WEB_CLIENT -> {
-                    if (WEBFLUX_PRESENT) {
-                        builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
-                    } else {
-                        log.warn(
-                                "spring-webflux is not in the classpath, fall back client-type to '{}'",
-                                HttpExchangeProperties.ClientType.REST_CLIENT);
-                        builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
-                    }
+            HttpExchangeProperties.ClientType ct = channelConfig.getClientType();
+            if (WEBFLUX_PRESENT && hasReactiveReturnTypeMethod(clientType)) {
+                if (ct != null && ct != WEB_CLIENT) {
+                    log.warn(
+                            "Client '{}' contains methods with reactive return types, use client-type '{}' instead of '{}'",
+                            clientType.getSimpleName(),
+                            WEB_CLIENT,
+                            ct);
                 }
-                default -> throw new IllegalStateException("Unexpected value: " + channelConfig.getClientType());
+                builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
+            } else {
+                switch (Optional.ofNullable(ct).orElse(REST_CLIENT)) {
+                    case REST_CLIENT -> builder.exchangeAdapter(
+                            RestClientAdapter.create(buildRestClient(channelConfig)));
+                    case REST_TEMPLATE -> builder.exchangeAdapter(
+                            RestTemplateAdapter.create(buildRestTemplate(channelConfig)));
+                    case WEB_CLIENT -> {
+                        if (WEBFLUX_PRESENT) {
+                            builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
+                        } else {
+                            log.warn(
+                                    "spring-webflux is not in the classpath, fall back client-type to '{}'",
+                                    REST_CLIENT);
+                            builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+                        }
+                    }
+                    default -> throw new IllegalStateException("Unsupported client-type: " + ct);
+                }
             }
         }
 
@@ -291,6 +311,15 @@ class ExchangeClientCreator {
         Optional.ofNullable(conversionService).ifPresent(builder::conversionService);
         Optional.ofNullable(embeddedValueResolver).ifPresent(builder::embeddedValueResolver);
         return builder;
+    }
+
+    private static boolean hasReactiveReturnTypeMethod(Class<?> clz) {
+        return Arrays.stream(ReflectionUtils.getAllDeclaredMethods(clz))
+                .filter(method -> AnnotationUtils.findAnnotation(method, HttpExchange.class) != null
+                        || AnnotationUtils.findAnnotation(method, RequestMapping.class) != null)
+                .map(Method::getReturnType)
+                .anyMatch(returnType -> Publisher.class.isAssignableFrom(returnType)
+                        || Flow.Publisher.class.isAssignableFrom(returnType));
     }
 
     @SuppressWarnings("unchecked")

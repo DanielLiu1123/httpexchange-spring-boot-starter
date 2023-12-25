@@ -80,7 +80,7 @@ public class HttpExchangeProperties implements InitializingBean {
      * @see ClientType
      * @since 3.2.0
      */
-    private ClientType clientType = ClientType.REST_CLIENT;
+    private ClientType clientType;
     /**
      * whether to process {@link org.springframework.web.bind.annotation.RequestMapping} based annotation,
      * default {@code false}.
