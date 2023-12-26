@@ -323,7 +323,8 @@ class ExchangeClientCreator {
         return builder;
     }
 
-    private static boolean hasReactiveReturnTypeMethod(Class<?> clz) {
+    /** visible for testing */
+    static boolean hasReactiveReturnTypeMethod(Class<?> clz) {
         return Arrays.stream(ReflectionUtils.getAllDeclaredMethods(clz))
                 .filter(method -> AnnotationUtils.findAnnotation(method, HttpExchange.class) != null
                         || AnnotationUtils.findAnnotation(method, RequestMapping.class) != null)
