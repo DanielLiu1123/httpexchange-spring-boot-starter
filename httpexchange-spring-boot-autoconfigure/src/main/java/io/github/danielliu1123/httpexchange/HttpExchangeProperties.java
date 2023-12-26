@@ -73,7 +73,14 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     private Refresh refresh = new Refresh();
     /**
-     * Client type, default {@link ClientType#REST_CLIENT}.
+     * Client Type, if not specified, an appropriate client type will be set.
+     *
+     * <ul>
+     *     <li> Use {@link ClientType#REST_CLIENT} if none of the methods in the client return Reactive type.
+     *     <li> Use {@link ClientType#WEB_CLIENT} if any method in the client returns Reactive type.
+     * </ul>
+     *
+     * <p> In most cases, there's no need to explicitly specify the client type.
      *
      * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ClientType#WEB_CLIENT}.
      *
