@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -129,6 +131,15 @@ public class HttpExchangeProperties implements InitializingBean {
      * @since 3.2.0
      */
     private boolean loadbalancerEnabled = true;
+    /**
+     * Request factory class, use {@link JdkClientHttpRequestFactory} if not set.
+     *
+     * <p color="orange"> NOTE: this configuration is not supported by {@link ClientType#WEB_CLIENT}.
+     *
+     * @see ClientHttpRequestFactory
+     * @see JdkClientHttpRequestFactory
+     */
+    private Class<? extends ClientHttpRequestFactory> requestFactory;
 
     @Data
     @NoArgsConstructor
@@ -164,6 +175,9 @@ public class HttpExchangeProperties implements InitializingBean {
             mapper.from(loadbalancerEnabled)
                     .when(e -> isNull(chan.getLoadbalancerEnabled()))
                     .to(chan::setLoadbalancerEnabled);
+            mapper.from(requestFactory)
+                    .when(e -> isNull(chan.getRequestFactory()))
+                    .to(chan::setRequestFactory);
 
             // defaultHeaders + chan.headers
             LinkedHashMap<String, List<String>> total = headers.stream()
@@ -187,6 +201,7 @@ public class HttpExchangeProperties implements InitializingBean {
                 connectTimeout,
                 readTimeout,
                 loadbalancerEnabled,
+                requestFactory,
                 List.of(),
                 List.of());
     }
@@ -242,6 +257,10 @@ public class HttpExchangeProperties implements InitializingBean {
          * @since 3.2.0
          */
         private Boolean loadbalancerEnabled;
+        /**
+         * Request factory class, use {@link HttpExchangeProperties#requestFactory} if not set.
+         */
+        private Class<? extends ClientHttpRequestFactory> requestFactory;
         /**
          * Exchange Clients to apply this channel.
          *

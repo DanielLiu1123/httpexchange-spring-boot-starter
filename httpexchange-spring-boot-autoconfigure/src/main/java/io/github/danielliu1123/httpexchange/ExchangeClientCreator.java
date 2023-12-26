@@ -17,7 +17,6 @@ import java.util.concurrent.Flow;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.web.client.ClientHttpRequestFactories;
@@ -208,7 +207,7 @@ class ExchangeClientCreator {
         if (channelConfig.getReadTimeout() != null) {
             builder = builder.setReadTimeout(Duration.ofMillis(channelConfig.getReadTimeout()));
         }
-        builder = builder.requestFactory(() -> getRequestFactory(channelConfig));
+        builder = builder.requestFactory(getRequestFactoryClass(channelConfig));
 
         RestTemplate restTemplate = builder.build();
 
@@ -286,13 +285,7 @@ class ExchangeClientCreator {
                         .map(Duration::ofMillis)
                         .orElse(null),
                 (SslBundle) null);
-        ClientHttpRequestFactory requestFactory =
-                beanFactory.getBeanProvider(ClientHttpRequestFactory.class).getIfUnique();
-        return requestFactory != null
-                ? ClientHttpRequestFactories.get(
-                        AopProxyUtils.ultimateTargetClass(requestFactory).asSubclass(ClientHttpRequestFactory.class),
-                        settings)
-                : ClientHttpRequestFactories.get(JdkClientHttpRequestFactory.class, settings);
+        return ClientHttpRequestFactories.get(getRequestFactoryClass(channelConfig), settings);
     }
 
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
@@ -331,6 +324,11 @@ class ExchangeClientCreator {
                 .map(Method::getReturnType)
                 .anyMatch(returnType -> Publisher.class.isAssignableFrom(returnType)
                         || Flow.Publisher.class.isAssignableFrom(returnType));
+    }
+
+    private static Class<? extends ClientHttpRequestFactory> getRequestFactoryClass(
+            HttpExchangeProperties.Channel channel) {
+        return channel.getRequestFactory() != null ? channel.getRequestFactory() : JdkClientHttpRequestFactory.class;
     }
 
     @SuppressWarnings("unchecked")

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.http.client.ClientHttpRequestFactory;
 
 /**
  * {@link HttpExchangeAutoConfiguration} tester.
@@ -21,7 +20,6 @@ class HttpExchangeAutoConfigurationTest {
         runner.run(ctx -> {
             assertThat(ctx).hasSingleBean(HttpClientBeanDefinitionRegistry.class);
             assertThat(ctx).hasSingleBean(BeanParamArgumentResolver.class);
-            assertThat(ctx).hasSingleBean(ClientHttpRequestFactory.class);
             assertThat(ctx).hasSingleBean(CommandLineRunner.class);
         });
     }
@@ -31,7 +29,6 @@ class HttpExchangeAutoConfigurationTest {
         runner.withPropertyValues("http-exchange.enabled=false").run(ctx -> {
             assertThat(ctx).doesNotHaveBean(HttpClientBeanDefinitionRegistry.class);
             assertThat(ctx).doesNotHaveBean(BeanParamArgumentResolver.class);
-            assertThat(ctx).doesNotHaveBean(ClientHttpRequestFactory.class);
             assertThat(ctx).doesNotHaveBean(CommandLineRunner.class);
         });
     }
