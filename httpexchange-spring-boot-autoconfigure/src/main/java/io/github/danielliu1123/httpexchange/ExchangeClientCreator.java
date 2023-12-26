@@ -159,7 +159,6 @@ class ExchangeClientCreator {
         }
 
         HttpExchangeProperties.ClientType ct = channelConfig.getClientType();
-
         if (WEBFLUX_PRESENT && hasReactiveReturnTypeMethod(clientType)) {
             if (ct != null && ct != WEB_CLIENT) {
                 log.warn(
@@ -172,7 +171,7 @@ class ExchangeClientCreator {
             return;
         }
 
-        switch (Optional.ofNullable(ct).orElse(REST_CLIENT)) {
+        switch (getClientType(channelConfig)) {
             case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
             case REST_TEMPLATE -> builder.exchangeAdapter(RestTemplateAdapter.create(buildRestTemplate(channelConfig)));
             case WEB_CLIENT -> {
@@ -329,6 +328,10 @@ class ExchangeClientCreator {
     private static Class<? extends ClientHttpRequestFactory> getRequestFactoryClass(
             HttpExchangeProperties.Channel channel) {
         return channel.getRequestFactory() != null ? channel.getRequestFactory() : JdkClientHttpRequestFactory.class;
+    }
+
+    private static HttpExchangeProperties.ClientType getClientType(HttpExchangeProperties.Channel channel) {
+        return channel.getClientType() != null ? channel.getClientType() : REST_CLIENT;
     }
 
     @SuppressWarnings("unchecked")
