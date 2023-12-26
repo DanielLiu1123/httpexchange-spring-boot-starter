@@ -15,7 +15,11 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.client.JettyClientHttpRequestFactory;
+import org.springframework.http.client.ReactorNettyClientRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -136,8 +140,11 @@ public class HttpExchangeProperties implements InitializingBean {
      *
      * <p color="orange"> NOTE: this configuration is not supported by {@link ClientType#WEB_CLIENT}.
      *
-     * @see ClientHttpRequestFactory
      * @see JdkClientHttpRequestFactory
+     * @see SimpleClientHttpRequestFactory
+     * @see HttpComponentsClientHttpRequestFactory
+     * @see ReactorNettyClientRequestFactory
+     * @see JettyClientHttpRequestFactory
      */
     private Class<? extends ClientHttpRequestFactory> requestFactory;
 
