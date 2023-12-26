@@ -134,38 +134,7 @@ class ExchangeClientCreator {
                 .getBeanProvider(HttpServiceProxyFactory.Builder.class)
                 .getIfUnique(HttpServiceProxyFactory::builder);
 
-        HttpExchangeAdapter exchangeAdapter = getFieldValue(builder, exchangeAdapterField);
-        if (exchangeAdapter == null) {
-            HttpExchangeProperties.ClientType ct = channelConfig.getClientType();
-            if (WEBFLUX_PRESENT && hasReactiveReturnTypeMethod(clientType)) {
-                if (ct != null && ct != WEB_CLIENT) {
-                    log.warn(
-                            "Client '{}' contains methods with reactive return types, use client-type '{}' instead of '{}'",
-                            clientType.getSimpleName(),
-                            WEB_CLIENT,
-                            ct);
-                }
-                builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
-            } else {
-                switch (Optional.ofNullable(ct).orElse(REST_CLIENT)) {
-                    case REST_CLIENT -> builder.exchangeAdapter(
-                            RestClientAdapter.create(buildRestClient(channelConfig)));
-                    case REST_TEMPLATE -> builder.exchangeAdapter(
-                            RestTemplateAdapter.create(buildRestTemplate(channelConfig)));
-                    case WEB_CLIENT -> {
-                        if (WEBFLUX_PRESENT) {
-                            builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
-                        } else {
-                            log.warn(
-                                    "spring-webflux is not in the classpath, fall back client-type to '{}'",
-                                    REST_CLIENT);
-                            builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
-                        }
-                    }
-                    default -> throw new IllegalStateException("Unsupported client-type: " + ct);
-                }
-            }
-        }
+        setExchangeAdapter(builder, channelConfig);
 
         // String value resolver, need to support ${} placeholder
         StringValueResolver resolver = Optional.ofNullable(getFieldValue(builder, embeddedValueResolverField))
@@ -181,6 +150,42 @@ class ExchangeClientCreator {
                 .forEach(builder::customArgumentResolver);
 
         return builder;
+    }
+
+    private void setExchangeAdapter(
+            HttpServiceProxyFactory.Builder builder, HttpExchangeProperties.Channel channelConfig) {
+        HttpExchangeAdapter exchangeAdapter = getFieldValue(builder, exchangeAdapterField);
+        if (exchangeAdapter != null) {
+            return;
+        }
+
+        HttpExchangeProperties.ClientType ct = channelConfig.getClientType();
+
+        if (WEBFLUX_PRESENT && hasReactiveReturnTypeMethod(clientType)) {
+            if (ct != null && ct != WEB_CLIENT) {
+                log.warn(
+                        "Client '{}' contains methods with reactive return types, use client-type '{}' instead of '{}'",
+                        clientType.getSimpleName(),
+                        WEB_CLIENT,
+                        ct);
+            }
+            builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
+            return;
+        }
+
+        switch (Optional.ofNullable(ct).orElse(REST_CLIENT)) {
+            case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+            case REST_TEMPLATE -> builder.exchangeAdapter(RestTemplateAdapter.create(buildRestTemplate(channelConfig)));
+            case WEB_CLIENT -> {
+                if (WEBFLUX_PRESENT) {
+                    builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
+                } else {
+                    log.warn("spring-webflux is not in the classpath, fall back client-type to '{}'", REST_CLIENT);
+                    builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+                }
+            }
+            default -> throw new IllegalStateException("Unsupported client-type: " + ct);
+        }
     }
 
     private RestTemplate buildRestTemplate(HttpExchangeProperties.Channel channelConfig) {
@@ -208,7 +213,9 @@ class ExchangeClientCreator {
         RestTemplate restTemplate = builder.build();
 
         if (isLoadBalancerEnabled(channelConfig)) {
-            beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).stream()
+            beanFactory
+                    .getBeanProvider(ClientHttpRequestInterceptor.class)
+                    .orderedStream()
                     .filter(e -> !restTemplate.getInterceptors().contains(e))
                     .forEach(restTemplate.getInterceptors()::add);
         }
@@ -231,7 +238,9 @@ class ExchangeClientCreator {
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
         if (isLoadBalancerEnabled(channelConfig)) {
-            builder.filters(it -> beanFactory.getBeanProvider(ExchangeFilterFunction.class).stream()
+            builder.filters(it -> beanFactory
+                    .getBeanProvider(ExchangeFilterFunction.class)
+                    .orderedStream()
                     .filter(ExchangeClientCreator::notLoadBalancedFilter)
                     .filter(e -> !it.contains(e))
                     .forEach(it::add));
@@ -254,9 +263,10 @@ class ExchangeClientCreator {
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
         builder.requestFactory(getRequestFactory(channelConfig));
-        // If loadbalancer in the classpath, use LoadBalancerInterceptor.
         if (isLoadBalancerEnabled(channelConfig)) {
-            builder.requestInterceptors(it -> beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).stream()
+            builder.requestInterceptors(it -> beanFactory
+                    .getBeanProvider(ClientHttpRequestInterceptor.class)
+                    .orderedStream()
                     .filter(e -> !it.contains(e))
                     .forEach(it::add));
         }
