@@ -135,37 +135,23 @@ class ExchangeClientCreator {
 
         setExchangeAdapter(builder, channelConfig);
 
-        // String value resolver, need to support ${} placeholder
-        StringValueResolver resolver = Optional.ofNullable(getFieldValue(builder, embeddedValueResolverField))
-                .map(StringValueResolver.class::cast)
-                .map(r -> UrlPlaceholderStringValueResolver.create(environment, r))
-                .orElseGet(() -> UrlPlaceholderStringValueResolver.create(environment, null));
-        builder.embeddedValueResolver(resolver);
+        setEmbeddedValueResolver(builder);
 
-        // custom HttpServiceArgumentResolver
-        beanFactory
-                .getBeanProvider(HttpServiceArgumentResolver.class)
-                .orderedStream()
-                .forEach(builder::customArgumentResolver);
+        addCustomArgumentResolver(builder);
 
         return builder;
     }
 
     private void setExchangeAdapter(
             HttpServiceProxyFactory.Builder builder, HttpExchangeProperties.Channel channelConfig) {
-        HttpExchangeAdapter exchangeAdapter = getFieldValue(builder, exchangeAdapterField);
-        if (exchangeAdapter != null) {
-            return;
-        }
-
-        HttpExchangeProperties.ClientType ct = channelConfig.getClientType();
         if (WEBFLUX_PRESENT && hasReactiveReturnTypeMethod(clientType)) {
-            if (ct != null && ct != WEB_CLIENT) {
+            HttpExchangeProperties.ClientType type = channelConfig.getClientType();
+            if (type != null && type != WEB_CLIENT) {
                 log.warn(
                         "Client '{}' contains methods with reactive return types, use client-type '{}' instead of '{}'",
                         clientType.getSimpleName(),
                         WEB_CLIENT,
-                        ct);
+                        type);
             }
             builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
             return;
@@ -182,8 +168,24 @@ class ExchangeClientCreator {
                     builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
                 }
             }
-            default -> throw new IllegalStateException("Unsupported client-type: " + ct);
+            default -> throw new IllegalStateException("Unsupported client-type: " + channelConfig.getClientType());
         }
+    }
+
+    private void addCustomArgumentResolver(HttpServiceProxyFactory.Builder builder) {
+        beanFactory
+                .getBeanProvider(HttpServiceArgumentResolver.class)
+                .orderedStream()
+                .forEach(builder::customArgumentResolver);
+    }
+
+    private void setEmbeddedValueResolver(HttpServiceProxyFactory.Builder builder) {
+        // String value resolver, need to support ${} placeholder
+        StringValueResolver resolver = Optional.ofNullable(getFieldValue(builder, embeddedValueResolverField))
+                .map(StringValueResolver.class::cast)
+                .map(r -> UrlPlaceholderStringValueResolver.create(environment, r))
+                .orElseGet(() -> UrlPlaceholderStringValueResolver.create(environment, null));
+        builder.embeddedValueResolver(resolver);
     }
 
     private RestTemplate buildRestTemplate(HttpExchangeProperties.Channel channelConfig) {
