@@ -94,7 +94,47 @@ class TimeoutTests {
         ctx.close();
     }
 
-    interface DelayApi {
+    @ParameterizedTest
+    @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
+    void testTimeoutForSingleRequest_whenUsingBlockingClient_thenWorksFine(String clientType) {
+        int port = PortGetter.availablePort();
+        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+                .properties("server.port=" + port)
+                .properties(HttpExchangeProperties.PREFIX + ".read-timeout=100")
+                .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
+                .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
+                .run();
+
+        DelayApi api = ctx.getBean(DelayApi.class);
+
+        assertThatCode(() -> api.delay(120))
+                .isInstanceOf(ResourceAccessException.class)
+                .hasMessageContaining("request timed out");
+        assertThatCode(() -> api.withTimeout(200).delay(120)).doesNotThrowAnyException();
+
+        ctx.close();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"WEB_CLIENT"})
+    void testTimeoutForSingleRequest_whenUsingReactiveClient_thenNotWork(String clientType) {
+        int port = PortGetter.availablePort();
+        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+                .properties("server.port=" + port)
+                .properties(HttpExchangeProperties.PREFIX + ".read-timeout=100")
+                .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
+                .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
+                .run();
+
+        DelayApi api = ctx.getBean(DelayApi.class);
+
+        assertThatCode(() -> api.delay(120)).doesNotThrowAnyException();
+        assertThatCode(() -> api.withTimeout(50).delay(120)).doesNotThrowAnyException();
+
+        ctx.close();
+    }
+
+    interface DelayApi extends RequestConfigurator<DelayApi> {
         @GetExchange("/delay/{delay}")
         String delay(@PathVariable int delay);
     }
