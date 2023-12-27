@@ -17,7 +17,6 @@ import java.util.concurrent.Flow;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.web.client.ClientHttpRequestFactories;
@@ -136,44 +135,29 @@ class ExchangeClientCreator {
 
         setExchangeAdapter(builder, channelConfig);
 
-        // String value resolver, need to support ${} placeholder
-        StringValueResolver resolver = Optional.ofNullable(getFieldValue(builder, embeddedValueResolverField))
-                .map(StringValueResolver.class::cast)
-                .map(r -> UrlPlaceholderStringValueResolver.create(environment, r))
-                .orElseGet(() -> UrlPlaceholderStringValueResolver.create(environment, null));
-        builder.embeddedValueResolver(resolver);
+        setEmbeddedValueResolver(builder);
 
-        // custom HttpServiceArgumentResolver
-        beanFactory
-                .getBeanProvider(HttpServiceArgumentResolver.class)
-                .orderedStream()
-                .forEach(builder::customArgumentResolver);
+        addCustomArgumentResolver(builder);
 
         return builder;
     }
 
     private void setExchangeAdapter(
             HttpServiceProxyFactory.Builder builder, HttpExchangeProperties.Channel channelConfig) {
-        HttpExchangeAdapter exchangeAdapter = getFieldValue(builder, exchangeAdapterField);
-        if (exchangeAdapter != null) {
-            return;
-        }
-
-        HttpExchangeProperties.ClientType ct = channelConfig.getClientType();
-
         if (WEBFLUX_PRESENT && hasReactiveReturnTypeMethod(clientType)) {
-            if (ct != null && ct != WEB_CLIENT) {
+            HttpExchangeProperties.ClientType type = channelConfig.getClientType();
+            if (type != null && type != WEB_CLIENT) {
                 log.warn(
                         "Client '{}' contains methods with reactive return types, use client-type '{}' instead of '{}'",
                         clientType.getSimpleName(),
                         WEB_CLIENT,
-                        ct);
+                        type);
             }
             builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
             return;
         }
 
-        switch (Optional.ofNullable(ct).orElse(REST_CLIENT)) {
+        switch (getClientType(channelConfig)) {
             case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
             case REST_TEMPLATE -> builder.exchangeAdapter(RestTemplateAdapter.create(buildRestTemplate(channelConfig)));
             case WEB_CLIENT -> {
@@ -184,8 +168,24 @@ class ExchangeClientCreator {
                     builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
                 }
             }
-            default -> throw new IllegalStateException("Unsupported client-type: " + ct);
+            default -> throw new IllegalStateException("Unsupported client-type: " + channelConfig.getClientType());
         }
+    }
+
+    private void addCustomArgumentResolver(HttpServiceProxyFactory.Builder builder) {
+        beanFactory
+                .getBeanProvider(HttpServiceArgumentResolver.class)
+                .orderedStream()
+                .forEach(builder::customArgumentResolver);
+    }
+
+    private void setEmbeddedValueResolver(HttpServiceProxyFactory.Builder builder) {
+        // String value resolver, need to support ${} placeholder
+        StringValueResolver resolver = Optional.ofNullable(getFieldValue(builder, embeddedValueResolverField))
+                .map(StringValueResolver.class::cast)
+                .map(r -> UrlPlaceholderStringValueResolver.create(environment, r))
+                .orElseGet(() -> UrlPlaceholderStringValueResolver.create(environment, null));
+        builder.embeddedValueResolver(resolver);
     }
 
     private RestTemplate buildRestTemplate(HttpExchangeProperties.Channel channelConfig) {
@@ -208,7 +208,7 @@ class ExchangeClientCreator {
         if (channelConfig.getReadTimeout() != null) {
             builder = builder.setReadTimeout(Duration.ofMillis(channelConfig.getReadTimeout()));
         }
-        builder = builder.requestFactory(() -> getRequestFactory(channelConfig));
+        builder = builder.requestFactory(getRequestFactoryClass(channelConfig));
 
         RestTemplate restTemplate = builder.build();
 
@@ -286,13 +286,7 @@ class ExchangeClientCreator {
                         .map(Duration::ofMillis)
                         .orElse(null),
                 (SslBundle) null);
-        ClientHttpRequestFactory requestFactory =
-                beanFactory.getBeanProvider(ClientHttpRequestFactory.class).getIfUnique();
-        return requestFactory != null
-                ? ClientHttpRequestFactories.get(
-                        AopProxyUtils.ultimateTargetClass(requestFactory).asSubclass(ClientHttpRequestFactory.class),
-                        settings)
-                : ClientHttpRequestFactories.get(JdkClientHttpRequestFactory.class, settings);
+        return ClientHttpRequestFactories.get(getRequestFactoryClass(channelConfig), settings);
     }
 
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
@@ -331,6 +325,15 @@ class ExchangeClientCreator {
                 .map(Method::getReturnType)
                 .anyMatch(returnType -> Publisher.class.isAssignableFrom(returnType)
                         || Flow.Publisher.class.isAssignableFrom(returnType));
+    }
+
+    private static Class<? extends ClientHttpRequestFactory> getRequestFactoryClass(
+            HttpExchangeProperties.Channel channel) {
+        return channel.getRequestFactory() != null ? channel.getRequestFactory() : JdkClientHttpRequestFactory.class;
+    }
+
+    private static HttpExchangeProperties.ClientType getClientType(HttpExchangeProperties.Channel channel) {
+        return channel.getClientType() != null ? channel.getClientType() : REST_CLIENT;
     }
 
     @SuppressWarnings("unchecked")

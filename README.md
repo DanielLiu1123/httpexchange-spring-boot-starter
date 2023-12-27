@@ -397,21 +397,9 @@ HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
 
 Auto-detect all of the `HttpServiceArgumentResolver` beans, then apply them to build the `HttpServiceProxyFactory`.
 
-#### Change ClientHttpRequestFactory implementation
-
-There are many built-in implementations of `ClientHttpRequestFactory`, use `JdkClientHttpRequestFactory` by default.
-You can change it another implementation, such as `ReactorNettyClientRequestFactory`.
-
-```java
-@Bean
-ClientHttpRequestFactory reactorNettyClientRequestFactory() {
-   return ClientHttpRequestFactories.get(ReactorNettyClientRequestFactory.class, ClientHttpRequestFactorySettings.DEFAULTS);
-}
-```
-
 #### Change Http Client Implementation
 
-There are three adapters for HttpExchange client: `RestClientAdapter`,
+There are many adapters for HttpExchange client: `RestClientAdapter`,
 `WebClientAdapter` and `RestTemplateAdapter`, use `REST_CLIENT` by default,
 you can change it to `WEB_CLIENT` or `REST_TEMPLATE`.
 
@@ -421,6 +409,18 @@ http-exchange:
 ```
 
 > ⚠️ **Warning**: The `connectTimeout` and `readTimeout` settings are not supported by `WEB_CLIENT`.
+
+#### Change ClientHttpRequestFactory implementation
+
+There are many built-in implementations of `ClientHttpRequestFactory`, use `JdkClientHttpRequestFactory` by default.
+You can change it another implementation, such as `ReactorNettyClientRequestFactory`.
+
+```yaml
+http-exchange:
+  request-factory: org.springframework.http.client.ReactorNettyClientRequestFactory
+```
+
+> `request-factory` config works on `REST_CLIENT` and `REST_TEMPLATE` client type only.
 
 ## Version
 

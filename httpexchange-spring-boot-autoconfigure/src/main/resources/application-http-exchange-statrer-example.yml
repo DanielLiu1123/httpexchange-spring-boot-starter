@@ -13,6 +13,7 @@ http-exchange:
   client-type: rest_client
   warn-unused-config-enabled: true
   loadbalancer-enabled: true
+  request-factory: org.springframework.http.client.JdkClientHttpRequestFactory
   channels:
     - base-url: http://order
       headers:
