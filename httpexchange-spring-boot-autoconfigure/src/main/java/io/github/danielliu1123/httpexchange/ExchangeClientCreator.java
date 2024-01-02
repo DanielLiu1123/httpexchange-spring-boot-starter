@@ -5,6 +5,7 @@ import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.Client
 import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.github.danielliu1123.httpexchange.factory.jdkclient.EnhancedJdkClientHttpRequestFactory;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -28,7 +29,6 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -329,7 +329,9 @@ class ExchangeClientCreator {
 
     private static Class<? extends ClientHttpRequestFactory> getRequestFactoryClass(
             HttpExchangeProperties.Channel channel) {
-        return channel.getRequestFactory() != null ? channel.getRequestFactory() : JdkClientHttpRequestFactory.class;
+        return channel.getRequestFactory() != null
+                ? channel.getRequestFactory()
+                : EnhancedJdkClientHttpRequestFactory.class;
     }
 
     private static HttpExchangeProperties.ClientType getClientType(HttpExchangeProperties.Channel channel) {

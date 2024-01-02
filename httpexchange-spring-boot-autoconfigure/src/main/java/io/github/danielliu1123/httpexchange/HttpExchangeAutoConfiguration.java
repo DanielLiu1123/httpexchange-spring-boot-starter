@@ -8,7 +8,10 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.client.RestClientCustomizer;
+import org.springframework.boot.web.client.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 
 /**
  * Http Exchange Auto Configuration.
@@ -26,6 +29,11 @@ public class HttpExchangeAutoConfiguration implements DisposableBean {
     }
 
     @Bean
+    static RequestConfiguratorBeanPostProcessor requestConfiguratorBeanPostProcessor() {
+        return new RequestConfiguratorBeanPostProcessor();
+    }
+
+    @Bean
     @ConditionalOnMissingBean
     public BeanParamArgumentResolver beanParamArgumentResolver(HttpExchangeProperties properties) {
         return new BeanParamArgumentResolver(properties);
@@ -38,6 +46,17 @@ public class HttpExchangeAutoConfiguration implements DisposableBean {
             matchIfMissing = true)
     public CommandLineRunner unusedConfigChecker(HttpExchangeProperties properties) {
         return args -> checkUnusedConfig(properties);
+    }
+
+    @Bean // RestClientBuilderConfigurer is not lazy :)
+    public RestClientCustomizer httpExchangeClientHttpRequestInterceptorRestClientCustomizer() {
+        return builder -> builder.requestInterceptor(HttpExchangeClientHttpRequestInterceptor.INSTANCE);
+    }
+
+    @Bean
+    @Lazy // RestTemplateBuilderConfigurer is lazy :)
+    public RestTemplateCustomizer httpExchangeClientHttpRequestInterceptorRestTemplateCustomizer() {
+        return builder -> builder.getInterceptors().add(HttpExchangeClientHttpRequestInterceptor.INSTANCE);
     }
 
     @Override
