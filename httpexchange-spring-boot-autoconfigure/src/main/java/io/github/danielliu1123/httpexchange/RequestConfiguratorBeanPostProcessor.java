@@ -43,29 +43,30 @@ public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
 
     @SuppressWarnings("unchecked")
     private Object createProxy(Object target, HttpExchangeMetadata metadata) {
+        Advised advised = (Advised) target;
         Class<?>[] interfaces = Stream.concat(
-                        Arrays.stream(((Advised) target).getProxiedInterfaces()), Stream.of(RequestConfigurator.class))
+                        Arrays.stream(advised.getProxiedInterfaces()), Stream.of(RequestConfigurator.class))
                 .distinct()
                 .toArray(Class[]::new);
         return Proxy.newProxyInstance(getClass().getClassLoader(), interfaces, (proxy, method, args) -> {
             if (ADD_HEADER_METHOD.equals(method)) {
                 HttpExchangeMetadata copy = metadata.copy();
                 copy.getHeaders().put((String) args[0], (List<String>) args[1]);
-                return createProxy(target, copy);
+                return createProxy(advised, copy);
             }
             if (WITH_TIMEOUT_METHOD.equals(method)) {
                 HttpExchangeMetadata copy = metadata.copy();
                 copy.setReadTimeout((Integer) args[0]);
-                return createProxy(target, copy);
+                return createProxy(advised, copy);
             }
 
             if (isNotHttpRequestMethod(method)) {
-                return method.invoke(target, args);
+                return method.invoke(advised, args);
             }
 
             HttpExchangeMetadata.set(metadata);
             try {
-                return method.invoke(target, args);
+                return method.invoke(advised, args);
             } catch (InvocationTargetException e) {
                 throw e.getTargetException();
             } finally {
