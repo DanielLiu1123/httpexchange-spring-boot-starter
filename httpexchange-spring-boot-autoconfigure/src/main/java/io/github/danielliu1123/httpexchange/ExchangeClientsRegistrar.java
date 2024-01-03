@@ -1,5 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
+import jakarta.annotation.Nonnull;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -20,12 +21,13 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Environ
     private HttpClientBeanRegistrar registrar;
 
     @Override
-    public void setEnvironment(Environment environment) {
+    public void setEnvironment(@Nonnull Environment environment) {
         this.environment = environment;
     }
 
     @Override
-    public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
+    public void registerBeanDefinitions(
+            @Nonnull AnnotationMetadata metadata, @Nonnull BeanDefinitionRegistry registry) {
         boolean enabled = environment.getProperty(HttpExchangeProperties.PREFIX + ".enabled", Boolean.class, true);
         if (!enabled) {
             return;
@@ -38,7 +40,7 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Environ
                         metadata.getAnnotationAttributes(EnableExchangeClients.class.getName()))
                 .orElse(Map.of());
 
-        // Shouldn't scan base packages when using clients property
+        // Shouldn't scan base packages when using 'clients' property
         // see https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/1
         String[] basePackages = getBasePackages(attrs);
         Class<?>[] clientClasses = getClients(attrs);

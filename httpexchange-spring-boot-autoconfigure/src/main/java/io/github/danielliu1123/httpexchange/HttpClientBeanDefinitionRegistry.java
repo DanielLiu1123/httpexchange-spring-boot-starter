@@ -1,5 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
+import jakarta.annotation.Nonnull;
 import java.util.Set;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -19,7 +20,7 @@ class HttpClientBeanDefinitionRegistry implements BeanDefinitionRegistryPostProc
     private HttpClientBeanRegistrar registrar;
 
     @Override
-    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+    public void postProcessBeanDefinitionRegistry(@Nonnull BeanDefinitionRegistry registry) throws BeansException {
         // check if already processed by ExchangeClientsRegistrar
         if (HttpClientBeanRegistrar.hasRegistered(registry)) {
             return;
@@ -39,12 +40,12 @@ class HttpClientBeanDefinitionRegistry implements BeanDefinitionRegistryPostProc
     }
 
     @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+    public void postProcessBeanFactory(@Nonnull ConfigurableListableBeanFactory beanFactory) throws BeansException {
         // nothing to do
     }
 
     @Override
-    public void setEnvironment(Environment environment) {
+    public void setEnvironment(@Nonnull Environment environment) {
         this.environment = environment;
     }
 }

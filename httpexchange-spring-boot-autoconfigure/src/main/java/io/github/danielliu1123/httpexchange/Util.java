@@ -25,7 +25,7 @@ class Util {
         if (found.isPresent()) {
             return found;
         }
-        // not class match, try to find from the clients configuration
+        // not class match, try to find from the 'clients' configuration
         return properties.getChannels().stream().filter(it -> match(clz, it)).findFirst();
     }
 

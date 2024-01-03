@@ -1,5 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
+import jakarta.annotation.Nonnull;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
@@ -128,7 +129,7 @@ class HttpClientBeanRegistrar {
     private static ClassPathScanningCandidateComponentProvider getScanner() {
         ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false) {
             @Override
-            protected boolean isCandidateComponent(AnnotatedBeanDefinition abd) {
+            protected boolean isCandidateComponent(@Nonnull AnnotatedBeanDefinition abd) {
                 return true;
             }
         };

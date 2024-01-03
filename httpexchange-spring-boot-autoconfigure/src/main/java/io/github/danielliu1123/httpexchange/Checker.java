@@ -10,8 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * @author Freeman
  */
-@UtilityClass
 @Slf4j
+@UtilityClass
 class Checker {
 
     public static void checkUnusedConfig(HttpExchangeProperties properties) {

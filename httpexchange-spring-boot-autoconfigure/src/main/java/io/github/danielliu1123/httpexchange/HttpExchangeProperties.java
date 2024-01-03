@@ -226,7 +226,7 @@ public class HttpExchangeProperties implements InitializingBean {
          */
         private String baseUrl;
         /**
-         * Default headers, will be merged with {@link HttpExchangeProperties#headers}.
+         * Default headers will be merged with {@link HttpExchangeProperties#headers}.
          */
         private List<Header> headers = new ArrayList<>();
         /**

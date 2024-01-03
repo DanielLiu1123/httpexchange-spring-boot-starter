@@ -1,5 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
+import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
@@ -19,7 +20,9 @@ public class HttpExchangeClientHttpRequestInterceptor implements ClientHttpReque
             new HttpExchangeClientHttpRequestInterceptor();
 
     @Override
-    public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
+    @Nonnull
+    public ClientHttpResponse intercept(
+            @Nonnull HttpRequest request, @Nonnull byte[] body, @Nonnull ClientHttpRequestExecution execution)
             throws IOException {
         HttpExchangeMetadata metadata = HttpExchangeMetadata.get();
         if (metadata == null) {

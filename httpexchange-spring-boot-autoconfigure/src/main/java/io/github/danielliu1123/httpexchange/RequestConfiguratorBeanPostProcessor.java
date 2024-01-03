@@ -1,5 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
+import jakarta.annotation.Nonnull;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -30,7 +31,7 @@ public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
 
     @Nullable
     @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+    public Object postProcessAfterInitialization(@Nonnull Object bean, @Nonnull String beanName) throws BeansException {
         if (bean instanceof RequestConfigurator<?>
                 && AopUtils.isJdkDynamicProxy(bean)
                 && bean instanceof Advised

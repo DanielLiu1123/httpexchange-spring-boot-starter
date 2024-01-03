@@ -1,5 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
+import jakarta.annotation.Nonnull;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.net.URI;
@@ -49,7 +50,8 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
     }
 
     @Override
-    public boolean resolve(Object argument, MethodParameter parameter, HttpRequestValues.Builder requestValues) {
+    public boolean resolve(
+            Object argument, @Nonnull MethodParameter parameter, @Nonnull HttpRequestValues.Builder requestValues) {
         if (isNonResolvableArgument(argument, parameter)) {
             return false;
         }
