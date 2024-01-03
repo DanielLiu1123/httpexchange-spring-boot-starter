@@ -97,6 +97,10 @@ class ExchangeClientCreator {
      */
     @SuppressWarnings("unchecked")
     public <T> T create() {
+        if (log.isTraceEnabled()) {
+            log.trace("Creating http exchange client for {}", clientType.getSimpleName());
+        }
+
         HttpExchangeProperties httpExchangeProperties = beanFactory
                 .getBeanProvider(HttpExchangeProperties.class)
                 .getIfUnique(() -> Util.getProperties(environment));
