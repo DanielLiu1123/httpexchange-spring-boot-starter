@@ -15,6 +15,7 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
 
@@ -60,6 +61,8 @@ public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
                 copy.setReadTimeout((Integer) args[0]);
                 return createProxy(advised, copy);
             }
+
+            ReflectionUtils.makeAccessible(method);
 
             if (isNotHttpRequestMethod(method)) {
                 return method.invoke(advised, args);

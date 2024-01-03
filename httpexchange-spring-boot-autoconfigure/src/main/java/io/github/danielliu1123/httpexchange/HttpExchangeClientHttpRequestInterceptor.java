@@ -16,9 +16,6 @@ public class HttpExchangeClientHttpRequestInterceptor implements ClientHttpReque
 
     public static final String REQUEST_TIMEOUT_HEADER = "X-HttpExchange-Request-Timeout";
 
-    public static final HttpExchangeClientHttpRequestInterceptor INSTANCE =
-            new HttpExchangeClientHttpRequestInterceptor();
-
     @Override
     @Nonnull
     public ClientHttpResponse intercept(

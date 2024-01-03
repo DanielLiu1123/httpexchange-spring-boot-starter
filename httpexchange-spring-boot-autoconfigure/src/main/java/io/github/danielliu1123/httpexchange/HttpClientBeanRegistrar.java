@@ -91,16 +91,16 @@ class HttpClientBeanRegistrar {
             throw new IllegalArgumentException(className + " is not an interface");
         }
 
-        boolean usingNeutralAnnotation = hasHttpExchangeAnnotation(clz);
+        boolean hasHttpExchangeAnnotation = hasHttpExchangeAnnotation(clz);
 
-        if (!usingNeutralAnnotation && !hasRequestMappingAnnotation(clz)) {
+        if (!hasHttpExchangeAnnotation && !hasRequestMappingAnnotation(clz)) {
             return;
         }
 
         Assert.isInstanceOf(ConfigurableBeanFactory.class, registry);
 
         ExchangeClientCreator creator =
-                new ExchangeClientCreator((ConfigurableBeanFactory) registry, clz, usingNeutralAnnotation);
+                new ExchangeClientCreator((ConfigurableBeanFactory) registry, clz, hasHttpExchangeAnnotation);
 
         AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, creator::create)
                 .getBeanDefinition();

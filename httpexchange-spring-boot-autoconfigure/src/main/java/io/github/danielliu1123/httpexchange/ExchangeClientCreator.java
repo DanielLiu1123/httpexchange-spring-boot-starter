@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Flow;
 import org.reactivestreams.Publisher;
@@ -29,7 +30,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.util.Assert;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
@@ -79,14 +80,15 @@ class ExchangeClientCreator {
     private final ConfigurableBeanFactory beanFactory;
     private final Environment environment;
     private final Class<?> clientType;
-    private final boolean usingNeutralAnnotation;
+    private final boolean isUseHttpExchangeAnnotation;
 
     @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
-    ExchangeClientCreator(ConfigurableBeanFactory beanFactory, Class<?> clientType, boolean usingNeutralAnnotation) {
+    ExchangeClientCreator(
+            ConfigurableBeanFactory beanFactory, Class<?> clientType, boolean isUseHttpExchangeAnnotation) {
         this.beanFactory = beanFactory;
         this.environment = beanFactory.getBean(Environment.class);
         this.clientType = clientType;
-        this.usingNeutralAnnotation = usingNeutralAnnotation;
+        this.isUseHttpExchangeAnnotation = isUseHttpExchangeAnnotation;
     }
 
     /**
@@ -106,7 +108,7 @@ class ExchangeClientCreator {
                 .getIfUnique(() -> Util.getProperties(environment));
         HttpExchangeProperties.Channel chan =
                 findMatchedConfig(clientType, httpExchangeProperties).orElseGet(httpExchangeProperties::defaultClient);
-        if (usingNeutralAnnotation) {
+        if (isUseHttpExchangeAnnotation) {
             HttpServiceProxyFactory factory = buildFactory(chan);
             T result = (T) factory.createClient(clientType);
             Cache.addClient(result);
@@ -195,9 +197,7 @@ class ExchangeClientCreator {
     private RestTemplate buildRestTemplate(HttpExchangeProperties.Channel channelConfig) {
         RestTemplateBuilder builder =
                 beanFactory.getBeanProvider(RestTemplateBuilder.class).getIfUnique(RestTemplateBuilder::new);
-        // see org.springframework.boot.web.client.RestTemplateBuilder#rootUri
-        String rootUri = getFieldValue(builder, "rootUri");
-        if (!StringUtils.hasText(rootUri) && StringUtils.hasText(channelConfig.getBaseUrl())) {
+        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
             builder = builder.rootUri(getRealBaseUrl(channelConfig));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
@@ -230,9 +230,7 @@ class ExchangeClientCreator {
     private WebClient buildWebClient(HttpExchangeProperties.Channel channelConfig) {
         WebClient.Builder builder =
                 beanFactory.getBeanProvider(WebClient.Builder.class).getIfUnique(WebClient::builder);
-        // see org.springframework.web.reactive.function.client.DefaultWebClientBuilder#baseUrl
-        String baseUrl = getFieldValue(builder, "baseUrl");
-        if (!StringUtils.hasText(baseUrl) && StringUtils.hasText(channelConfig.getBaseUrl())) {
+        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
             builder.baseUrl(getRealBaseUrl(channelConfig));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
@@ -255,9 +253,7 @@ class ExchangeClientCreator {
     private RestClient buildRestClient(HttpExchangeProperties.Channel channelConfig) {
         RestClient.Builder builder =
                 beanFactory.getBeanProvider(RestClient.Builder.class).getIfUnique(RestClient::builder);
-        // see org.springframework.web.client.DefaultRestClientBuilder#baseUrl
-        String baseUrl = getFieldValue(builder, "baseUrl");
-        if (!StringUtils.hasText(baseUrl) && StringUtils.hasText(channelConfig.getBaseUrl())) {
+        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
             builder.baseUrl(getRealBaseUrl(channelConfig));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
@@ -321,7 +317,9 @@ class ExchangeClientCreator {
         return builder;
     }
 
-    /** visible for testing */
+    /**
+     * visible for testing
+     */
     static boolean hasReactiveReturnTypeMethod(Class<?> clz) {
         return Arrays.stream(ReflectionUtils.getAllDeclaredMethods(clz))
                 .filter(method -> AnnotationUtils.findAnnotation(method, HttpExchange.class) != null
@@ -331,11 +329,21 @@ class ExchangeClientCreator {
                         || Flow.Publisher.class.isAssignableFrom(returnType));
     }
 
-    private static Class<? extends ClientHttpRequestFactory> getRequestFactoryClass(
-            HttpExchangeProperties.Channel channel) {
-        return channel.getRequestFactory() != null
-                ? channel.getRequestFactory()
-                : EnhancedJdkClientHttpRequestFactory.class;
+    private Class<? extends ClientHttpRequestFactory> getRequestFactoryClass(HttpExchangeProperties.Channel channel) {
+        if (RequestConfigurator.class.isAssignableFrom(clientType)) {
+            if (channel.getRequestFactory() == null) {
+                return EnhancedJdkClientHttpRequestFactory.class;
+            }
+            if (!Objects.equals(channel.getRequestFactory(), EnhancedJdkClientHttpRequestFactory.class)) {
+                log.warn(
+                        "Client '{}' extends RequestConfigurator, but request-factory '{}' does not implement RequestConfigurator's features, remove request-factory from configuration or use '{}' instead.",
+                        clientType.getSimpleName(),
+                        channel.getRequestFactory().getSimpleName(),
+                        EnhancedJdkClientHttpRequestFactory.class.getSimpleName());
+            }
+            return channel.getRequestFactory();
+        }
+        return JdkClientHttpRequestFactory.class;
     }
 
     private static HttpExchangeProperties.ClientType getClientType(HttpExchangeProperties.Channel channel) {
@@ -346,11 +354,5 @@ class ExchangeClientCreator {
     private static <T> T getFieldValue(Object obj, Field field) {
         ReflectionUtils.makeAccessible(field);
         return (T) ReflectionUtils.getField(field, obj);
-    }
-
-    private static <T> T getFieldValue(Object obj, String fieldName) {
-        Field field = ReflectionUtils.findField(obj.getClass(), fieldName);
-        Assert.notNull(field, "No such field '" + fieldName + "' in " + obj.getClass());
-        return getFieldValue(obj, field);
     }
 }
