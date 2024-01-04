@@ -3,12 +3,14 @@ package io.github.danielliu1123.httpexchange;
 import jakarta.annotation.Nonnull;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.Advised;
+import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -43,45 +45,14 @@ public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
         return bean;
     }
 
-    @SuppressWarnings("unchecked")
-    private Object createProxy(Object target, HttpExchangeMetadata metadata) {
-        Advised advised = (Advised) target;
+    private static Object createProxy(Object client, HttpExchangeMetadata metadata) {
         Class<?>[] interfaces = Stream.concat(
-                        Arrays.stream(advised.getProxiedInterfaces()), Stream.of(RequestConfigurator.class))
+                        Arrays.stream(((Advised) client).getProxiedInterfaces()), Stream.of(RequestConfigurator.class))
                 .distinct()
                 .toArray(Class[]::new);
-        return Proxy.newProxyInstance(getClass().getClassLoader(), interfaces, (proxy, method, args) -> {
-            if (ADD_HEADER_METHOD.equals(method)) {
-                HttpExchangeMetadata copy = metadata.copy();
-                copy.getHeaders().put((String) args[0], (List<String>) args[1]);
-                return createProxy(advised, copy);
-            }
-            if (WITH_TIMEOUT_METHOD.equals(method)) {
-                HttpExchangeMetadata copy = metadata.copy();
-                copy.setReadTimeout((Integer) args[0]);
-                return createProxy(advised, copy);
-            }
-
-            ReflectionUtils.makeAccessible(method);
-
-            if (isNotHttpRequestMethod(method)) {
-                return method.invoke(advised, args);
-            }
-
-            HttpExchangeMetadata.set(metadata);
-            try {
-                return method.invoke(advised, args);
-            } catch (InvocationTargetException e) {
-                throw e.getTargetException();
-            } finally {
-                HttpExchangeMetadata.remove();
-            }
-        });
-    }
-
-    private static boolean isNotHttpRequestMethod(Method method) {
-        return !AnnotatedElementUtils.hasAnnotation(method, HttpExchange.class)
-                && !AnnotatedElementUtils.hasAnnotation(method, RequestMapping.class);
+        ProxyFactory proxyFactory = new ProxyFactory(interfaces);
+        proxyFactory.addAdvice(new RequestConfiguratorMethodInterceptor(client, metadata));
+        return proxyFactory.getProxy();
     }
 
     @SneakyThrows
@@ -92,5 +63,46 @@ public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
     @SneakyThrows
     private static Method getWithTimeoutMethod() {
         return RequestConfigurator.class.getMethod("withTimeout", int.class);
+    }
+
+    private record RequestConfiguratorMethodInterceptor(Object client, HttpExchangeMetadata metadata)
+            implements MethodInterceptor {
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Object invoke(MethodInvocation invocation) throws Throwable {
+            Method method = invocation.getMethod();
+            Object[] args = invocation.getArguments();
+            if (ADD_HEADER_METHOD.equals(method)) {
+                HttpExchangeMetadata copy = metadata.copy();
+                copy.getHeaders().put((String) args[0], (List<String>) args[1]);
+                return createProxy(client, copy);
+            }
+            if (WITH_TIMEOUT_METHOD.equals(method)) {
+                HttpExchangeMetadata copy = metadata.copy();
+                copy.setReadTimeout((Integer) args[0]);
+                return createProxy(client, copy);
+            }
+
+            ReflectionUtils.makeAccessible(method);
+
+            if (isNotHttpRequestMethod(method)) {
+                return method.invoke(client, args);
+            }
+
+            HttpExchangeMetadata.set(metadata);
+            try {
+                return method.invoke(client, args);
+            } catch (InvocationTargetException e) {
+                throw e.getTargetException();
+            } finally {
+                HttpExchangeMetadata.remove();
+            }
+        }
+
+        private static boolean isNotHttpRequestMethod(Method method) {
+            return !AnnotatedElementUtils.hasAnnotation(method, HttpExchange.class)
+                    && !AnnotatedElementUtils.hasAnnotation(method, RequestMapping.class);
+        }
     }
 }

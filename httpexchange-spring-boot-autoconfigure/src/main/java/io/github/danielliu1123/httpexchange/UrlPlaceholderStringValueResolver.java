@@ -31,7 +31,7 @@ public class UrlPlaceholderStringValueResolver implements StringValueResolver {
         try {
             resolved = environment.resolvePlaceholders(strVal);
         } catch (Exception e) {
-            log.warn("Failed to resolve placeholders in '{}'", strVal, e);
+            log.warn("Placeholders in '{}' could not be resolved", strVal, e);
         }
         return delegate != null ? delegate.resolveStringValue(resolved) : resolved;
     }
