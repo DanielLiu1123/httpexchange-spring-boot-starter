@@ -121,7 +121,7 @@ class HttpClientBeanRegistrar {
         } catch (BeanDefinitionOverrideException ignore) {
             // clients are included in base packages
             log.warn(
-                    "Your @HttpExchanges client '{}' is included in base packages, you can remove it from 'clients' property.",
+                    "Remove @HttpExchanges client '{}' from 'clients' property; it's already in base packages",
                     className);
         }
     }

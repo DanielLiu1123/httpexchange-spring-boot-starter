@@ -21,7 +21,13 @@ public class HttpExchangeMetadata {
 
     private static final ThreadLocal<HttpExchangeMetadata> HOLDER = new InheritableThreadLocal<>();
 
+    /**
+     * Read timeout in milliseconds.
+     */
     private Integer readTimeout;
+    /**
+     * Request headers to be added.
+     */
     private Map<String, List<String>> headers = new LinkedHashMap<>();
 
     @Nullable

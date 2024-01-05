@@ -115,7 +115,9 @@ class ExchangeClientTests {
 
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
 
-        assertThat(output).contains("you can remove it from 'clients' property.");
+        assertThat(output)
+                .contains(
+                        "Remove @HttpExchanges client 'io.github.danielliu1123.order.api.OrderApi' from 'clients' property; it's already in base packages");
 
         ctx.close();
     }

@@ -36,7 +36,7 @@ class Checker {
             Class<?> clazz = channel.getClasses().get(j);
             if (classes.stream().noneMatch(clazz::isAssignableFrom)) {
                 log.warn(
-                        "The configuration item '{}.channels[{}].classes[{}]={}' doesn't take effect, please remove it!",
+                        "The configuration '{}.channels[{}].clients[{}]={}' is ineffective and should be removed",
                         HttpExchangeProperties.PREFIX,
                         i,
                         j,
@@ -52,7 +52,7 @@ class Checker {
             String name = channel.getClients().get(j);
             if (!nameMatch(name, classes)) {
                 log.warn(
-                        "The configuration item '{}.channels[{}].clients[{}]={}' doesn't take effect, please remove it!",
+                        "The configuration '{}.channels[{}].clients[{}]={}' is ineffective and should be removed",
                         HttpExchangeProperties.PREFIX,
                         i,
                         j,

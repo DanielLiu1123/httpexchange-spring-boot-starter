@@ -99,39 +99,30 @@ class ExchangeClientCreator {
      */
     @SuppressWarnings("unchecked")
     public <T> T create() {
-        if (log.isTraceEnabled()) {
-            log.trace("Creating http exchange client for {}", clientType.getSimpleName());
-        }
-
         HttpExchangeProperties httpExchangeProperties = beanFactory
                 .getBeanProvider(HttpExchangeProperties.class)
                 .getIfUnique(() -> Util.getProperties(environment));
         HttpExchangeProperties.Channel chan =
                 findMatchedConfig(clientType, httpExchangeProperties).orElseGet(httpExchangeProperties::defaultClient);
         if (isUseHttpExchangeAnnotation) {
-            HttpServiceProxyFactory factory = buildFactory(chan);
+            // Do NOT cache the HttpServiceProxyFactory to use the same HttpServiceProxyFactory for the same
+            // configuration.
+            // The same configuration might create different HttpServiceProxyFactory (e.g., exchangeAdapter).
+            // So each client uses different HttpServiceProxyFactory (HTTP client).
+            HttpServiceProxyFactory factory = factoryBuilder(chan).build();
             T result = (T) factory.createClient(clientType);
             Cache.addClient(result);
             return result;
         }
         if (!httpExchangeProperties.isRequestMappingSupportEnabled()) {
             throw new IllegalStateException(
-                    "You're using @RequestMapping based annotation, please migrate to @HttpExchange or set 'http-exchange.request-mapping-support-enabled=true' to support processing @RequestMapping.");
+                    "Found a usage of the @RequestMapping based annotation, please migrate to @HttpExchange, or set 'http-exchange.request-mapping-support-enabled=true' to enable support for processing @RequestMapping");
         }
-        ShadedHttpServiceProxyFactory shadedFactory = buildShadedFactory(chan);
+        ShadedHttpServiceProxyFactory shadedFactory =
+                shadedProxyFactory(factoryBuilder(chan)).build();
         T result = (T) shadedFactory.createClient(clientType);
         Cache.addClient(result);
         return result;
-    }
-
-    private HttpServiceProxyFactory buildFactory(HttpExchangeProperties.Channel channelConfig) {
-        HttpServiceProxyFactory.Builder builder = Cache.getOrSupply(channelConfig, () -> factoryBuilder(channelConfig));
-        return builder.build();
-    }
-
-    private ShadedHttpServiceProxyFactory buildShadedFactory(HttpExchangeProperties.Channel channelConfig) {
-        HttpServiceProxyFactory.Builder b = Cache.getOrSupply(channelConfig, () -> factoryBuilder(channelConfig));
-        return shadedProxyFactory(b).build();
     }
 
     private HttpServiceProxyFactory.Builder factoryBuilder(HttpExchangeProperties.Channel channelConfig) {
@@ -154,7 +145,7 @@ class ExchangeClientCreator {
             HttpExchangeProperties.ClientType type = channelConfig.getClientType();
             if (type != null && type != WEB_CLIENT) {
                 log.warn(
-                        "Client '{}' contains methods with reactive return types, use client-type '{}' instead of '{}'",
+                        "{} contains methods with reactive return types, should use the client-type '{}' instead of '{}'",
                         clientType.getSimpleName(),
                         WEB_CLIENT,
                         type);
@@ -170,7 +161,9 @@ class ExchangeClientCreator {
                 if (WEBFLUX_PRESENT) {
                     builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
                 } else {
-                    log.warn("spring-webflux is not in the classpath, fall back client-type to '{}'", REST_CLIENT);
+                    log.warn(
+                            "Since spring-webflux is not in the classpath, the client-type will fall back to '{}'",
+                            REST_CLIENT);
                     builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
                 }
             }
@@ -263,6 +256,7 @@ class ExchangeClientCreator {
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
         builder.requestFactory(getRequestFactory(channelConfig));
+
         if (isLoadBalancerEnabled(channelConfig)) {
             builder.requestInterceptors(it -> beanFactory
                     .getBeanProvider(ClientHttpRequestInterceptor.class)
@@ -336,7 +330,7 @@ class ExchangeClientCreator {
             }
             if (!Objects.equals(channel.getRequestFactory(), EnhancedJdkClientHttpRequestFactory.class)) {
                 log.warn(
-                        "Client '{}' extends RequestConfigurator, but request-factory '{}' does not implement RequestConfigurator's features, remove request-factory from configuration or use '{}' instead.",
+                        "Client '{}' extends RequestConfigurator, but request-factory '{}' does not implement the features of RequestConfigurator, please remove the request-factory from the configuration, or use '{}' instead",
                         clientType.getSimpleName(),
                         channel.getRequestFactory().getSimpleName(),
                         EnhancedJdkClientHttpRequestFactory.class.getSimpleName());
