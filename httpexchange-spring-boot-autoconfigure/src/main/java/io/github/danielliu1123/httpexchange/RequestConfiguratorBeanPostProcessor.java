@@ -1,5 +1,7 @@
 package io.github.danielliu1123.httpexchange;
 
+import static org.springframework.util.ObjectUtils.isEmpty;
+
 import jakarta.annotation.Nonnull;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -57,7 +59,7 @@ public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
 
     @SneakyThrows
     private static Method getAddHeaderMethod() {
-        return RequestConfigurator.class.getMethod("addHeader", String.class, List.class);
+        return RequestConfigurator.class.getMethod("addHeader", String.class, String[].class);
     }
 
     @SneakyThrows
@@ -69,13 +71,15 @@ public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
             implements MethodInterceptor {
 
         @Override
-        @SuppressWarnings("unchecked")
         public Object invoke(MethodInvocation invocation) throws Throwable {
             Method method = invocation.getMethod();
             Object[] args = invocation.getArguments();
             if (ADD_HEADER_METHOD.equals(method)) {
                 HttpExchangeMetadata copy = metadata.copy();
-                copy.getHeaders().put((String) args[0], (List<String>) args[1]);
+                String[] values = (String[]) args[1];
+                if (!isEmpty(values)) {
+                    copy.getHeaders().put((String) args[0], List.of(values));
+                }
                 return createProxy(client, copy);
             }
             if (WITH_TIMEOUT_METHOD.equals(method)) {
