@@ -4,6 +4,8 @@ import static io.github.danielliu1123.PortGetter.availablePort;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.constraints.Size;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,7 +14,9 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.endpoint.event.RefreshEvent;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.service.annotation.GetExchange;
@@ -38,15 +42,22 @@ class DynamicRefreshTests {
                 .properties("http-exchange.refresh.enabled=true")
                 .run();
 
-        // Three beans: controller bean, api bean, proxied api bean
-        assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(3);
+        // Two beans: api bean, proxied api bean
+        assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(2);
         assertThat(ctx.getBeanProvider(BarApi.class)).hasSize(2);
+        assertThat(ctx.getBeanProvider(BazApi.class)).hasSize(2);
 
-        FooApi api = ctx.getBean(FooApi.class);
+        FooApi fooApi = ctx.getBean(FooApi.class);
         BarApi barApi = ctx.getBean(BarApi.class);
+        BazApi bazApi = ctx.getBean(BazApi.class);
 
-        assertThat(api.get()).isEqualTo("OK");
+        assertThat(fooApi.get()).isEqualTo("OK");
         assertThat(barApi.get()).isEqualTo("OK");
+        assertThat(bazApi.get("aaaaa")).isEqualTo("OK");
+        assertThatCode(() -> bazApi.get("aaaaaa"))
+                .isInstanceOf(ConstraintViolationException.class)
+                .hasMessageContaining("size must be between 0 and 5");
+
         assertThat(barApi.withTimeout(1000).get()).isEqualTo("OK");
         assertThatCode(() -> barApi.withTimeout(1000).withTimeout(5).get())
                 .isInstanceOf(ResourceAccessException.class)
@@ -56,10 +67,17 @@ class DynamicRefreshTests {
         ctx.publishEvent(new RefreshEvent(ctx, null, null));
 
         // base-url changed
-        assertThat(api.get()).isEqualTo("OK v2");
+        assertThat(fooApi.get()).isEqualTo("OK v2");
         assertThat(barApi.get()).isEqualTo("OK v2");
         assertThat(barApi.withTimeout(1000).get()).isEqualTo("OK v2");
         assertThatCode(() -> barApi.withTimeout(5).get())
+                .isInstanceOf(ResourceAccessException.class)
+                .hasMessageContaining("request timed out");
+        assertThat(bazApi.get("aaaaa")).isEqualTo("OK v2");
+        assertThatCode(() -> bazApi.get("aaaaaa"))
+                .isInstanceOf(ConstraintViolationException.class)
+                .hasMessageContaining("size must be between 0 and 5");
+        assertThatCode(() -> bazApi.withTimeout(5).get("aaaaa"))
                 .isInstanceOf(ResourceAccessException.class)
                 .hasMessageContaining("request timed out");
 
@@ -68,11 +86,11 @@ class DynamicRefreshTests {
 
     @Configuration(proxyBeanMethods = false)
     @EnableAutoConfiguration
-    @EnableExchangeClients(clients = {FooApi.class, BarApi.class})
+    @EnableExchangeClients(clients = {FooApi.class, BarApi.class, BazApi.class})
     @RestController
-    static class Cfg implements FooApi {
+    static class Cfg {
 
-        @Override
+        @GetMapping("/get")
         @SneakyThrows
         public String get() {
             Thread.sleep(10);
@@ -97,5 +115,12 @@ class DynamicRefreshTests {
 
         @GetExchange("/get")
         String get();
+    }
+
+    @Validated
+    interface BazApi extends RequestConfigurator<BazApi> {
+
+        @GetExchange("/get")
+        String get(@RequestParam @Size(max = 5) String str);
     }
 }
