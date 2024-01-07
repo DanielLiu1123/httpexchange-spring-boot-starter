@@ -3,6 +3,7 @@ package io.github.danielliu1123.httpexchange;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toMap;
 
+import io.github.danielliu1123.httpexchange.factory.jdkclient.EnhancedJdkClientHttpRequestFactory;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -105,14 +106,12 @@ public class HttpExchangeProperties implements InitializingBean {
     private boolean requestMappingSupportEnabled = false;
     /**
      * Connect timeout duration, specified in milliseconds.
-     * Negative, zero, or null values indicate that the timeout is not set.
      *
      * @since 3.2.0
      */
     private Integer connectTimeout;
     /**
      * Read timeout duration, specified in milliseconds.
-     * Negative, zero, or null values indicate that the timeout is not set.
      *
      * @since 3.2.0
      */
@@ -136,9 +135,14 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     private boolean loadbalancerEnabled = true;
     /**
-     * Request factory class, use {@link JdkClientHttpRequestFactory} if not set.
+     * Request factory class, if not specified, an appropriate request factory will be set.
      *
-     * <p color="orange"> NOTE: this configuration is not supported by {@link ClientType#WEB_CLIENT}.
+     * <p> Use {@link JdkClientHttpRequestFactory} by default if interface not extends {@link RequestConfigurator},
+     * otherwise use {@link EnhancedJdkClientHttpRequestFactory} to achieve dynamic read-timeout configuration for each request.
+     *
+     * <p> In most cases, there's no need to explicitly specify the request factory.
+     *
+     * <p color="orange"> NOTE: this configuration is used for {@link ClientType#REST_CLIENT} and {@link ClientType#REST_TEMPLATE} only, {@link ClientType#WEB_CLIENT} is not supported.
      *
      * @see JdkClientHttpRequestFactory
      * @see SimpleClientHttpRequestFactory
@@ -232,14 +236,14 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Client type, use {@link HttpExchangeProperties#clientType} if not set.
          *
-         * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ClientType#WEB_CLIENT}.
+         * <p color="orange"> NOTE:
+         * the {@link #connectTimeout} and {@link #readTimeout} settings are not supported for {@link ClientType#WEB_CLIENT}.
          *
          * @see ClientType
          */
         private ClientType clientType;
         /**
          * Connection timeout duration, specified in milliseconds.
-         * Negative, zero, or null values indicate that the timeout is not set.
          *
          * <p> Use {@link HttpExchangeProperties#connectTimeout} if not set.
          *
@@ -249,7 +253,6 @@ public class HttpExchangeProperties implements InitializingBean {
         private Integer connectTimeout;
         /**
          * Read timeout duration, specified in milliseconds.
-         * Negative, zero, or null values indicate that the timeout is not set.
          *
          * <p> Use {@link HttpExchangeProperties#readTimeout} if not set.
          *
