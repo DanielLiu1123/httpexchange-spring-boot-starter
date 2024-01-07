@@ -264,6 +264,21 @@ http-exchange:
         - com.example.user.api.*Api
 ```
 
+### Reactive Support
+
+Support to define reactive API.
+
+```java
+@HttpExchange("/users")
+public interface UserApi {
+    @GetExchange("/{id}")
+    Mono<User> get(@PathVariable("id") String id);
+    
+    @GetExchange
+    Flux<User> list();
+}
+```
+
 ### Set Read Timeout Dynamically
 
 Support to dynamically set the read timeout for each request, just use client extends `RequestConfigurator` interface.
