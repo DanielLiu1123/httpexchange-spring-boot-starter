@@ -46,20 +46,20 @@ public class App {
 
 So what is the problem? 🤔
 
-1. No auto configuration
+- No auto configuration
 
-   There's no autoconfiguration for the clients, you need to create client beans manually.
-   This is excruciating if you have many clients.
+  There's no autoconfiguration for the clients, you need to create client beans manually.
+  This is excruciating if you have many clients.
 
-   If you are familiar with `Spring Cloud OpenFeign`, you will find `@EnableFeignClients` is beneficial, it reduces a
-   lot of boilerplate code.
+  If you are familiar with `Spring Cloud OpenFeign`, you will find `@EnableFeignClients` is beneficial, it reduces a
+  lot of boilerplate code.
 
-2. Not support Spring web annotations
+- Not support Spring web annotations
 
-   Native support for declarative HTTP clients is great, but it introduces a whole new set of annotations, such as
-   `@GetExchange`, `@PostExchange`, etc. And does not support Spring web annotations, such as
-   `@GetMapping`, `@PostMapping`, etc., which is extremely painful for users that using `Spring Cloud OpenFeign` and want
-   to migrate to Spring 6.x.
+  Native support for declarative HTTP clients is great, but it introduces a whole new set of annotations, such as
+  `@GetExchange`, `@PostExchange`, etc. And does not support Spring web annotations, such as
+  `@GetMapping`, `@PostMapping`, etc., which is extremely painful for users that using `Spring Cloud OpenFeign` and want
+  to migrate to Spring 6.x.
 
 The main goals of this project:
 - Promote the use of `@HttpExchange` as a neutral annotation to define API interfaces.
@@ -79,9 +79,9 @@ Write a classic Spring Boot application:
 
 ```java
 @HttpExchange("/typicode/demo")
-interface PostApi { 
-   record Post(Integer id, String title) {}     
-   
+interface PostApi {
+   record Post(Integer id, String title) {}
+
    @GetExchange("/posts/{id}")
    Post getPost(@PathVariable Integer id);
 }
@@ -94,10 +94,10 @@ public class App {
               .properties("http-exchange.base-url=https://my-json-server.typicode.com")
               .run(args);
    }
-   
+
    @Autowired
    private PostApi api;
-   
+
    @Bean
    ApplicationRunner runner() {
       return args -> api.getPost(1);
@@ -111,15 +111,15 @@ Configure the base URL for different clients:
 
 ```yaml
 http-exchange:
-  channels:
-    - base-url: http://user-service
-      clients:
-        - com.example.user.api.**
-        - com.example.api.user.**
-    - base-url: http://order-service
-      clients:
-        - com.example.order.api.**
-        - com.example.api.order.**
+   channels:
+      - base-url: http://user-service
+        clients:
+           - com.example.user.api.**
+           - com.example.api.user.**
+      - base-url: http://order-service
+        clients:
+           - com.example.order.api.**
+           - com.example.api.order.**
 ```
 
 ## Features
@@ -264,7 +264,31 @@ http-exchange:
         - com.example.user.api.*Api
 ```
 
-### Dynamic Refresh Configuration
+### Set Read Timeout Dynamically
+
+Support to dynamically set the read timeout for each request, just use client extends `RequestConfigurator` interface.
+
+```java
+@HttpExchange("/users")  
+interface UserApi extends RequestConfigurator<UserApi> {
+    @GetExchange      
+    List<User> list();
+}    
+
+@Service
+class UserService {
+    @Autowired
+    UserApi userApi;
+    
+    List<User> listWithTimeout(int timeout) {
+        return userApi.withTimeout(timeout).list();
+    }    
+}
+```
+
+> Each time the `RequestConfigurator` method is called, a new proxy client will be created, and it inherits the original configuration and will not affect the original configuration.
+
+### Refresh Configuration Dynamically
 
 Support to dynamically refresh the configuration of clients, you can put the configuration in the configuration
 center ([Consul](https://github.com/hashicorp/consul), [Apollo](https://github.com/apolloconfig/apollo), [Nacos](https://github.com/alibaba/nacos),
@@ -416,9 +440,9 @@ http-exchange:
 
 ## Version
 
-The version of this project is kept in sync with Spring Boot 3,
-if you are using Spring Boot 3.2.0, then `httpexchange-spring-boot-starter` 3.2.0 should be used.
+The version of this project is kept in sync with Spring Boot 3.x.
+If you are using Spring Boot 3.2.1, then `httpexchange-spring-boot-starter` 3.2.1 should be used.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.2.0       | 3.2.0                            |
+| 3.2.x       | 3.2.1                            |

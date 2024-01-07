@@ -37,8 +37,8 @@ public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
     @Nullable
     @Override
     public Object postProcessAfterInitialization(@Nonnull Object bean, @Nonnull String beanName) throws BeansException {
-        if (bean instanceof RequestConfigurator<?>
-                && AopUtils.isJdkDynamicProxy(bean)
+        if (bean instanceof RequestConfigurator
+                && AopUtils.isJdkDynamicProxy(bean) // Http exchange client use JDK dynamic proxy
                 && bean instanceof Advised
                 // Controller may implement api interface, api interface may extend RequestConfigurator
                 && !AnnotatedElementUtils.hasAnnotation(bean.getClass(), Component.class)) {

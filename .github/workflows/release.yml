@@ -18,6 +18,9 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Build
+        run: ./gradlew build --no-daemon
+
       - name: Decrypt secring.gpg
         run: openssl enc -aes-256-cbc -d -pbkdf2 -in secring.gpg.bin -out secring.gpg -pass pass:${{ secrets.privateKeyPassword }}
 

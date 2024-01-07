@@ -23,7 +23,7 @@ jobs:
           distribution: 'corretto'
           cache: 'gradle'
 
-      - name: Build with Gradle
+      - name: Build
         run: ./gradlew build --no-daemon
 
       - name: Release Snapshot

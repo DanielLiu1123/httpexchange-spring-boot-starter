@@ -272,7 +272,31 @@ http-exchange:
         - com.example.user.api.*Api
 ```
 
-### Dynamic Refresh Configuration
+### Set Read Timeout Dynamically
+
+Support to dynamically set the read timeout for each request, just use client extends `RequestConfigurator` interface.
+
+```java
+@HttpExchange("/users")  
+interface UserApi extends RequestConfigurator<UserApi> {
+    @GetExchange      
+    List<User> list();
+}    
+
+@Service
+class UserService {
+    @Autowired
+    UserApi userApi;
+    
+    List<User> listWithTimeout(int timeout) {
+        return userApi.withTimeout(timeout).list();
+    }    
+}
+```
+
+> Each time the `RequestConfigurator` method is called, a new proxy client will be created, and it inherits the original configuration and will not affect the original configuration.
+
+### Refresh Configuration Dynamically
 
 Support to dynamically refresh the configuration of clients, you can put the configuration in the configuration
 center ([Consul](https://github.com/hashicorp/consul), [Apollo](https://github.com/apolloconfig/apollo), [Nacos](https://github.com/alibaba/nacos),
@@ -424,12 +448,12 @@ http-exchange:
 
 ## Version
 
-The version of this project is kept in sync with Spring Boot 3,
-if you are using Spring Boot 3.2.0, then `httpexchange-spring-boot-starter` 3.2.0 should be used.
+The version of this project is kept in sync with Spring Boot 3.x.
+If you are using Spring Boot 3.2.1, then `httpexchange-spring-boot-starter` 3.2.1 should be used.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.2.0       | 3.2.0                            |
+| 3.2.x       | 3.2.1                            |
 
 ## License
 
