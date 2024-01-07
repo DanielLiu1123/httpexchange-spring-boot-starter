@@ -6,7 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.endpoint.event.RefreshEvent;
@@ -26,12 +27,14 @@ class DynamicRefreshTests {
         System.clearProperty("http-exchange.base-url");
     }
 
-    @Test
-    void testDynamicRefresh() {
+    @ParameterizedTest
+    @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
+    void testDynamicRefresh(String clientType) {
         int port = availablePort();
         var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.base-url=http://localhost:" + port)
+                .properties("http-exchange.client-type=" + clientType)
                 .properties("http-exchange.refresh.enabled=true")
                 .run();
 
