@@ -1,6 +1,7 @@
 package io.github.danielliu1123.httpexchange;
 
 import jakarta.annotation.Nonnull;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
@@ -91,9 +92,9 @@ class HttpClientBeanRegistrar {
             throw new IllegalArgumentException(className + " is not an interface");
         }
 
-        boolean hasHttpExchangeAnnotation = hasHttpExchangeAnnotation(clz);
+        boolean hasHttpExchangeAnnotation = hasAnnotation(clz, HttpExchange.class);
 
-        if (!hasHttpExchangeAnnotation && !hasRequestMappingAnnotation(clz)) {
+        if (!hasHttpExchangeAnnotation && !hasAnnotation(clz, RequestMapping.class)) {
             return;
         }
 
@@ -147,26 +148,13 @@ class HttpClientBeanRegistrar {
                         || am.hasAnnotatedMethods(RequestMapping.class.getName()));
     }
 
-    private static boolean hasRequestMappingAnnotation(Class<?> clz) {
-        if (AnnotationUtils.findAnnotation(clz, RequestMapping.class) != null) {
+    private static boolean hasAnnotation(Class<?> clz, Class<? extends Annotation> annotationType) {
+        if (AnnotationUtils.findAnnotation(clz, annotationType) != null) {
             return true;
         }
         Method[] methods = ReflectionUtils.getAllDeclaredMethods(clz);
         for (Method method : methods) {
-            if (AnnotationUtils.findAnnotation(method, RequestMapping.class) != null) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean hasHttpExchangeAnnotation(Class<?> clz) {
-        if (AnnotationUtils.findAnnotation(clz, HttpExchange.class) != null) {
-            return true;
-        }
-        Method[] methods = ReflectionUtils.getAllDeclaredMethods(clz);
-        for (Method method : methods) {
-            if (AnnotationUtils.findAnnotation(method, HttpExchange.class) != null) {
+            if (AnnotationUtils.findAnnotation(method, annotationType) != null) {
                 return true;
             }
         }
