@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.scope.ScopedProxyUtils;
@@ -80,13 +81,9 @@ class HttpClientBeanRegistrar {
      * @param registry  {@link BeanDefinitionRegistry}
      * @param className class name of HTTP client interface
      */
+    @SneakyThrows
     private void registerHttpClientBean(BeanDefinitionRegistry registry, String className) {
-        Class<?> clz;
-        try {
-            clz = Class.forName(className);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException(e);
-        }
+        Class<?> clz = Class.forName(className);
 
         if (!clz.isInterface()) {
             throw new IllegalArgumentException(className + " is not an interface");
