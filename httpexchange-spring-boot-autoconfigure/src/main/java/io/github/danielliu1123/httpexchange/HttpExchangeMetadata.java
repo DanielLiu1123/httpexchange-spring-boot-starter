@@ -3,7 +3,6 @@ package io.github.danielliu1123.httpexchange;
 import jakarta.annotation.Nullable;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.Data;
 
 /**
@@ -28,7 +27,7 @@ public class HttpExchangeMetadata {
     /**
      * Request headers to be added.
      */
-    private Map<String, List<String>> headers = new LinkedHashMap<>();
+    private LinkedHashMap<String, List<String>> headers = new LinkedHashMap<>();
 
     @Nullable
     public static HttpExchangeMetadata get() {

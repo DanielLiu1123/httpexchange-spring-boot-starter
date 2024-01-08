@@ -303,6 +303,15 @@ class UserService {
 
 > Each time the `RequestConfigurator` method is called, a new proxy client will be created, and it inherits the original configuration and will not affect the original configuration.
 
+`RequestConfigurator` is suitable for client-side use but not for defining a neutral API. Therefore, a `Requester` is provided for a programmatic way to dynamically set the read timeout.
+
+```java
+List<User> users = Requester.create()
+                        .withTimeout(10000)                              
+                        .addHeader("X-Foo", "bar")                              
+                        .call(() -> userApi.list());
+```
+
 ### Refresh Configuration Dynamically
 
 Support to dynamically refresh the configuration of clients, you can put the configuration in the configuration

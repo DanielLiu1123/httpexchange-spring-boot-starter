@@ -26,8 +26,12 @@ package io.github.danielliu1123.httpexchange;
  * <p> Api interface may extend this interface, and the server side may implement api interface; we don't want to the server side to implement {@link RequestConfigurator}.
  * <p> Use dynamic proxy at runtime to create a proxy client that implements {@link RequestConfigurator}.
  *
+ * <p> {@link RequestConfigurator} is suitable for client-side use but not for defining a neutral API.
+ * Therefore, {@link Requester} is provided for a programmatic way to dynamically set the read timeout.
+ *
  * @author Freeman
  * @see RequestConfiguratorBeanPostProcessor
+ * @see Requester
  * @since 3.2.1
  */
 @SuppressWarnings("unchecked")

@@ -94,13 +94,19 @@ public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
                 return method.invoke(client, args);
             }
 
-            HttpExchangeMetadata.set(metadata);
+            // Maybe set HttpExchangeMetadata manually
+            boolean notSet = HttpExchangeMetadata.get() == null;
+            if (notSet) {
+                HttpExchangeMetadata.set(metadata);
+            }
             try {
                 return method.invoke(client, args);
             } catch (InvocationTargetException e) {
                 throw e.getTargetException();
             } finally {
-                HttpExchangeMetadata.remove();
+                if (notSet) {
+                    HttpExchangeMetadata.remove();
+                }
             }
         }
 
