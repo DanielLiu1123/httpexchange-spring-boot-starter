@@ -1,0 +1,6 @@
+dependencies {
+    implementation("org.springframework:spring-web")
+    annotationProcessor(project(":httpexchange-processor"))
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+}

@@ -1,5 +1,10 @@
 package io.github.danielliu1123.httpexchange.processor;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Generated;
@@ -14,6 +19,8 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.tools.FileObject;
+import javax.tools.StandardLocation;
 import lombok.SneakyThrows;
 import org.springframework.http.HttpStatus;
 import org.springframework.javapoet.AnnotationSpec;
@@ -22,6 +29,10 @@ import org.springframework.javapoet.MethodSpec;
 import org.springframework.javapoet.ParameterSpec;
 import org.springframework.javapoet.TypeName;
 import org.springframework.javapoet.TypeSpec;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
+import org.springframework.util.function.SingletonSupplier;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
@@ -38,15 +49,41 @@ import org.springframework.web.server.ResponseStatusException;
 })
 public class ApiBaseProcessor extends AbstractProcessor {
 
-    private static final String GENERATED_CLASS_SUFFIX = "Base";
+    private static final String DEFAULT_CLASS_SUFFIX = "Base";
+    private static final String CONFIG_FILE_NAME = "httpexchange-processor.properties";
+    private static final String DUMMY_FILE_NAME = "httpexchange-processor.tmp";
+
+    private static final AntPathMatcher matcher = new AntPathMatcher(".");
+    private final SingletonSupplier<ProcessorProperties> properties = SingletonSupplier.of(this::loadProperties);
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        for (Element element : roundEnv.getRootElements()) {
-            // Perhaps just process the interfaces to enhance compile performance?
-            processElement(annotations, element);
+        if (properties.obtain().enabled()) {
+            for (Element element : roundEnv.getRootElements()) {
+                // Perhaps just process the interfaces to enhance compile performance?
+                processElement(annotations, element);
+            }
         }
         return true;
+    }
+
+    private ProcessorProperties loadProperties() {
+        Properties prop = new Properties();
+        try {
+            FileObject virtualFile =
+                    processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", DUMMY_FILE_NAME);
+            String classOutputPath = virtualFile.toUri().getPath().replace(DUMMY_FILE_NAME, "");
+            File dir = Finder.findProjectDir(new File(classOutputPath), 20);
+            File file = new File(dir, CONFIG_FILE_NAME);
+            if (file.exists() && file.isFile()) {
+                try (InputStream is = file.toURI().toURL().openStream()) {
+                    prop.load(is);
+                }
+            }
+        } catch (IOException ignored) {
+            // No-op
+        }
+        return ProcessorProperties.of(prop);
     }
 
     private static boolean isInterface(Element element) {
@@ -61,11 +98,27 @@ public class ApiBaseProcessor extends AbstractProcessor {
     }
 
     private void processElement(Set<? extends TypeElement> annotations, Element element) {
+        if (!isTargetPackage(element)) {
+            return;
+        }
         if (isInterface(element) && !isGenericType(element)) {
             processAnnotations(annotations, element);
         } else {
             processNonInterfaceElement(annotations, element);
         }
+    }
+
+    private boolean isTargetPackage(Element element) {
+        List<String> targetPatterns = properties.obtain().packages();
+        if (ObjectUtils.isEmpty(targetPatterns)) {
+            return true;
+        }
+        String pkg = processingEnv
+                .getElementUtils()
+                .getPackageOf(element)
+                .getQualifiedName()
+                .toString();
+        return targetPatterns.stream().anyMatch(pattern -> matcher.match(pattern, pkg));
     }
 
     private void processNonInterfaceElement(Set<? extends TypeElement> annotations, Element element) {
@@ -102,7 +155,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
     }
 
     private TypeSpec.Builder createClassBuilder(Element element) {
-        TypeSpec.Builder result = TypeSpec.classBuilder(element.getSimpleName() + GENERATED_CLASS_SUFFIX)
+        TypeSpec.Builder result = TypeSpec.classBuilder(getGeneratedClassName(element))
                 .addModifiers(Modifier.ABSTRACT)
                 .addSuperinterface(TypeName.get(element.asType()))
                 .addAnnotation(AnnotationSpec.builder(Generated.class)
@@ -128,6 +181,18 @@ public class ApiBaseProcessor extends AbstractProcessor {
             result.addModifiers(Modifier.PUBLIC);
         }
         return result;
+    }
+
+    private String getGeneratedClassName(Element element) {
+        String suffix = properties.obtain().suffix();
+        String prefix = properties.obtain().prefix();
+        boolean hasSuffix = StringUtils.hasText(suffix);
+        boolean hasPrefix = StringUtils.hasText(prefix);
+        if (!hasPrefix && !hasSuffix) {
+            // Use <ClassName>Base as default class name
+            return element.getSimpleName() + DEFAULT_CLASS_SUFFIX;
+        }
+        return (hasPrefix ? prefix : "") + element.getSimpleName() + (hasSuffix ? suffix : "");
     }
 
     private boolean processMethodElement(
