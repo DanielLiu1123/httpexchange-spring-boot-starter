@@ -32,7 +32,7 @@ class RequesterTests {
 
     @ParameterizedTest
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
-    void testRequestConfigurator(String clientType) {
+    void testRequester(String clientType) {
         int port = availablePort();
         var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
