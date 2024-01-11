@@ -228,6 +228,10 @@ prefix=
 packages=com.example.api
 ```
 
+> `httpexchange-processor.properties` should be in the project dir, not in the classpath. 
+> It should be in the same directory as `pom.xml` if you are using Maven,
+> or in the same directory as `build.gradle` if you are using Gradle.
+
 | Property | Description                                                                            | Default Value                              |
 |----------|----------------------------------------------------------------------------------------|--------------------------------------------|
 | enabled  | Enable the processor                                                                   | true                                       |
