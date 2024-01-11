@@ -155,7 +155,8 @@ public class ApiBaseProcessor extends AbstractProcessor {
     }
 
     private TypeSpec.Builder createClassBuilder(Element element) {
-        TypeSpec.Builder result = TypeSpec.classBuilder(getGeneratedClassName(element))
+        String generatedClassName = getGeneratedClassName(element);
+        TypeSpec.Builder result = TypeSpec.classBuilder(generatedClassName)
                 .addModifiers(Modifier.ABSTRACT)
                 .addSuperinterface(TypeName.get(element.asType()))
                 .addAnnotation(AnnotationSpec.builder(Generated.class)
@@ -175,8 +176,8 @@ public class ApiBaseProcessor extends AbstractProcessor {
                                 }
                                 }</pre>
                                 """,
-                        element.getSimpleName() + "Impl",
-                        element.getSimpleName() + "Base");
+                        generatedClassName + "Impl",
+                        generatedClassName);
         if (element.getModifiers().contains(Modifier.PUBLIC)) {
             result.addModifiers(Modifier.PUBLIC);
         }
