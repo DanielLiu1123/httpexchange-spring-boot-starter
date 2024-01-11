@@ -202,7 +202,7 @@ public abstract class UserApiBase implements UserApi {
 }
 ```
 
-> Generated abstract class name is the interface name with suffix `Base`.
+> Generated abstract class name is the interface name with suffix `Base` by default, can be configured by `httpexchange-processor.properties`.
 
 Use the base implementation to implement the server side:
 
@@ -215,6 +215,29 @@ public class UserController extends UserApiBase {
    }
 }
 ```
+
+#### Custom Configuration
+
+`httpexchange-processor.properties` in the project dir is used to configure the behavior of the processor.
+
+```properties
+# httpexchange-processor.properties
+enabled=true
+suffix=Base
+prefix=
+packages=com.example.api
+```
+
+> `httpexchange-processor.properties` should be in the project dir, not in the classpath. 
+> It should be in the same directory as `pom.xml` if you are using Maven,
+> or in the same directory as `build.gradle` if you are using Gradle.
+
+| Property | Description                                                                            | Default Value                              |
+|----------|----------------------------------------------------------------------------------------|--------------------------------------------|
+| enabled  | Enable the processor                                                                   | true                                       |
+| suffix   | Generated base implementation class name suffix                                        | Base (if suffix and prefix are both empty) |        
+| prefix   | Generated base implementation class name prefix                                        |                                            |
+| packages | Packages to scan, use comma to separate multiple packages, support `Ant-style` pattern | All packages                               |
 
 ### Spring Web Annotations Support
 
