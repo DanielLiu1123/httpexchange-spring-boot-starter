@@ -213,7 +213,6 @@ public class UserController extends UserApiBase {
 `httpexchange-processor.properties` in the project dir is used to configure the behavior of the processor.
 
 ```properties
-# httpexchange-processor.properties
 enabled=true
 suffix=Base
 prefix=
