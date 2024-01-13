@@ -73,10 +73,9 @@ public class ApiBaseProcessor extends AbstractProcessor {
             FileObject virtualFile =
                     processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", DUMMY_FILE_NAME);
             String classOutputPath = virtualFile.toUri().getPath().replace(DUMMY_FILE_NAME, "");
-            File dir = Finder.findProjectDir(new File(classOutputPath), 20);
-            File file = new File(dir, CONFIG_FILE_NAME);
-            if (file.exists() && file.isFile()) {
-                try (InputStream is = file.toURI().toURL().openStream()) {
+            File configFile = Finder.findFile(new File(classOutputPath), CONFIG_FILE_NAME);
+            if (configFile != null) {
+                try (InputStream is = configFile.toURI().toURL().openStream()) {
                     prop.load(is);
                 }
             }
