@@ -34,7 +34,7 @@ class TimeoutTests {
 
         assertThatExceptionOfType(ResourceAccessException.class)
                 .isThrownBy(() -> api.delay(300))
-                .withMessageContaining("request timed out");
+                .withMessageContaining("timed out");
 
         ctx.close();
     }
@@ -109,7 +109,7 @@ class TimeoutTests {
 
         assertThatCode(() -> api.delay(120))
                 .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("request timed out");
+                .hasMessageContaining("timed out");
         assertThatCode(() -> api.withTimeout(200).delay(120)).doesNotThrowAnyException();
 
         ctx.close();

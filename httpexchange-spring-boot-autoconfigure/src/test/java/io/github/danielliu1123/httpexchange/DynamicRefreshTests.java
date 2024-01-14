@@ -61,7 +61,7 @@ class DynamicRefreshTests {
         assertThat(barApi.withTimeout(1000).get()).isEqualTo("OK");
         assertThatCode(() -> barApi.withTimeout(1000).withTimeout(5).get())
                 .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("request timed out");
+                .hasMessageContaining("timed out");
 
         System.setProperty("http-exchange.base-url", "http://localhost:" + port + "/v2");
         ctx.publishEvent(new RefreshEvent(ctx, null, null));
@@ -72,14 +72,14 @@ class DynamicRefreshTests {
         assertThat(barApi.withTimeout(1000).get()).isEqualTo("OK v2");
         assertThatCode(() -> barApi.withTimeout(5).get())
                 .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("request timed out");
+                .hasMessageContaining("timed out");
         assertThat(bazApi.get("aaaaa")).isEqualTo("OK v2");
         assertThatCode(() -> bazApi.get("aaaaaa"))
                 .isInstanceOf(ConstraintViolationException.class)
                 .hasMessageContaining("size must be between 0 and 5");
         assertThatCode(() -> bazApi.withTimeout(5).get("aaaaa"))
                 .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("request timed out");
+                .hasMessageContaining("timed out");
 
         ctx.close();
     }

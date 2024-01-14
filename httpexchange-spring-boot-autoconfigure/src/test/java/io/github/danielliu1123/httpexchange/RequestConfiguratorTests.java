@@ -16,8 +16,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.ResourceAccessException;
@@ -46,13 +46,13 @@ class RequestConfiguratorTests {
         assertThatCode(() -> api.delay(1)).doesNotThrowAnyException();
         assertThatCode(() -> api.delay(120))
                 .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("request timed out");
+                .hasMessageContaining("timed out");
 
         // withTimeout
         assertThatCode(() -> api.withTimeout(150).delay(100)).doesNotThrowAnyException();
         assertThatCode(() -> api.withTimeout(150).withTimeout(100).delay(100))
                 .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("request timed out");
+                .hasMessageContaining("timed out");
 
         // addHeader
         assertThat(api.addHeader("foo1", "bar1").delay(1))
@@ -75,7 +75,7 @@ class RequestConfiguratorTests {
                         .withTimeout(100)
                         .delay(100))
                 .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("request timed out");
+                .hasMessageContaining("timed out");
 
         // async
         Api apiForAsync = api.addHeader("foo1", "bar1").withTimeout(1000);
@@ -99,7 +99,7 @@ class RequestConfiguratorTests {
     static class Cfg {
 
         @SneakyThrows
-        @RequestMapping("/api")
+        @GetMapping("/api")
         public Map<String, List<String>> delay(@RequestParam("delay") int delay, @RequestHeader HttpHeaders headers) {
             Thread.sleep(delay);
             return Map.copyOf(headers);

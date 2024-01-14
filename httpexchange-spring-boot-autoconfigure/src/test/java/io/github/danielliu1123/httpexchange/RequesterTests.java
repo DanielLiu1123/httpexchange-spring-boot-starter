@@ -46,7 +46,7 @@ class RequesterTests {
         assertThatCode(() -> api.delay(1)).doesNotThrowAnyException();
         assertThatCode(() -> api.delay(120))
                 .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("request timed out");
+                .hasMessageContaining("timed out");
 
         // withTimeout
         assertThatCode(() -> Requester.create().withTimeout(150).call(() -> api.delay(100)))
@@ -54,7 +54,7 @@ class RequesterTests {
         assertThatCode(() ->
                         Requester.create().withTimeout(150).withTimeout(100).call(() -> api.delay(100)))
                 .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("request timed out");
+                .hasMessageContaining("timed out");
 
         // addHeader
         assertThat(Requester.create().addHeader("foo1", "bar1").call(() -> api.delay(1)))
@@ -82,7 +82,7 @@ class RequesterTests {
                         .withTimeout(100)
                         .call(() -> api.delay(100)))
                 .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("request timed out");
+                .hasMessageContaining("timed out");
 
         // async
         Requester requester = Requester.create().addHeader("foo1", "bar1").withTimeout(1000);
