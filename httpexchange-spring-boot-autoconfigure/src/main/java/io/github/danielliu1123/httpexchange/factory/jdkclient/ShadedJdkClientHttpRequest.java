@@ -76,7 +76,10 @@ class ShadedJdkClientHttpRequest extends ShadedAbstractStreamingClientHttpReques
                     .map(Integer::valueOf)
                     .map(Duration::ofMillis)
                     .orElse(timeout);
-            HttpRequest request = builder.timeout(readTimeout).build();
+            if (readTimeout != null) {
+                builder.timeout(readTimeout);
+            }
+            HttpRequest request = builder.build();
             HttpResponse<InputStream> response;
             if (readTimeout != null) {
                 response = this.httpClient
