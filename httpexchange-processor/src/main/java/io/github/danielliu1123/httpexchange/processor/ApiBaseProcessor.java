@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
@@ -238,13 +239,22 @@ public class ApiBaseProcessor extends AbstractProcessor {
 
     @SneakyThrows
     private void generateJavaFile(Element element, TypeSpec.Builder classBuilder) {
-        String originalPackageName = processingEnv
+        JavaFile javaFile = JavaFile.builder(getOutputPackage(element), classBuilder.build())
+                .build();
+        javaFile.writeTo(processingEnv.getFiler());
+    }
+
+    private String getOutputPackage(Element element) {
+        String originalPackage = processingEnv
                 .getElementUtils()
                 .getPackageOf(element)
                 .getQualifiedName()
                 .toString();
-        JavaFile javaFile =
-                JavaFile.builder(originalPackageName, classBuilder.build()).build();
-        javaFile.writeTo(processingEnv.getFiler());
+        String outputSubpackage =
+                Optional.ofNullable(properties.obtain().outputSubpackage()).orElse("");
+        if (!StringUtils.hasText(originalPackage)) {
+            return outputSubpackage;
+        }
+        return StringUtils.hasText(outputSubpackage) ? originalPackage + "." + outputSubpackage : originalPackage;
     }
 }

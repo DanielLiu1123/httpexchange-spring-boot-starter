@@ -218,25 +218,27 @@ public class UserController extends UserApiBase {
 
 #### Custom Configuration
 
-`httpexchange-processor.properties` in the project dir is used to configure the behavior of the processor.
+You can create a `httpexchange-processor.properties` file in any directory and put configuration directives in it. 
+These apply to all source files in this directory and all child directories.
 
 ```properties
 enabled=true
 suffix=Base
 prefix=
 packages=com.example.api
+outputSubpackage=generated
 ```
 
-> `httpexchange-processor.properties` should be in the project dir, not in the classpath. 
-> It should be in the same directory as `pom.xml` if you are using Maven,
-> or in the same directory as `build.gradle` if you are using Gradle.
+> `httpexchange-processor.properties` usually placed in project/module directory.
+> Place it with `pom.xml` when using Maven, place it with `build.gradle` when using Gradle.
 
-| Property | Description                                                                            | Default Value                              |
-|----------|----------------------------------------------------------------------------------------|--------------------------------------------|
-| enabled  | Enable the processor                                                                   | true                                       |
-| suffix   | Generated base implementation class name suffix                                        | Base (if suffix and prefix are both empty) |        
-| prefix   | Generated base implementation class name prefix                                        |                                            |
-| packages | Packages to scan, use comma to separate multiple packages, support `Ant-style` pattern | All packages                               |
+| Property         | Description                                                                                     | Default Value                              |
+|------------------|-------------------------------------------------------------------------------------------------|--------------------------------------------|
+| enabled          | Enable the processor                                                                            | true                                       |
+| suffix           | Generated base implementation class name suffix                                                 | Base (if suffix and prefix are both empty) |        
+| prefix           | Generated base implementation class name prefix                                                 |                                            |
+| packages         | Packages to scan, use comma to separate multiple packages, support `Ant-style` pattern          | All packages                               |
+| outputSubpackage | Generated base implementation class output subpackage, relative to the package of the interface |                                            |
 
 ### Spring Web Annotations Support
 

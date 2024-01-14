@@ -8,7 +8,8 @@ import java.util.Properties;
 /**
  * @author Freeman
  */
-record ProcessorProperties(boolean enabled, String prefix, String suffix, List<String> packages) {
+record ProcessorProperties(
+        boolean enabled, String prefix, String suffix, List<String> packages, String outputSubpackage) {
 
     public static ProcessorProperties of(Properties properties) {
         boolean enabled = Optional.ofNullable(properties.getProperty("enabled"))
@@ -21,6 +22,8 @@ record ProcessorProperties(boolean enabled, String prefix, String suffix, List<S
                 .flatMap(Arrays::stream)
                 .filter(pkg -> !pkg.isBlank())
                 .toList();
-        return new ProcessorProperties(enabled, prefix, suffix, packages);
+        String outputSubpackage =
+                Optional.ofNullable(properties.getProperty("outputSubpackage")).orElse("");
+        return new ProcessorProperties(enabled, prefix, suffix, packages, outputSubpackage);
     }
 }

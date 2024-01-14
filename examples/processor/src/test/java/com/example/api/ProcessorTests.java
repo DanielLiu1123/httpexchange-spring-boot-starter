@@ -11,9 +11,9 @@ class ProcessorTests {
 
     @Test
     void testGenerateCode() {
-        assertThatCode(() -> Class.forName("com.example.foo.api.AbstractFooApiImpl"))
+        assertThatCode(() -> Class.forName("com.example.foo.api.generated.AbstractFooApiImpl"))
                 .doesNotThrowAnyException();
-        assertThatCode(() -> Class.forName("com.example.bar.api.AbstractBarApiImpl"))
+        assertThatCode(() -> Class.forName("com.example.bar.api.generated.AbstractBarApiImpl"))
                 .isInstanceOf(ClassNotFoundException.class);
     }
 }
