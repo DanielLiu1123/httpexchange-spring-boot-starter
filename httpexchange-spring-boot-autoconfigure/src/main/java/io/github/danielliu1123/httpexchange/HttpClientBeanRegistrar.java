@@ -107,6 +107,14 @@ class HttpClientBeanRegistrar {
         abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
         abd.setLazyInit(true);
 
+        // use factory bean
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(HttpExchangeFactoryBean.class);
+        builder.addConstructorArgValue(clz);
+        builder.addConstructorArgValue(hasHttpExchangeAnnotation);
+        builder.setPrimary(true);
+        builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+        AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
+
         try {
             if (properties.getRefresh().isEnabled() && SPRING_CLOUD_CONTEXT_PRESENT) {
                 abd.setScope("refresh");
@@ -114,7 +122,8 @@ class HttpClientBeanRegistrar {
                         ScopedProxyUtils.createScopedProxy(new BeanDefinitionHolder(abd, className), registry, false);
                 BeanDefinitionReaderUtils.registerBeanDefinition(scopedProxy, registry);
             } else {
-                BeanDefinitionReaderUtils.registerBeanDefinition(new BeanDefinitionHolder(abd, className), registry);
+                BeanDefinitionReaderUtils.registerBeanDefinition(
+                        new BeanDefinitionHolder(beanDefinition, className), registry);
             }
         } catch (BeanDefinitionOverrideException ignore) {
             // clients are included in base packages
