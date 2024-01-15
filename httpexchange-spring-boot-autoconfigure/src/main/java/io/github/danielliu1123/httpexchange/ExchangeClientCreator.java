@@ -5,7 +5,7 @@ import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.Client
 import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.github.danielliu1123.httpexchange.factory.jdkclient.EnhancedJdkClientHttpRequestFactory;
+import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

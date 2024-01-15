@@ -3,7 +3,7 @@ package io.github.danielliu1123.httpexchange;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toMap;
 
-import io.github.danielliu1123.httpexchange.factory.jdkclient.EnhancedJdkClientHttpRequestFactory;
+import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
