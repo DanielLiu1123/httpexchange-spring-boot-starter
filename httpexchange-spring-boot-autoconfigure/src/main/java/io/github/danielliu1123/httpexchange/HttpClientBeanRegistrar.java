@@ -108,11 +108,11 @@ class HttpClientBeanRegistrar {
         abd.setLazyInit(true);
 
         // use factory bean
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(HttpExchangeFactoryBean.class);
-        builder.addConstructorArgValue(clz);
-        builder.addConstructorArgValue(hasHttpExchangeAnnotation);
-        builder.setPrimary(true);
-        builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(HttpExchangeFactoryBean.class)
+                .addConstructorArgValue(clz)
+                .addConstructorArgValue(hasHttpExchangeAnnotation)
+                .setPrimary(true)
+                .setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
         AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
 
         try {
