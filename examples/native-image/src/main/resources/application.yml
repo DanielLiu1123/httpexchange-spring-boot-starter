@@ -1,3 +1,5 @@
 spring:
   application:
     name: native-image
+http-exchange:
+  request-mapping-support-enabled: true

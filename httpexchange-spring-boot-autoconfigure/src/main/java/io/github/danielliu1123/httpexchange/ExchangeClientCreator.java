@@ -116,7 +116,8 @@ class ExchangeClientCreator {
         }
         if (!httpExchangeProperties.isRequestMappingSupportEnabled()) {
             throw new IllegalStateException(
-                    "Found a usage of the @RequestMapping based annotation, please migrate to @HttpExchange, or set 'http-exchange.request-mapping-support-enabled=true' to enable support for processing @RequestMapping");
+                    clientType
+                            + " is using the @RequestMapping based annotation, please migrate to @HttpExchange, or set 'http-exchange.request-mapping-support-enabled=true' to enable support for processing @RequestMapping");
         }
         ShadedHttpServiceProxyFactory shadedFactory =
                 shadedProxyFactory(factoryBuilder(chan)).build();

@@ -4,10 +4,8 @@ plugins {
 }
 
 dependencies {
-//    implementation(project(":starters:httpexchange-spring-boot-starter"))
-    implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework.boot:spring-boot-starter-json")
-    implementation("org.springframework:spring-web")
+    implementation(project(":starters:httpexchange-spring-boot-starter"))
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 

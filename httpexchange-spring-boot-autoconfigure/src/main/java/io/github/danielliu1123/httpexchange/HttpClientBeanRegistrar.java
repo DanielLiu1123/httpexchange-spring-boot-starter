@@ -20,7 +20,9 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.ClassMetadata;
@@ -97,29 +99,32 @@ class HttpClientBeanRegistrar {
 
         Assert.isInstanceOf(ConfigurableBeanFactory.class, registry);
 
-        ExchangeClientCreator creator =
-                new ExchangeClientCreator((ConfigurableBeanFactory) registry, clz, hasHttpExchangeAnnotation);
+        //        ExchangeClientCreator creator =
+        //                new ExchangeClientCreator((ConfigurableBeanFactory) registry, clz, hasHttpExchangeAnnotation);
 
-        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, creator::create)
-                .getBeanDefinition();
+        //        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, creator::create)
+        //                .getBeanDefinition();
+        //
+        //        abd.setPrimary(true);
+        //        abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+        //        abd.setLazyInit(true);
 
-        abd.setPrimary(true);
-        abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
-        abd.setLazyInit(true);
-
-        // use factory bean
+        // Use FactoryBean to support native image
+        // see https://github.com/spring-projects/spring-framework/issues/30434,
+        // https://github.com/DanielThomas/spring-aot-issues/pull/1/files
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(HttpExchangeFactoryBean.class)
                 .addConstructorArgValue(clz)
                 .addConstructorArgValue(hasHttpExchangeAnnotation)
                 .setPrimary(true)
                 .setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
-        AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
+        RootBeanDefinition beanDefinition = (RootBeanDefinition) builder.getBeanDefinition();
+        beanDefinition.setTargetType(ResolvableType.forClassWithGenerics(HttpExchangeFactoryBean.class, clz));
 
         try {
             if (properties.getRefresh().isEnabled() && SPRING_CLOUD_CONTEXT_PRESENT) {
-                abd.setScope("refresh");
-                BeanDefinitionHolder scopedProxy =
-                        ScopedProxyUtils.createScopedProxy(new BeanDefinitionHolder(abd, className), registry, false);
+                beanDefinition.setScope("refresh");
+                BeanDefinitionHolder scopedProxy = ScopedProxyUtils.createScopedProxy(
+                        new BeanDefinitionHolder(beanDefinition, className), registry, false);
                 BeanDefinitionReaderUtils.registerBeanDefinition(scopedProxy, registry);
             } else {
                 BeanDefinitionReaderUtils.registerBeanDefinition(
