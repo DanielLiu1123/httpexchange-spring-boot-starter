@@ -99,16 +99,6 @@ class HttpClientBeanRegistrar {
 
         Assert.isInstanceOf(ConfigurableBeanFactory.class, registry);
 
-        //        ExchangeClientCreator creator =
-        //                new ExchangeClientCreator((ConfigurableBeanFactory) registry, clz, hasHttpExchangeAnnotation);
-
-        //        AbstractBeanDefinition abd = BeanDefinitionBuilder.genericBeanDefinition(clz, creator::create)
-        //                .getBeanDefinition();
-        //
-        //        abd.setPrimary(true);
-        //        abd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
-        //        abd.setLazyInit(true);
-
         // Use FactoryBean to support native image
         // see https://github.com/spring-projects/spring-framework/issues/30434,
         // https://github.com/DanielThomas/spring-aot-issues/pull/1/files
