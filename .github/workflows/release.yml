@@ -18,8 +18,23 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Check version
+        run: |
+          VERSION_TAG=${{ github.ref_name }}
+          VERSION_TAG=${VERSION_TAG#v}
+          PROJECT_VERSION=$(grep "^version=" gradle.properties | cut -d'=' -f2)
+          if [[ "$PROJECT_VERSION" == "${VERSION_TAG}-SNAPSHOT" ]]; then
+            echo "Version match: tag $VERSION_TAG matches project version $PROJECT_VERSION, proceeding with release"
+          else
+            echo "Version mismatch: tag $VERSION_TAG does not match project version $PROJECT_VERSION"
+            exit 1
+          fi
+
+      - name: Build
+        run: ./gradlew build --no-daemon
+
       - name: Decrypt secring.gpg
         run: openssl enc -aes-256-cbc -d -pbkdf2 -in secring.gpg.bin -out secring.gpg -pass pass:${{ secrets.privateKeyPassword }}
 
       - name: Release
-        run: RELEASE=true OSSRH_USER=${{ secrets.OSSRH_USER }} OSSRH_PASSWORD=${{ secrets.OSSRH_PASSWORD }} ./gradlew publish -Psigning.secretKeyRingFile=secring.gpg -Psigning.keyId=${{ secrets.signKeyId }} -Psigning.password=${{ secrets.signPassword }}
+        run: RELEASE=true OSSRH_USER=${{ secrets.OSSRH_USER }} OSSRH_PASSWORD=${{ secrets.OSSRH_PASSWORD }} ./gradlew publish -Psigning.secretKeyRingFile=$(pwd)/secring.gpg -Psigning.keyId=${{ secrets.signKeyId }} -Psigning.password=${{ secrets.signPassword }}
