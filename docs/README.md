@@ -529,3 +529,4 @@ For Spring Boot 3.2.x, use `httpexchange-spring-boot-starter` version 3.2.1.
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
 | 3.2.x       | 3.2.1                            |
+| 3.1.x       | 3.1.8                            |
