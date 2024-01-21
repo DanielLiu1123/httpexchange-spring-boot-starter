@@ -3,7 +3,6 @@ package io.github.danielliu1123.httpexchange;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toMap;
 
-import io.github.danielliu1123.httpexchange.factory.jdkclient.EnhancedJdkClientHttpRequestFactory;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -15,12 +14,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.http.client.JettyClientHttpRequestFactory;
-import org.springframework.http.client.ReactorNettyClientRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -134,23 +127,6 @@ public class HttpExchangeProperties implements InitializingBean {
      * @since 3.2.0
      */
     private boolean loadbalancerEnabled = true;
-    /**
-     * Request factory class, if not specified, an appropriate request factory will be set.
-     *
-     * <p> Use {@link JdkClientHttpRequestFactory} by default if interface not extends {@link RequestConfigurator},
-     * otherwise use {@link EnhancedJdkClientHttpRequestFactory} to achieve dynamic read-timeout configuration for each request.
-     *
-     * <p> In most cases, there's no need to explicitly specify the request factory.
-     *
-     * <p color="orange"> NOTE: this configuration is used for {@link ClientType#REST_CLIENT} and {@link ClientType#REST_TEMPLATE} only, {@link ClientType#WEB_CLIENT} is not supported.
-     *
-     * @see JdkClientHttpRequestFactory
-     * @see SimpleClientHttpRequestFactory
-     * @see HttpComponentsClientHttpRequestFactory
-     * @see ReactorNettyClientRequestFactory
-     * @see JettyClientHttpRequestFactory
-     */
-    private Class<? extends ClientHttpRequestFactory> requestFactory;
 
     @Data
     @NoArgsConstructor
@@ -186,9 +162,6 @@ public class HttpExchangeProperties implements InitializingBean {
             mapper.from(loadbalancerEnabled)
                     .when(e -> isNull(chan.getLoadbalancerEnabled()))
                     .to(chan::setLoadbalancerEnabled);
-            mapper.from(requestFactory)
-                    .when(e -> isNull(chan.getRequestFactory()))
-                    .to(chan::setRequestFactory);
 
             // defaultHeaders + chan.headers
             LinkedHashMap<String, List<String>> total = headers.stream()
@@ -212,7 +185,6 @@ public class HttpExchangeProperties implements InitializingBean {
                 connectTimeout,
                 readTimeout,
                 loadbalancerEnabled,
-                requestFactory,
                 List.of(),
                 List.of());
     }
@@ -267,10 +239,6 @@ public class HttpExchangeProperties implements InitializingBean {
          * @since 3.2.0
          */
         private Boolean loadbalancerEnabled;
-        /**
-         * Request factory class, use {@link HttpExchangeProperties#requestFactory} if not set.
-         */
-        private Class<? extends ClientHttpRequestFactory> requestFactory;
         /**
          * Exchange Clients to apply this channel.
          *

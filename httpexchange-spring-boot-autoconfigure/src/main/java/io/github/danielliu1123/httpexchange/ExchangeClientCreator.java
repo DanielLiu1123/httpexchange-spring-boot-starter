@@ -13,7 +13,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Flow;
 import org.reactivestreams.Publisher;
@@ -28,9 +27,11 @@ import org.springframework.cloud.client.loadbalancer.reactive.LoadBalancedExchan
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
+import org.springframework.http.client.AbstractClientHttpRequestFactoryWrapper;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
@@ -205,9 +206,18 @@ class ExchangeClientCreator {
         if (channelConfig.getReadTimeout() != null) {
             builder = builder.setReadTimeout(Duration.ofMillis(channelConfig.getReadTimeout()));
         }
-        builder = builder.requestFactory(getRequestFactoryClass(channelConfig));
 
+        // RestTemplateCustomizer invoked in builder.build()
         RestTemplate restTemplate = builder.build();
+
+        ClientHttpRequestFactory requestFactory = unwrapRequestFactoryIfNecessary(restTemplate.getRequestFactory());
+        if (requestFactory instanceof SimpleClientHttpRequestFactory) {
+            // If it is SimpleClientHttpRequestFactory (default value), we consider it not configured by user
+            // See org.springframework.http.client.support.HttpAccessor.requestFactory
+            restTemplate.setRequestFactory(getRequestFactory(channelConfig));
+        } else {
+            setTimeoutByConfig(requestFactory, channelConfig);
+        }
 
         if (isLoadBalancerEnabled(channelConfig)) {
             beanFactory
@@ -232,6 +242,10 @@ class ExchangeClientCreator {
                     .forEach(header -> builder.defaultHeader(
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
+        if (channelConfig.getReadTimeout() != null) {
+            builder.filter((request, next) ->
+                    next.exchange(request).timeout(Duration.ofMillis(channelConfig.getReadTimeout())));
+        }
         if (isLoadBalancerEnabled(channelConfig)) {
             builder.filters(it -> beanFactory
                     .getBeanProvider(ExchangeFilterFunction.class)
@@ -255,7 +269,14 @@ class ExchangeClientCreator {
                     .forEach(header -> builder.defaultHeader(
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
-        builder.requestFactory(getRequestFactory(channelConfig));
+
+        ClientHttpRequestFactory requestFactory =
+                unwrapRequestFactoryIfNecessary(getFieldValue(builder, "requestFactory"));
+        if (requestFactory == null) {
+            builder.requestFactory(getRequestFactory(channelConfig));
+        } else {
+            setTimeoutByConfig(requestFactory, channelConfig);
+        }
 
         if (isLoadBalancerEnabled(channelConfig)) {
             builder.requestInterceptors(it -> beanFactory
@@ -280,7 +301,8 @@ class ExchangeClientCreator {
                         .map(Duration::ofMillis)
                         .orElse(null),
                 (SslBundle) null);
-        return ClientHttpRequestFactories.get(getRequestFactoryClass(channelConfig), settings);
+        // For support Requester.create().call(..) and RequestConfigurator
+        return ClientHttpRequestFactories.get(EnhancedJdkClientHttpRequestFactory.class, settings);
     }
 
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
@@ -323,30 +345,73 @@ class ExchangeClientCreator {
                         || Flow.Publisher.class.isAssignableFrom(returnType));
     }
 
-    private Class<? extends ClientHttpRequestFactory> getRequestFactoryClass(HttpExchangeProperties.Channel channel) {
-        if (RequestConfigurator.class.isAssignableFrom(clientType)) {
-            if (channel.getRequestFactory() == null) {
-                return EnhancedJdkClientHttpRequestFactory.class;
-            }
-            if (!Objects.equals(channel.getRequestFactory(), EnhancedJdkClientHttpRequestFactory.class)) {
-                log.warn(
-                        "Client '{}' extends RequestConfigurator, but request-factory '{}' does not implement the features of RequestConfigurator, please remove the request-factory from the configuration, or use '{}' instead",
-                        clientType.getSimpleName(),
-                        channel.getRequestFactory().getSimpleName(),
-                        EnhancedJdkClientHttpRequestFactory.class.getSimpleName());
-            }
-            return channel.getRequestFactory();
-        }
-        return JdkClientHttpRequestFactory.class;
-    }
-
     private static HttpExchangeProperties.ClientType getClientType(HttpExchangeProperties.Channel channel) {
         return channel.getClientType() != null ? channel.getClientType() : REST_CLIENT;
+    }
+
+    /**
+     * Copy from {@link ClientHttpRequestFactories.Reflective#unwrapRequestFactoryIfNecessary(ClientHttpRequestFactory)}
+     *
+     * @see ClientHttpRequestFactories.Reflective#unwrapRequestFactoryIfNecessary(ClientHttpRequestFactory)
+     */
+    private static ClientHttpRequestFactory unwrapRequestFactoryIfNecessary(ClientHttpRequestFactory requestFactory) {
+        if (!(requestFactory instanceof AbstractClientHttpRequestFactoryWrapper)) {
+            return requestFactory;
+        }
+        Field field = ReflectionUtils.findField(AbstractClientHttpRequestFactoryWrapper.class, "requestFactory");
+        Assert.notNull(
+                field,
+                "requestFactory field not found in " + requestFactory.getClass().getName());
+        ReflectionUtils.makeAccessible(field);
+        ClientHttpRequestFactory unwrappedRequestFactory = requestFactory;
+        while (unwrappedRequestFactory instanceof AbstractClientHttpRequestFactoryWrapper) {
+            unwrappedRequestFactory =
+                    (ClientHttpRequestFactory) ReflectionUtils.getField(field, unwrappedRequestFactory);
+        }
+        return unwrappedRequestFactory;
+    }
+
+    private static void setTimeoutByConfig(
+            ClientHttpRequestFactory requestFactory, HttpExchangeProperties.Channel channelConfig) {
+        Optional.ofNullable(channelConfig.getReadTimeout())
+                .ifPresent(readTimeout -> setTimeout(requestFactory, "setReadTimeout", readTimeout));
+        Optional.ofNullable(channelConfig.getConnectTimeout())
+                .ifPresent(connectTimeout -> setTimeout(requestFactory, "setConnectTimeout", connectTimeout));
+    }
+
+    private static void setTimeout(ClientHttpRequestFactory requestFactory, String method, int timeout) {
+        if (!trySetTimeout(requestFactory, method, int.class, timeout)
+                && !trySetTimeout(requestFactory, method, Duration.class, Duration.ofMillis(timeout))
+                && !trySetTimeout(requestFactory, method, long.class, (long) timeout)) {
+            log.warn(
+                    "ClientHttpRequestFactory implementation {} not provide a method '{}' to modify the timeout",
+                    requestFactory.getClass().getName(),
+                    method);
+        }
+    }
+
+    private static boolean trySetTimeout(
+            ClientHttpRequestFactory requestFactory, String method, Class<?> paramType, Object paramValue) {
+        Method m = ReflectionUtils.findMethod(requestFactory.getClass(), method, paramType);
+        if (m != null) {
+            ReflectionUtils.makeAccessible(m);
+            ReflectionUtils.invokeMethod(m, requestFactory, paramValue);
+            return true;
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")
     private static <T> T getFieldValue(Object obj, Field field) {
         ReflectionUtils.makeAccessible(field);
         return (T) ReflectionUtils.getField(field, obj);
+    }
+
+    private static <T> T getFieldValue(Object obj, String fieldName) {
+        Field field = ReflectionUtils.findField(obj.getClass(), fieldName);
+        if (field == null) {
+            return null;
+        }
+        return getFieldValue(obj, field);
     }
 }
