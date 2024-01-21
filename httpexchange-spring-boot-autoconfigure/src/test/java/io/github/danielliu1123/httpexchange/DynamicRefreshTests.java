@@ -58,8 +58,8 @@ class DynamicRefreshTests {
                 .isInstanceOf(ConstraintViolationException.class)
                 .hasMessageContaining("size must be between 0 and 5");
 
-        assertThat(barApi.withTimeout(1000).get()).isEqualTo("OK");
-        assertThatCode(() -> barApi.withTimeout(1000).withTimeout(5).get())
+        assertThat(barApi.withTimeout(100).get()).isEqualTo("OK");
+        assertThatCode(() -> barApi.withTimeout(100).withTimeout(1).get())
                 .isInstanceOf(ResourceAccessException.class)
                 .hasMessageContaining("timed out");
 
@@ -69,7 +69,7 @@ class DynamicRefreshTests {
         // base-url changed
         assertThat(fooApi.get()).isEqualTo("OK v2");
         assertThat(barApi.get()).isEqualTo("OK v2");
-        assertThat(barApi.withTimeout(1000).get()).isEqualTo("OK v2");
+        assertThat(barApi.withTimeout(100).get()).isEqualTo("OK v2");
         assertThatCode(() -> barApi.withTimeout(5).get())
                 .isInstanceOf(ResourceAccessException.class)
                 .hasMessageContaining("timed out");
