@@ -41,7 +41,7 @@ class BaseUrlTests {
 
         assertThatCode(() -> api.delay(10))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("URI is not absolute");
+                .hasMessage("URI with undefined scheme");
 
         ctx.close();
     }
