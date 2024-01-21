@@ -132,9 +132,12 @@ class ExchangeClientCreator {
     }
 
     private HttpServiceProxyFactory.Builder factoryBuilder(HttpExchangeProperties.Channel channelConfig) {
-        HttpServiceProxyFactory.Builder builder = beanFactory
-                .getBeanProvider(HttpServiceProxyFactory.Builder.class)
-                .getIfUnique(HttpServiceProxyFactory::builder);
+        HttpServiceProxyFactory.Builder builder = HttpServiceProxyFactory.builder();
+
+        beanFactory
+                .getBeanProvider(HttpServiceProxyFactoryCustomizer.class)
+                .orderedStream()
+                .forEach(customizer -> customizer.customize(builder));
 
         setExchangeAdapter(builder, channelConfig);
 
@@ -178,9 +181,11 @@ class ExchangeClientCreator {
     }
 
     private void addCustomArgumentResolver(HttpServiceProxyFactory.Builder builder) {
+        List<HttpServiceArgumentResolver> existingResolvers = getFieldValue(builder, customArgumentResolversField);
         beanFactory
                 .getBeanProvider(HttpServiceArgumentResolver.class)
                 .orderedStream()
+                .filter(resolver -> !existingResolvers.contains(resolver))
                 .forEach(builder::customArgumentResolver);
     }
 
