@@ -20,6 +20,7 @@ record ProcessorProperties(
         List<String> packages = Optional.ofNullable(properties.getProperty("packages")).stream()
                 .map(list -> list.split(","))
                 .flatMap(Arrays::stream)
+                .map(String::trim)
                 .filter(pkg -> !pkg.isBlank())
                 .toList();
         String outputSubpackage =
