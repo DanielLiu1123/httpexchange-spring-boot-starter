@@ -1,6 +1,7 @@
 package io.github.danielliu1123.httpexchange;
 
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_CLIENT;
+import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_TEMPLATE;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.WEB_CLIENT;
 import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
 
@@ -159,21 +160,26 @@ class ExchangeClientCreator {
                         WEB_CLIENT,
                         type);
             }
-            builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
+            builder.exchangeAdapter(WebClientAdapter.create(
+                    Cache.getConfigToHttpClient(channelConfig, WEB_CLIENT, () -> buildWebClient(channelConfig))));
             return;
         }
 
         switch (getClientType(channelConfig)) {
-            case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
-            case REST_TEMPLATE -> builder.exchangeAdapter(RestTemplateAdapter.create(buildRestTemplate(channelConfig)));
+            case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(
+                    Cache.getConfigToHttpClient(channelConfig, REST_CLIENT, () -> buildRestClient(channelConfig))));
+            case REST_TEMPLATE -> builder.exchangeAdapter(RestTemplateAdapter.create(
+                    Cache.getConfigToHttpClient(channelConfig, REST_TEMPLATE, () -> buildRestTemplate(channelConfig))));
             case WEB_CLIENT -> {
                 if (WEBFLUX_PRESENT) {
-                    builder.exchangeAdapter(WebClientAdapter.create(buildWebClient(channelConfig)));
+                    builder.exchangeAdapter(WebClientAdapter.create(Cache.getConfigToHttpClient(
+                            channelConfig, WEB_CLIENT, () -> buildWebClient(channelConfig))));
                 } else {
                     log.warn(
                             "Since spring-webflux is not in the classpath, the client-type will fall back to '{}'",
                             REST_CLIENT);
-                    builder.exchangeAdapter(RestClientAdapter.create(buildRestClient(channelConfig)));
+                    builder.exchangeAdapter(RestClientAdapter.create(Cache.getConfigToHttpClient(
+                            channelConfig, REST_CLIENT, () -> buildRestClient(channelConfig))));
                 }
             }
             default -> throw new IllegalStateException("Unsupported client-type: " + channelConfig.getClientType());
