@@ -3,7 +3,6 @@ package io.github.danielliu1123.httpexchange;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.Channel;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType;
 
-import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -20,9 +19,9 @@ class Cache {
      */
     private static final Map<Class<?>, Object> classToInstance = new ConcurrentHashMap<>();
     /**
-     * Channel config -> client type -> client.
+     * {@link ClientId} to Http client instance.
      */
-    private static final Map<Channel, Map<ClientType, Object>> configToHttpClient = new ConcurrentHashMap<>();
+    private static final Map<ClientId, Object> clientIdToHttpClient = new ConcurrentHashMap<>();
 
     /**
      * Add a client to cache.
@@ -43,10 +42,8 @@ class Cache {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T getConfigToHttpClient(Channel channel, ClientType clientType, Supplier<T> supplier) {
-        return (T) configToHttpClient
-                .computeIfAbsent(channel, k -> new EnumMap<>(ClientType.class))
-                .computeIfAbsent(clientType, k -> supplier.get());
+    public static <T> T getHttpClient(ClientId clientId, Supplier<T> supplier) {
+        return (T) clientIdToHttpClient.computeIfAbsent(clientId, k -> supplier.get());
     }
 
     /**
@@ -54,6 +51,8 @@ class Cache {
      */
     public static void clear() {
         classToInstance.clear();
-        configToHttpClient.clear();
+        clientIdToHttpClient.clear();
     }
+
+    record ClientId(Channel channel, ClientType clientType) {}
 }

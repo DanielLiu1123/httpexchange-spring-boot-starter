@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Flow;
+import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,29 +162,35 @@ class ExchangeClientCreator {
                         type);
             }
             builder.exchangeAdapter(WebClientAdapter.create(
-                    Cache.getConfigToHttpClient(channelConfig, WEB_CLIENT, () -> buildWebClient(channelConfig))));
+                    getClient(new Cache.ClientId(channelConfig, WEB_CLIENT), () -> buildWebClient(channelConfig))));
             return;
         }
 
         switch (getClientType(channelConfig)) {
             case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(
-                    Cache.getConfigToHttpClient(channelConfig, REST_CLIENT, () -> buildRestClient(channelConfig))));
-            case REST_TEMPLATE -> builder.exchangeAdapter(RestTemplateAdapter.create(
-                    Cache.getConfigToHttpClient(channelConfig, REST_TEMPLATE, () -> buildRestTemplate(channelConfig))));
+                    getClient(new Cache.ClientId(channelConfig, REST_CLIENT), () -> buildRestClient(channelConfig))));
+            case REST_TEMPLATE -> builder.exchangeAdapter(RestTemplateAdapter.create(getClient(
+                    new Cache.ClientId(channelConfig, REST_TEMPLATE), () -> buildRestTemplate(channelConfig))));
             case WEB_CLIENT -> {
                 if (WEBFLUX_PRESENT) {
-                    builder.exchangeAdapter(WebClientAdapter.create(Cache.getConfigToHttpClient(
-                            channelConfig, WEB_CLIENT, () -> buildWebClient(channelConfig))));
+                    builder.exchangeAdapter(WebClientAdapter.create(getClient(
+                            new Cache.ClientId(channelConfig, WEB_CLIENT), () -> buildWebClient(channelConfig))));
                 } else {
                     log.warn(
                             "Since spring-webflux is not in the classpath, the client-type will fall back to '{}'",
                             REST_CLIENT);
-                    builder.exchangeAdapter(RestClientAdapter.create(Cache.getConfigToHttpClient(
-                            channelConfig, REST_CLIENT, () -> buildRestClient(channelConfig))));
+                    builder.exchangeAdapter(RestClientAdapter.create(getClient(
+                            new Cache.ClientId(channelConfig, REST_CLIENT), () -> buildRestClient(channelConfig))));
                 }
             }
             default -> throw new IllegalStateException("Unsupported client-type: " + channelConfig.getClientType());
         }
+    }
+
+    private static <T> T getClient(Cache.ClientId clientId, Supplier<T> supplier) {
+        return Boolean.TRUE.equals(clientId.channel().getHttpClientReuseEnabled())
+                ? Cache.getHttpClient(clientId, supplier)
+                : supplier.get();
     }
 
     private void addCustomArgumentResolver(HttpServiceProxyFactory.Builder builder) {

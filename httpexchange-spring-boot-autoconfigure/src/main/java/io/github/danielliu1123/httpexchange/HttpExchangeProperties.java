@@ -127,6 +127,14 @@ public class HttpExchangeProperties implements InitializingBean {
      * @since 3.2.0
      */
     private boolean loadbalancerEnabled = true;
+    /**
+     * Whether to enable http client reuse, default {@code true}.
+     *
+     * <p> Same {@link Channel} configuration will share the same http client if enabled.
+     *
+     * @since 3.2.2
+     */
+    private boolean httpClientReuseEnabled = true;
 
     @Data
     @NoArgsConstructor
@@ -162,6 +170,9 @@ public class HttpExchangeProperties implements InitializingBean {
             mapper.from(loadbalancerEnabled)
                     .when(e -> isNull(chan.getLoadbalancerEnabled()))
                     .to(chan::setLoadbalancerEnabled);
+            mapper.from(httpClientReuseEnabled)
+                    .when(e -> isNull(chan.getHttpClientReuseEnabled()))
+                    .to(chan::setHttpClientReuseEnabled);
 
             // defaultHeaders + chan.headers
             LinkedHashMap<String, List<String>> total = headers.stream()
@@ -185,6 +196,7 @@ public class HttpExchangeProperties implements InitializingBean {
                 connectTimeout,
                 readTimeout,
                 loadbalancerEnabled,
+                httpClientReuseEnabled,
                 List.of(),
                 List.of());
     }
@@ -239,6 +251,13 @@ public class HttpExchangeProperties implements InitializingBean {
          * @since 3.2.0
          */
         private Boolean loadbalancerEnabled;
+        /**
+         * Whether to enable http client reuse, use {@link HttpExchangeProperties#httpClientReuseEnabled} if not set.
+         *
+         * @see HttpExchangeProperties#httpClientReuseEnabled
+         * @since 3.2.2
+         */
+        private Boolean httpClientReuseEnabled;
         /**
          * Exchange Clients to apply this channel.
          *
