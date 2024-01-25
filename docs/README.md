@@ -494,8 +494,6 @@ In most cases, there's no need to explicitly specify the client type.
 For `RestClient` and `RestTemplate`, there are many built-in implementations of `ClientHttpRequestFactory`,
 use `EnhancedJdkClientHttpRequestFactory` to support dynamic `read-timeout` by default.
 
-**If choose to use other implementations, dynamic `read-timeout` for single request will not be supported.**
-
 > ⚠️ **Warning**:
 > If choose to use other implementations, dynamic `read-timeout` for single request will not be supported,
 > Spring does not provide an extension point to support this feature,

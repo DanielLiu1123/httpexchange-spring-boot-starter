@@ -502,8 +502,6 @@ In most cases, there's no need to explicitly specify the client type.
 For `RestClient` and `RestTemplate`, there are many built-in implementations of `ClientHttpRequestFactory`, 
 use `EnhancedJdkClientHttpRequestFactory` to support dynamic `read-timeout` by default.
 
-**If choose to use other implementations, dynamic `read-timeout` for single request will not be supported.**
-
 > ⚠️ **Warning**:
 > If choose to use other implementations, dynamic `read-timeout` for single request will not be supported, 
 > Spring does not provide an extension point to support this feature,
@@ -538,6 +536,19 @@ For Spring Boot 3.2.x, use `httpexchange-spring-boot-starter` version 3.2.1.
 |-------------|----------------------------------|
 | 3.2.x       | 3.2.1                            |
 | 3.1.x       | 3.1.8                            |
+
+## Code of Conduct
+
+This project is governed by the [Code of Conduct](./CODE_OF_CONDUCT.md).
+By participating, you are expected to uphold this code of conduct.
+Please report unacceptable behavior to llw599502537@gmail.com.
+
+## Contributing
+
+The [issue tracker](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues) is the preferred channel for bug reports, 
+feature requests and submitting pull requests.
+
+If you would like to contribute to the project, please refer to [Contributing](./CONTRIBUTING.md).
 
 ## License
 
