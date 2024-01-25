@@ -73,7 +73,7 @@ class ShadedJdkClientHttpRequest extends ShadedAbstractStreamingClientHttpReques
             HttpRequest.Builder builder = HttpRequest.newBuilder(
                     buildRequest(headers, body), (name, value) -> !name.equalsIgnoreCase(REQUEST_TIMEOUT_HEADER));
             Duration readTimeout = Optional.ofNullable(headers.getFirst(REQUEST_TIMEOUT_HEADER))
-                    .map(Integer::valueOf)
+                    .map(Long::valueOf)
                     .map(Duration::ofMillis)
                     .orElse(timeout);
             if (readTimeout != null) {

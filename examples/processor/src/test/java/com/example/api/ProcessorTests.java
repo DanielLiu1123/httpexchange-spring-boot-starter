@@ -14,6 +14,10 @@ class ProcessorTests {
         assertThatCode(() -> Class.forName("com.example.foo.api.generated.AbstractFooApiImpl"))
                 .doesNotThrowAnyException();
         assertThatCode(() -> Class.forName("com.example.bar.api.generated.AbstractBarApiImpl"))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> Class.forName("com.example.bar.api.generated.AbstractRequestMappingBarApiImpl"))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> Class.forName("com.example.baz.api.generated.AbstractBazApiImpl"))
                 .isInstanceOf(ClassNotFoundException.class);
     }
 }

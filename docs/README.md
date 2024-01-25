@@ -305,35 +305,47 @@ public interface UserApi {
 
 ### Set Read Timeout Dynamically
 
-Support to dynamically set the read timeout for each request, just use client extends `RequestConfigurator` interface.
+Dynamically set read timeouts per request.
 
-```java
-@HttpExchange("/users")  
-interface UserApi extends RequestConfigurator<UserApi> {
-    @GetExchange      
-    List<User> list();
-}    
+- Use `RequestConfigurator`
 
-@Service
-class UserService {
-    @Autowired
-    UserApi userApi;
-    
-    List<User> listWithTimeout(int timeout) {
-        return userApi.withTimeout(timeout).list();
+    ```java
+    @HttpExchange("/users")  
+    interface UserApi extends RequestConfigurator<UserApi> {
+        @GetExchange      
+        List<User> list();
     }    
-}
-```
+    
+    @Service
+    class UserService {
+        @Autowired
+        UserApi userApi;
+        
+        List<User> listWithTimeout(int timeout) {
+            return userApi.withTimeout(timeout).list();
+        }    
+    }
+    ```
 
-> Each time the `RequestConfigurator` method is called, a new proxy client will be created, and it inherits the original configuration and will not affect the original configuration.
+  Each time the `RequestConfigurator` method is called, a new proxy client will be created, and it inherits the original configuration and will not affect the original configuration.
 
-`RequestConfigurator` is suitable for client-side use but not for defining a neutral API. Therefore, a `Requester` is provided for a programmatic way to dynamically set the read timeout.
+  > `RequestConfigurator` is suitable for client-side use but not for defining a neutral API. Therefore, a `Requester` is provided for a programmatic way to dynamically set the read timeout.
+
+- Use `Requester`
+
+    ```java
+    List<User> users = Requester.create()
+                            .withTimeout(10000)                              
+                            .addHeader("X-Foo", "bar")                              
+                            .call(() -> userApi.list());
+    ```
+
+> ⚠️ **Warning**: This feature needs to use `EnhancedJdkClientHttpRequestFactory` as the `ClientHttpRequestFactory` implementation, and this is the default behavior.
+
+For `WebClient` client type, use `timeout` method to set the read timeout for each request.
 
 ```java
-List<User> users = Requester.create()
-                        .withTimeout(10000)                              
-                        .addHeader("X-Foo", "bar")                              
-                        .call(() -> userApi.list());
+Flux<User> users = userApi.list().timeout(Duration.ofSeconds(10));
 ```
 
 ### Refresh Configuration Dynamically
@@ -461,36 +473,58 @@ HttpServiceArgumentResolver yourHttpServiceArgumentResolver() {
 
 Auto-detect all of the `HttpServiceArgumentResolver` beans, then apply them to build the `HttpServiceProxyFactory`.
 
-#### Change Http Client Implementation
+#### Change Client Type
 
-There are many adapters for HttpExchange client: `RestClientAdapter`,
-`WebClientAdapter` and `RestTemplateAdapter`, use `REST_CLIENT` by default,
-you can change it to `WEB_CLIENT` or `REST_TEMPLATE`.
+There are many adapters for `HttpExchange` client: `RestClientAdapter`, `WebClientAdapter` and `RestTemplateAdapter`.
 
 ```yaml
 http-exchange:
   client-type: REST_CLIENT
 ```
 
-> ⚠️ **Warning**: The `connectTimeout` and `readTimeout` settings are not supported by `WEB_CLIENT`.
+The framework will choose the appropriate adapter according to the http client interface.
+If any method in the interface returns a reactive type (Mono/Flux),
+then `WebClient` will be used, otherwise `RestClient` will be used.
+In most cases, there's no need to explicitly specify the client type.
 
-#### Change ClientHttpRequestFactory implementation
+> ⚠️ **Warning**: The `connectTimeout` settings are not supported by `WEB_CLIENT`.
 
-There are many built-in implementations of `ClientHttpRequestFactory`, use `JdkClientHttpRequestFactory` by default.
-You can change it another implementation, such as `ReactorNettyClientRequestFactory`.
+#### Change Http Client Implementation
 
-```yaml
-http-exchange:
-  request-factory: org.springframework.http.client.ReactorNettyClientRequestFactory
+For `RestClient` and `RestTemplate`, there are many built-in implementations of `ClientHttpRequestFactory`,
+use `EnhancedJdkClientHttpRequestFactory` to support dynamic `read-timeout` by default.
+
+> ⚠️ **Warning**:
+> If choose to use other implementations, dynamic `read-timeout` for single request will not be supported,
+> Spring does not provide an extension point to support this feature,
+> see [issue](https://github.com/spring-projects/spring-framework/issues/31926).
+
+```java
+// Change ClientHttpRequestFactory for RestClient
+@Bean
+RestClientCustomizer restClientCustomizer() {
+    return builder -> builder.requestFactory(new ReactorNettyClientRequestFactory());
+}
+
+// Change ClientHttpRequestFactory for RestTemplate
+@Bean
+RestTemplateCustomizer restTemplateCustomizer() {
+    return restTemplate -> restTemplate.setRequestFactory(new ReactorNettyClientRequestFactory());
+}
+
+// Change ClientHttpConnector for WebClient
+@Bean
+WebClientCustomizer webClientCustomizer() {
+    return builder -> builder.clientConnector(new ReactorClientHttpConnector());
+}
 ```
 
-> `request-factory` config works on `REST_CLIENT` and `REST_TEMPLATE` client type only.
+## Version Compatibility
 
-## Version
-
-The version of this project is kept in sync with Spring Boot 3.x.
-If you are using Spring Boot 3.2.x, then `httpexchange-spring-boot-starter` 3.2.1 should be used.
+The project version aligns with Spring Boot 3.x.
+For Spring Boot 3.2.x, use `httpexchange-spring-boot-starter` version 3.2.1.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
 | 3.2.x       | 3.2.1                            |
+| 3.1.x       | 3.1.8                            |

@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     api(project(":httpexchange-spring-boot-autoconfigure"))
+    api("org.springframework.boot:spring-boot-starter")
     api("org.springframework.boot:spring-boot-starter-json")
 
     optionalSupportApi("org.springframework:spring-webflux")

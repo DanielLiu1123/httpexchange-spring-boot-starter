@@ -3,7 +3,6 @@ package io.github.danielliu1123.httpexchange;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toMap;
 
-import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -15,12 +14,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.http.client.JettyClientHttpRequestFactory;
-import org.springframework.http.client.ReactorNettyClientRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -135,22 +128,13 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     private boolean loadbalancerEnabled = true;
     /**
-     * Request factory class, if not specified, an appropriate request factory will be set.
+     * Whether to enable http client reuse, default {@code true}.
      *
-     * <p> Use {@link JdkClientHttpRequestFactory} by default if interface not extends {@link RequestConfigurator},
-     * otherwise use {@link EnhancedJdkClientHttpRequestFactory} to achieve dynamic read-timeout configuration for each request.
+     * <p> Same {@link Channel} configuration will share the same http client if enabled.
      *
-     * <p> In most cases, there's no need to explicitly specify the request factory.
-     *
-     * <p color="orange"> NOTE: this configuration is used for {@link ClientType#REST_CLIENT} and {@link ClientType#REST_TEMPLATE} only, {@link ClientType#WEB_CLIENT} is not supported.
-     *
-     * @see JdkClientHttpRequestFactory
-     * @see SimpleClientHttpRequestFactory
-     * @see HttpComponentsClientHttpRequestFactory
-     * @see ReactorNettyClientRequestFactory
-     * @see JettyClientHttpRequestFactory
+     * @since 3.2.2
      */
-    private Class<? extends ClientHttpRequestFactory> requestFactory;
+    private boolean httpClientReuseEnabled = true;
 
     @Data
     @NoArgsConstructor
@@ -186,9 +170,9 @@ public class HttpExchangeProperties implements InitializingBean {
             mapper.from(loadbalancerEnabled)
                     .when(e -> isNull(chan.getLoadbalancerEnabled()))
                     .to(chan::setLoadbalancerEnabled);
-            mapper.from(requestFactory)
-                    .when(e -> isNull(chan.getRequestFactory()))
-                    .to(chan::setRequestFactory);
+            mapper.from(httpClientReuseEnabled)
+                    .when(e -> isNull(chan.getHttpClientReuseEnabled()))
+                    .to(chan::setHttpClientReuseEnabled);
 
             // defaultHeaders + chan.headers
             LinkedHashMap<String, List<String>> total = headers.stream()
@@ -212,7 +196,7 @@ public class HttpExchangeProperties implements InitializingBean {
                 connectTimeout,
                 readTimeout,
                 loadbalancerEnabled,
-                requestFactory,
+                httpClientReuseEnabled,
                 List.of(),
                 List.of());
     }
@@ -268,9 +252,12 @@ public class HttpExchangeProperties implements InitializingBean {
          */
         private Boolean loadbalancerEnabled;
         /**
-         * Request factory class, use {@link HttpExchangeProperties#requestFactory} if not set.
+         * Whether to enable http client reuse, use {@link HttpExchangeProperties#httpClientReuseEnabled} if not set.
+         *
+         * @see HttpExchangeProperties#httpClientReuseEnabled
+         * @since 3.2.2
          */
-        private Class<? extends ClientHttpRequestFactory> requestFactory;
+        private Boolean httpClientReuseEnabled;
         /**
          * Exchange Clients to apply this channel.
          *

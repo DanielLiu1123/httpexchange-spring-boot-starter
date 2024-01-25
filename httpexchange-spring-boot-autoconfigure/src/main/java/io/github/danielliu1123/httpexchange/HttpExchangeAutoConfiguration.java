@@ -56,7 +56,7 @@ public class HttpExchangeAutoConfiguration implements DisposableBean {
     @Bean
     @Lazy // RestTemplateBuilderConfigurer is lazy :)
     public RestTemplateCustomizer httpExchangeClientHttpRequestInterceptorRestTemplateCustomizer() {
-        return builder -> builder.getInterceptors().add(new HttpExchangeClientHttpRequestInterceptor());
+        return restTemplate -> restTemplate.getInterceptors().add(new HttpExchangeClientHttpRequestInterceptor());
     }
 
     @Override

@@ -47,6 +47,12 @@ import org.springframework.web.server.ResponseStatusException;
     "org.springframework.web.service.annotation.PutExchange",
     "org.springframework.web.service.annotation.DeleteExchange",
     "org.springframework.web.service.annotation.PatchExchange",
+    "org.springframework.web.bind.annotation.RequestMapping",
+    "org.springframework.web.bind.annotation.GetMapping",
+    "org.springframework.web.bind.annotation.PostMapping",
+    "org.springframework.web.bind.annotation.PutMapping",
+    "org.springframework.web.bind.annotation.DeleteMapping",
+    "org.springframework.web.bind.annotation.PatchMapping"
 })
 public class ApiBaseProcessor extends AbstractProcessor {
 
@@ -118,7 +124,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
                 .getPackageOf(element)
                 .getQualifiedName()
                 .toString();
-        return targetPatterns.stream().anyMatch(pattern -> matcher.match(pattern, pkg));
+        return targetPatterns.stream().anyMatch(pattern -> pkg.startsWith(pattern) || matcher.match(pattern, pkg));
     }
 
     private void processNonInterfaceElement(Set<? extends TypeElement> annotations, Element element) {
