@@ -497,7 +497,7 @@ use `EnhancedJdkClientHttpRequestFactory` to support dynamic `read-timeout` by d
 > ⚠️ **Warning**:
 > If choose to use other implementations, dynamic `read-timeout` for single request will not be supported,
 > Spring does not provide an extension point to support this feature,
-> see [issue](https://github.com/spring-projects/spring-framework/issues/31926)
+> see [issue](https://github.com/spring-projects/spring-framework/issues/31926).
 
 ```java
 // Change ClientHttpRequestFactory for RestClient
