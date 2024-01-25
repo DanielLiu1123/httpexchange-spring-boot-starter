@@ -25,8 +25,8 @@ This project is released under the MIT license, and we welcome contributions of 
 
 ## Code Style and Conventions
 
-- **Code Formatting**: We use palantir-java-format for code formatting. Please ensure your code complies with this
-  format.
+- **Code Formatting**: We use [palantir-java-format](https://github.com/palantir/palantir-java-format) as our code
+  formatter.
 
   Run the following command to apply formatting:
 
