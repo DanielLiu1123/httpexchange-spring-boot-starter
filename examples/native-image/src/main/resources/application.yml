@@ -3,3 +3,6 @@ spring:
     name: native-image
 http-exchange:
   request-mapping-support-enabled: true
+  base-url: https://my-json-server.typicode.com
+  refresh:
+    enabled: true

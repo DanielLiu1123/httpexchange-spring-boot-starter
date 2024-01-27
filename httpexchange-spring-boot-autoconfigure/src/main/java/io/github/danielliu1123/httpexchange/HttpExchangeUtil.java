@@ -2,6 +2,7 @@ package io.github.danielliu1123.httpexchange;
 
 import static org.springframework.beans.factory.support.AbstractBeanDefinition.AUTOWIRE_BY_TYPE;
 
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.scope.ScopedProxyUtils;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.core.NativeDetector;
 import org.springframework.core.env.Environment;
 import org.springframework.util.ClassUtils;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -24,6 +27,7 @@ public class HttpExchangeUtil {
 
     private static final boolean SPRING_CLOUD_CONTEXT_PRESENT =
             ClassUtils.isPresent("org.springframework.cloud.context.scope.refresh.RefreshScope", null);
+    private static final AtomicReference<HttpExchangeProperties.Refresh> refresh = new AtomicReference<>();
 
     /**
      * Register a {@link HttpExchange} annotated interface as a Spring bean.
@@ -33,7 +37,7 @@ public class HttpExchangeUtil {
      *
      * @param beanFactory {@link DefaultListableBeanFactory}
      * @param environment {@link Environment}
-     * @param clz {@link HttpExchange} annotated interface
+     * @param clz         {@link HttpExchange} annotated interface
      */
     public static void registerHttpExchangeBean(
             DefaultListableBeanFactory beanFactory, Environment environment, Class<?> clz) {
@@ -47,7 +51,10 @@ public class HttpExchangeUtil {
 
         String className = clz.getName();
         try {
-            if (getProperties(beanFactory, environment).getRefresh().isEnabled() && SPRING_CLOUD_CONTEXT_PRESENT) {
+            if (getRefresh(environment).isEnabled()
+                    && SPRING_CLOUD_CONTEXT_PRESENT
+                    && System.getProperty("spring.aot.processing") == null
+                    && !NativeDetector.inNativeImage()) {
                 beanDefinition.setScope("refresh");
                 BeanDefinitionHolder scopedProxy = ScopedProxyUtils.createScopedProxy(
                         new BeanDefinitionHolder(beanDefinition, className), beanFactory, false);
@@ -64,10 +71,15 @@ public class HttpExchangeUtil {
         }
     }
 
-    private static HttpExchangeProperties getProperties(
-            DefaultListableBeanFactory beanFactory, Environment environment) {
-        return beanFactory
-                .getBeanProvider(HttpExchangeProperties.class)
-                .getIfUnique(() -> Util.getProperties(environment));
+    private static HttpExchangeProperties.Refresh getRefresh(Environment environment) {
+        HttpExchangeProperties.Refresh cached = refresh.get();
+        if (cached != null) {
+            return cached;
+        }
+        HttpExchangeProperties.Refresh result = Binder.get(environment)
+                .bind(HttpExchangeProperties.Refresh.PREFIX, HttpExchangeProperties.Refresh.class)
+                .orElseGet(HttpExchangeProperties.Refresh::new);
+        refresh.set(result);
+        return result;
     }
 }
