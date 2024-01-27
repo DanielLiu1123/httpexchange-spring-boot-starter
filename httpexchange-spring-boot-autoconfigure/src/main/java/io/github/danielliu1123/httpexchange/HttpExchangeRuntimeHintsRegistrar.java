@@ -34,10 +34,10 @@ class HttpExchangeRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
         reflection.registerType(HttpServiceProxyFactory.Builder.class, DECLARED_FIELDS);
 
-        registerForClientHttpRequestFactory(reflection);
+        registerForClientHttpRequestFactories(reflection);
     }
 
-    private void registerForClientHttpRequestFactory(ReflectionHints reflection) {
+    private void registerForClientHttpRequestFactories(ReflectionHints reflection) {
         Set<Class<?>> classes =
                 scanner
                         .findCandidateComponents(
@@ -61,14 +61,14 @@ class HttpExchangeRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
                 return true;
             }
         };
-        result.setResourcePattern("**/*Factory.class");
+        result.setResourcePattern("**/*.class");
         return result;
     }
 
     private static Class<?> forName(String className) {
         try {
             return ClassUtils.forName(className, null);
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
             return null;
         }
     }

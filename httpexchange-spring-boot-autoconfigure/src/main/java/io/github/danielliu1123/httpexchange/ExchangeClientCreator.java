@@ -1,5 +1,7 @@
 package io.github.danielliu1123.httpexchange;
 
+import static io.github.danielliu1123.httpexchange.HttpClientBeanRegistrar.hasAnnotation;
+import static io.github.danielliu1123.httpexchange.HttpClientBeanRegistrar.isHttpExchangeClient;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_CLIENT;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_TEMPLATE;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.WEB_CLIENT;
@@ -22,7 +24,7 @@ import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
 import org.springframework.boot.ssl.SslBundle;
@@ -60,7 +62,7 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 /**
  * @author Freeman
  */
-class ExchangeClientCreator {
+public final class ExchangeClientCreator {
     private static final Logger log = LoggerFactory.getLogger(ExchangeClientCreator.class);
 
     private static final boolean WEBFLUX_PRESENT =
@@ -85,18 +87,21 @@ class ExchangeClientCreator {
         }
     }
 
-    private final ConfigurableBeanFactory beanFactory;
+    private final BeanFactory beanFactory;
     private final Environment environment;
     private final Class<?> clientType;
     private final boolean isUseHttpExchangeAnnotation;
 
     @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
-    ExchangeClientCreator(
-            ConfigurableBeanFactory beanFactory, Class<?> clientType, boolean isUseHttpExchangeAnnotation) {
+    public ExchangeClientCreator(BeanFactory beanFactory, Class<?> clientType) {
         this.beanFactory = beanFactory;
         this.environment = beanFactory.getBean(Environment.class);
+
+        Assert.isTrue(clientType.isInterface(), () -> clientType + " is not an interface");
         this.clientType = clientType;
-        this.isUseHttpExchangeAnnotation = isUseHttpExchangeAnnotation;
+
+        Assert.isTrue(isHttpExchangeClient(clientType), () -> clientType + " is not a HTTP exchange interface");
+        this.isUseHttpExchangeAnnotation = hasAnnotation(clientType, HttpExchange.class);
     }
 
     /**

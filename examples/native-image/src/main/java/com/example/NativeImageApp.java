@@ -1,6 +1,7 @@
 package com.example;
 
 import io.github.danielliu1123.httpexchange.EnableExchangeClients;
+import io.github.danielliu1123.httpexchange.RequestConfigurator;
 import java.util.List;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -12,7 +13,8 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
 @SpringBootApplication
-@EnableExchangeClients
+@EnableExchangeClients /*(clients = NativeImageApp.PostApi.class)*/
+// @EnableFeignClients
 public class NativeImageApp {
 
     public static void main(String[] args) {
@@ -28,7 +30,8 @@ public class NativeImageApp {
     }
 
     @RequestMapping("https://my-json-server.typicode.com")
-    public interface PostApi2 {
+    //    @FeignClient(name = "postApi2", url = "https://my-json-server.typicode.com", contextId = "PostApi2")
+    public interface PostApi2 extends RequestConfigurator<PostApi2> {
         @GetMapping("/typicode/demo/posts")
         List<Post> list();
     }

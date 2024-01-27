@@ -8,27 +8,18 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.SneakyThrows;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.aop.scope.ScopedProxyUtils;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
-import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -37,20 +28,17 @@ import org.springframework.web.service.annotation.HttpExchange;
  * @author Freeman
  */
 class HttpClientBeanRegistrar {
-    private static final Logger log = LoggerFactory.getLogger(HttpClientBeanRegistrar.class);
 
     private static final Set<BeanDefinitionRegistry> registries = ConcurrentHashMap.newKeySet();
-    private static final boolean SPRING_CLOUD_CONTEXT_PRESENT =
-            ClassUtils.isPresent("org.springframework.cloud.context.scope.refresh.RefreshScope", null);
 
     private final ClassPathScanningCandidateComponentProvider scanner;
-    private final HttpExchangeProperties properties;
     private final BeanDefinitionRegistry registry;
+    private final Environment environment;
 
-    public HttpClientBeanRegistrar(HttpExchangeProperties properties, BeanDefinitionRegistry registry) {
+    public HttpClientBeanRegistrar(BeanDefinitionRegistry registry, Environment environment) {
         this.scanner = getScanner();
-        this.properties = properties;
         this.registry = registry;
+        this.environment = environment;
         registries.add(registry);
     }
 
@@ -91,41 +79,13 @@ class HttpClientBeanRegistrar {
             throw new IllegalArgumentException(className + " is not an interface");
         }
 
-        boolean hasHttpExchangeAnnotation = hasAnnotation(clz, HttpExchange.class);
-
-        if (!hasHttpExchangeAnnotation && !hasAnnotation(clz, RequestMapping.class)) {
+        if (!isHttpExchangeClient(clz)) {
             return;
         }
 
         Assert.isInstanceOf(ConfigurableBeanFactory.class, registry);
 
-        // Use FactoryBean to support native image
-        // see https://github.com/spring-projects/spring-framework/issues/30434,
-        // https://github.com/DanielThomas/spring-aot-issues/pull/1/files
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(HttpExchangeFactoryBean.class)
-                .addConstructorArgValue(clz)
-                .addConstructorArgValue(hasHttpExchangeAnnotation)
-                .setPrimary(true)
-                .setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
-        RootBeanDefinition beanDefinition = (RootBeanDefinition) builder.getBeanDefinition();
-        beanDefinition.setTargetType(ResolvableType.forClassWithGenerics(HttpExchangeFactoryBean.class, clz));
-
-        try {
-            if (properties.getRefresh().isEnabled() && SPRING_CLOUD_CONTEXT_PRESENT) {
-                beanDefinition.setScope("refresh");
-                BeanDefinitionHolder scopedProxy = ScopedProxyUtils.createScopedProxy(
-                        new BeanDefinitionHolder(beanDefinition, className), registry, false);
-                BeanDefinitionReaderUtils.registerBeanDefinition(scopedProxy, registry);
-            } else {
-                BeanDefinitionReaderUtils.registerBeanDefinition(
-                        new BeanDefinitionHolder(beanDefinition, className), registry);
-            }
-        } catch (BeanDefinitionOverrideException ignore) {
-            // clients are included in base packages
-            log.warn(
-                    "Remove @HttpExchanges client '{}' from 'clients' property; it's already in base packages",
-                    className);
-        }
+        HttpExchangeUtil.registerHttpExchangeBean((DefaultListableBeanFactory) registry, environment, clz);
     }
 
     private static ClassPathScanningCandidateComponentProvider getScanner() {
@@ -149,7 +109,7 @@ class HttpClientBeanRegistrar {
                         || am.hasAnnotatedMethods(RequestMapping.class.getName()));
     }
 
-    private static boolean hasAnnotation(Class<?> clz, Class<? extends Annotation> annotationType) {
+    static boolean hasAnnotation(Class<?> clz, Class<? extends Annotation> annotationType) {
         if (AnnotationUtils.findAnnotation(clz, annotationType) != null) {
             return true;
         }
@@ -160,6 +120,11 @@ class HttpClientBeanRegistrar {
             }
         }
         return false;
+    }
+
+    static boolean isHttpExchangeClient(Class<?> clz) {
+        return clz.isInterface()
+                && (hasAnnotation(clz, HttpExchange.class) || hasAnnotation(clz, RequestMapping.class));
     }
 
     private void registerBeans4BasePackages(Collection<String> basePackages) {
