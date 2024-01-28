@@ -1,8 +1,8 @@
 package io.github.danielliu1123.httpexchange;
 
+import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
+
 import jakarta.annotation.Nonnull;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
@@ -14,13 +14,11 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.util.Assert;
-import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
 
@@ -79,7 +77,7 @@ class HttpClientBeanRegistrar {
             throw new IllegalArgumentException(className + " is not an interface");
         }
 
-        if (!isHttpExchangeClient(clz)) {
+        if (!isHttpExchangeInterface(clz)) {
             return;
         }
 
@@ -95,11 +93,11 @@ class HttpClientBeanRegistrar {
                 return true;
             }
         };
-        provider.addIncludeFilter((mr, mrf) -> isHttpClientInterface(mr));
+        provider.addIncludeFilter((mr, mrf) -> isHttpExchange(mr));
         return provider;
     }
 
-    private static boolean isHttpClientInterface(MetadataReader mr) {
+    private static boolean isHttpExchange(MetadataReader mr) {
         ClassMetadata cm = mr.getClassMetadata();
         AnnotationMetadata am = mr.getAnnotationMetadata();
         return cm.isInterface()
@@ -107,24 +105,6 @@ class HttpClientBeanRegistrar {
                 && !cm.isAnnotation()
                 && (am.hasAnnotatedMethods(HttpExchange.class.getName())
                         || am.hasAnnotatedMethods(RequestMapping.class.getName()));
-    }
-
-    static boolean hasAnnotation(Class<?> clz, Class<? extends Annotation> annotationType) {
-        if (AnnotationUtils.findAnnotation(clz, annotationType) != null) {
-            return true;
-        }
-        Method[] methods = ReflectionUtils.getAllDeclaredMethods(clz);
-        for (Method method : methods) {
-            if (AnnotationUtils.findAnnotation(method, annotationType) != null) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    static boolean isHttpExchangeClient(Class<?> clz) {
-        return clz.isInterface()
-                && (hasAnnotation(clz, HttpExchange.class) || hasAnnotation(clz, RequestMapping.class));
     }
 
     private void registerBeans4BasePackages(Collection<String> basePackages) {

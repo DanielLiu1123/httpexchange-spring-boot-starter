@@ -1,11 +1,11 @@
 package io.github.danielliu1123.httpexchange;
 
-import static io.github.danielliu1123.httpexchange.HttpClientBeanRegistrar.hasAnnotation;
-import static io.github.danielliu1123.httpexchange.HttpClientBeanRegistrar.isHttpExchangeClient;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_CLIENT;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_TEMPLATE;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.WEB_CLIENT;
 import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
+import static io.github.danielliu1123.httpexchange.Util.hasAnnotation;
+import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
@@ -100,7 +100,7 @@ class ExchangeClientCreator {
         Assert.isTrue(clientType.isInterface(), () -> clientType + " is not an interface");
         this.clientType = clientType;
 
-        Assert.isTrue(isHttpExchangeClient(clientType), () -> clientType + " is not a HttpExchange client");
+        Assert.isTrue(isHttpExchangeInterface(clientType), () -> clientType + " is not a HttpExchange client");
         this.isUseHttpExchangeAnnotation = hasAnnotation(clientType, HttpExchange.class);
     }
 

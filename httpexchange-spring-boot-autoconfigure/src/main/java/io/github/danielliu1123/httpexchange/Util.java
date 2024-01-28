@@ -1,12 +1,18 @@
 package io.github.danielliu1123.httpexchange;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
 import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.service.annotation.HttpExchange;
 
 /**
  * @author Freeman
@@ -59,5 +65,23 @@ class Util {
                 .orElseGet(HttpExchangeProperties::new);
         properties.afterPropertiesSet();
         return properties;
+    }
+
+    public static boolean isHttpExchangeInterface(Class<?> clz) {
+        return clz.isInterface()
+                && (hasAnnotation(clz, HttpExchange.class) || hasAnnotation(clz, RequestMapping.class));
+    }
+
+    public static boolean hasAnnotation(Class<?> clz, Class<? extends Annotation> annotationType) {
+        if (AnnotationUtils.findAnnotation(clz, annotationType) != null) {
+            return true;
+        }
+        Method[] methods = ReflectionUtils.getAllDeclaredMethods(clz);
+        for (Method method : methods) {
+            if (AnnotationUtils.findAnnotation(method, annotationType) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 }

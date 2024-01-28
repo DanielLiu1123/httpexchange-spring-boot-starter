@@ -1,6 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
-import static io.github.danielliu1123.httpexchange.HttpClientBeanRegistrar.isHttpExchangeClient;
+import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 import static org.springframework.beans.factory.support.AbstractBeanDefinition.AUTOWIRE_BY_TYPE;
 import static org.springframework.core.NativeDetector.inNativeImage;
 
@@ -43,7 +43,7 @@ public class HttpExchangeUtil {
      */
     public static void registerHttpExchangeBean(
             DefaultListableBeanFactory beanFactory, Environment environment, Class<?> clz) {
-        Assert.isTrue(isHttpExchangeClient(clz), () -> clz + " is not a HttpExchange client");
+        Assert.isTrue(isHttpExchangeInterface(clz), () -> clz + " is not a HttpExchange client");
 
         AbstractBeanDefinition beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(
                         clz, () -> new ExchangeClientCreator(beanFactory, clz).create())

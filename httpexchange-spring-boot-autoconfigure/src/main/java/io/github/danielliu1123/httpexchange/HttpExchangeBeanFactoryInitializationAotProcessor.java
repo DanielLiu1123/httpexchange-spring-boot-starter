@@ -1,6 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
-import static io.github.danielliu1123.httpexchange.HttpClientBeanRegistrar.isHttpExchangeClient;
+import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -37,7 +37,7 @@ class HttpExchangeBeanFactoryInitializationAotProcessor
         // About use FactoryBean to support AOT,
         // see https://github.com/spring-projects/spring-framework/issues/30434,
         // https://github.com/DanielThomas/spring-aot-issues/pull/1/files
-        return isHttpExchangeClient(registeredBean.getBeanClass());
+        return isHttpExchangeInterface(registeredBean.getBeanClass());
     }
 
     @Nullable
@@ -90,7 +90,7 @@ class HttpExchangeBeanFactoryInitializationAotProcessor
         for (String name : beanFactory.getBeanDefinitionNames()) {
             BeanDefinition beanDefinition = beanFactory.getBeanDefinition(name);
             Class<?> clz = beanDefinition.getResolvableType().resolve();
-            if (clz != null && isHttpExchangeClient(clz)) {
+            if (clz != null && isHttpExchangeInterface(clz)) {
                 beanDefinitions.put(name, beanDefinition);
             }
         }
