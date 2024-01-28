@@ -62,7 +62,7 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 /**
  * @author Freeman
  */
-public final class ExchangeClientCreator {
+class ExchangeClientCreator {
     private static final Logger log = LoggerFactory.getLogger(ExchangeClientCreator.class);
 
     private static final boolean WEBFLUX_PRESENT =
