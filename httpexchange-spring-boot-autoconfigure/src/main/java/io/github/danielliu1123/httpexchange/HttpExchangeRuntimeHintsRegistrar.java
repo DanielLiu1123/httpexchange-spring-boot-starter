@@ -55,14 +55,12 @@ class HttpExchangeRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
     }
 
     private static ClassPathScanningCandidateComponentProvider getScanner() {
-        ClassPathScanningCandidateComponentProvider result = new ClassPathScanningCandidateComponentProvider(false) {
+        return new ClassPathScanningCandidateComponentProvider(false) {
             @Override
             protected boolean isCandidateComponent(MetadataReader metadataReader) {
                 return true;
             }
         };
-        result.setResourcePattern("**/*.class");
-        return result;
     }
 
     private static Class<?> forName(String className) {
