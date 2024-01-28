@@ -118,10 +118,6 @@ public final class ExchangeClientCreator {
         HttpExchangeProperties.Channel chan =
                 findMatchedConfig(clientType, httpExchangeProperties).orElseGet(httpExchangeProperties::defaultClient);
         if (isUseHttpExchangeAnnotation) {
-            // Do NOT cache the HttpServiceProxyFactory to use the same HttpServiceProxyFactory for the same
-            // configuration.
-            // The same configuration might create different HttpServiceProxyFactory (e.g., exchangeAdapter).
-            // So each client uses different HttpServiceProxyFactory (HTTP client).
             HttpServiceProxyFactory factory = factoryBuilder(chan).build();
             T result = (T) factory.createClient(clientType);
             Cache.addClient(result);
