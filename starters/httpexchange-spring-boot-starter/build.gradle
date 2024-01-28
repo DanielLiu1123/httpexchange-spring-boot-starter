@@ -1,7 +1,3 @@
-plugins {
-    id "java-library"
-}
-
 dependencies {
     api(project(":httpexchange-spring-boot-autoconfigure"))
     api("org.springframework.boot:spring-boot-starter")
