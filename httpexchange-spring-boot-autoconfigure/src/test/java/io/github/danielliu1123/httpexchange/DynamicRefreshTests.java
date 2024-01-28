@@ -43,9 +43,9 @@ class DynamicRefreshTests {
                 .run();
 
         // Two beans: api bean, proxied api bean
-        assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(2);
-        assertThat(ctx.getBeanProvider(BarApi.class)).hasSize(2);
-        assertThat(ctx.getBeanProvider(BazApi.class)).hasSize(2);
+        assertThat(ctx.getBeansOfType(FooApi.class)).hasSize(2);
+        assertThat(ctx.getBeansOfType(BarApi.class)).hasSize(2);
+        assertThat(ctx.getBeansOfType(BazApi.class)).hasSize(2);
 
         FooApi fooApi = ctx.getBean(FooApi.class);
         BarApi barApi = ctx.getBean(BarApi.class);

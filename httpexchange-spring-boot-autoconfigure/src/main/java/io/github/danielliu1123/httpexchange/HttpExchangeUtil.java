@@ -1,8 +1,9 @@
 package io.github.danielliu1123.httpexchange;
 
+import static io.github.danielliu1123.httpexchange.HttpClientBeanRegistrar.isHttpExchangeClient;
 import static org.springframework.beans.factory.support.AbstractBeanDefinition.AUTOWIRE_BY_TYPE;
+import static org.springframework.core.NativeDetector.inNativeImage;
 
-import java.util.concurrent.atomic.AtomicReference;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.scope.ScopedProxyUtils;
@@ -13,8 +14,10 @@ import org.springframework.beans.factory.support.BeanDefinitionOverrideException
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.context.properties.bind.Binder;
-import org.springframework.core.NativeDetector;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.aot.AbstractAotProcessor;
 import org.springframework.core.env.Environment;
+import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.web.service.annotation.HttpExchange;
 
@@ -27,13 +30,12 @@ public class HttpExchangeUtil {
 
     private static final boolean SPRING_CLOUD_CONTEXT_PRESENT =
             ClassUtils.isPresent("org.springframework.cloud.context.scope.refresh.RefreshScope", null);
-    private static final AtomicReference<HttpExchangeProperties.Refresh> refresh = new AtomicReference<>();
 
     /**
      * Register a {@link HttpExchange} annotated interface as a Spring bean.
      *
      * <p> NOTE: The second parameter {@code environment} is used to build {@link HttpExchangeProperties} if it can't be found in the bean factory (early stage),
-     * do NOT try to omit this parameter, {@link Environment} can't get from {@link DefaultListableBeanFactory} on every early stage (e.g., ApplicationContextInitializer).
+     * do NOT try to omit this parameter, {@link Environment} can't get from {@link DefaultListableBeanFactory} on every early stage (e.g., {@link ApplicationContextInitializer}).
      *
      * @param beanFactory {@link DefaultListableBeanFactory}
      * @param environment {@link Environment}
@@ -41,6 +43,8 @@ public class HttpExchangeUtil {
      */
     public static void registerHttpExchangeBean(
             DefaultListableBeanFactory beanFactory, Environment environment, Class<?> clz) {
+        Assert.isTrue(isHttpExchangeClient(clz), () -> clz + " is not a HttpExchange client");
+
         AbstractBeanDefinition beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(
                         clz, () -> new ExchangeClientCreator(beanFactory, clz).create())
                 .getBeanDefinition();
@@ -53,8 +57,10 @@ public class HttpExchangeUtil {
         try {
             if (getRefresh(environment).isEnabled()
                     && SPRING_CLOUD_CONTEXT_PRESENT
-                    && System.getProperty("spring.aot.processing") == null
-                    && !NativeDetector.inNativeImage()) {
+                    && !isAotProcessing() // Make 'aotClasses' task work
+                    && !inNativeImage() // Refresh scope is not supported with native images, see
+            // https://docs.spring.io/spring-cloud-config/reference/server/aot-and-native-image-support.html
+            ) {
                 beanDefinition.setScope("refresh");
                 BeanDefinitionHolder scopedProxy = ScopedProxyUtils.createScopedProxy(
                         new BeanDefinitionHolder(beanDefinition, className), beanFactory, false);
@@ -71,15 +77,16 @@ public class HttpExchangeUtil {
         }
     }
 
+    /**
+     * @see AbstractAotProcessor#process()
+     */
+    private static boolean isAotProcessing() {
+        return Boolean.getBoolean("spring.aot.processing");
+    }
+
     private static HttpExchangeProperties.Refresh getRefresh(Environment environment) {
-        HttpExchangeProperties.Refresh cached = refresh.get();
-        if (cached != null) {
-            return cached;
-        }
-        HttpExchangeProperties.Refresh result = Binder.get(environment)
+        return Binder.get(environment)
                 .bind(HttpExchangeProperties.Refresh.PREFIX, HttpExchangeProperties.Refresh.class)
                 .orElseGet(HttpExchangeProperties.Refresh::new);
-        refresh.set(result);
-        return result;
     }
 }

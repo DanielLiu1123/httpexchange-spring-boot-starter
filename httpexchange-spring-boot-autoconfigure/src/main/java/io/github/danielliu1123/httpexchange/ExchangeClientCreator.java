@@ -100,7 +100,7 @@ class ExchangeClientCreator {
         Assert.isTrue(clientType.isInterface(), () -> clientType + " is not an interface");
         this.clientType = clientType;
 
-        Assert.isTrue(isHttpExchangeClient(clientType), () -> clientType + " is not a HTTP exchange interface");
+        Assert.isTrue(isHttpExchangeClient(clientType), () -> clientType + " is not a HttpExchange client");
         this.isUseHttpExchangeAnnotation = hasAnnotation(clientType, HttpExchange.class);
     }
 
