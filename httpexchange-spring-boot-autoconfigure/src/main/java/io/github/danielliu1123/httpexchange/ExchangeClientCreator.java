@@ -12,6 +12,7 @@ import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory
 import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
+import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
@@ -346,7 +348,7 @@ class ExchangeClientCreator {
                         .orElse(null),
                 (SslBundle) null);
         // For support Requester.create().call(..) and RequestConfigurator
-        return ClientHttpRequestFactories.get(EnhancedJdkClientHttpRequestFactory.class, settings);
+        return createEnhancedJdkClientHttpRequestFactory(settings);
     }
 
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
@@ -447,6 +449,29 @@ class ExchangeClientCreator {
             return true;
         }
         return false;
+    }
+
+    /**
+     * @see ClientHttpRequestFactories.Jdk#get(ClientHttpRequestFactorySettings)
+     */
+    private static EnhancedJdkClientHttpRequestFactory createEnhancedJdkClientHttpRequestFactory(
+            ClientHttpRequestFactorySettings settings) {
+        HttpClient httpClient = createHttpClient(settings.connectTimeout(), settings.sslBundle());
+        EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory(httpClient);
+        PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+        map.from(settings::readTimeout).to(requestFactory::setReadTimeout);
+        return requestFactory;
+    }
+
+    private static HttpClient createHttpClient(Duration connectTimeout, SslBundle sslBundle) {
+        HttpClient.Builder builder = HttpClient.newBuilder();
+        if (connectTimeout != null) {
+            builder.connectTimeout(connectTimeout);
+        }
+        if (sslBundle != null) {
+            builder.sslContext(sslBundle.createSslContext());
+        }
+        return builder.build();
     }
 
     @SuppressWarnings("unchecked")

@@ -6,3 +6,5 @@ http-exchange:
   base-url: https://my-json-server.typicode.com
   refresh:
     enabled: true
+  read-timeout: 3000
+  connect-timeout: 1000
