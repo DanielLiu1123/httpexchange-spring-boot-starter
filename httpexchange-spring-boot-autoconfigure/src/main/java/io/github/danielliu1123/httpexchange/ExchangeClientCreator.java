@@ -4,12 +4,15 @@ import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.Client
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_TEMPLATE;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.WEB_CLIENT;
 import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
+import static io.github.danielliu1123.httpexchange.Util.hasAnnotation;
+import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.github.danielliu1123.httpexchange.factory.jdkclient.EnhancedJdkClientHttpRequestFactory;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
+import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,9 +25,10 @@ import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
+import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
@@ -85,18 +89,21 @@ class ExchangeClientCreator {
         }
     }
 
-    private final ConfigurableBeanFactory beanFactory;
+    private final BeanFactory beanFactory;
     private final Environment environment;
     private final Class<?> clientType;
     private final boolean isUseHttpExchangeAnnotation;
 
     @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
-    ExchangeClientCreator(
-            ConfigurableBeanFactory beanFactory, Class<?> clientType, boolean isUseHttpExchangeAnnotation) {
+    public ExchangeClientCreator(BeanFactory beanFactory, Class<?> clientType) {
         this.beanFactory = beanFactory;
         this.environment = beanFactory.getBean(Environment.class);
+
+        Assert.isTrue(clientType.isInterface(), () -> clientType + " is not an interface");
         this.clientType = clientType;
-        this.isUseHttpExchangeAnnotation = isUseHttpExchangeAnnotation;
+
+        Assert.isTrue(isHttpExchangeInterface(clientType), () -> clientType + " is not a HttpExchange client");
+        this.isUseHttpExchangeAnnotation = hasAnnotation(clientType, HttpExchange.class);
     }
 
     /**
@@ -113,10 +120,6 @@ class ExchangeClientCreator {
         HttpExchangeProperties.Channel chan =
                 findMatchedConfig(clientType, httpExchangeProperties).orElseGet(httpExchangeProperties::defaultClient);
         if (isUseHttpExchangeAnnotation) {
-            // Do NOT cache the HttpServiceProxyFactory to use the same HttpServiceProxyFactory for the same
-            // configuration.
-            // The same configuration might create different HttpServiceProxyFactory (e.g., exchangeAdapter).
-            // So each client uses different HttpServiceProxyFactory (HTTP client).
             HttpServiceProxyFactory factory = factoryBuilder(chan).build();
             T result = (T) factory.createClient(clientType);
             Cache.addClient(result);
@@ -124,7 +127,8 @@ class ExchangeClientCreator {
         }
         if (!httpExchangeProperties.isRequestMappingSupportEnabled()) {
             throw new IllegalStateException(
-                    "Found a usage of the @RequestMapping based annotation, please migrate to @HttpExchange, or set 'http-exchange.request-mapping-support-enabled=true' to enable support for processing @RequestMapping");
+                    clientType
+                            + " is using the @RequestMapping based annotation, please migrate to @HttpExchange, or set 'http-exchange.request-mapping-support-enabled=true' to enable support for processing @RequestMapping");
         }
         ShadedHttpServiceProxyFactory shadedFactory =
                 shadedProxyFactory(factoryBuilder(chan)).build();
@@ -344,7 +348,7 @@ class ExchangeClientCreator {
                         .orElse(null),
                 (SslBundle) null);
         // For support Requester.create().call(..) and RequestConfigurator
-        return ClientHttpRequestFactories.get(EnhancedJdkClientHttpRequestFactory.class, settings);
+        return createEnhancedJdkClientHttpRequestFactory(settings);
     }
 
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
@@ -445,6 +449,29 @@ class ExchangeClientCreator {
             return true;
         }
         return false;
+    }
+
+    /**
+     * @see ClientHttpRequestFactories.Jdk#get(ClientHttpRequestFactorySettings)
+     */
+    private static EnhancedJdkClientHttpRequestFactory createEnhancedJdkClientHttpRequestFactory(
+            ClientHttpRequestFactorySettings settings) {
+        HttpClient httpClient = createHttpClient(settings.connectTimeout(), settings.sslBundle());
+        EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory(httpClient);
+        PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+        map.from(settings::readTimeout).to(requestFactory::setReadTimeout);
+        return requestFactory;
+    }
+
+    private static HttpClient createHttpClient(Duration connectTimeout, SslBundle sslBundle) {
+        HttpClient.Builder builder = HttpClient.newBuilder();
+        if (connectTimeout != null) {
+            builder.connectTimeout(connectTimeout);
+        }
+        if (sslBundle != null) {
+            builder.sslContext(sslBundle.createSslContext());
+        }
+        return builder.build();
     }
 
     @SuppressWarnings("unchecked")

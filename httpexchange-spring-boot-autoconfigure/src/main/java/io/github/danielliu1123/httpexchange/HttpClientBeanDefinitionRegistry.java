@@ -27,7 +27,7 @@ class HttpClientBeanDefinitionRegistry implements BeanDefinitionRegistryPostProc
         }
 
         this.properties = (properties == null ? Util.getProperties(environment) : properties);
-        this.registrar = (registrar == null ? new HttpClientBeanRegistrar(properties, registry) : registrar);
+        this.registrar = (registrar == null ? new HttpClientBeanRegistrar(registry, environment) : registrar);
 
         String[] basePackages = properties.getBasePackages().toArray(String[]::new);
         if (!ObjectUtils.isEmpty(basePackages)) {

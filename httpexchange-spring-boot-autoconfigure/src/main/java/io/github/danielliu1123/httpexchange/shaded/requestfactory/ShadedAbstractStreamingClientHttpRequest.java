@@ -1,4 +1,4 @@
-package io.github.danielliu1123.httpexchange.factory.jdkclient;
+package io.github.danielliu1123.httpexchange.shaded.requestfactory;
 
 import java.io.IOException;
 import java.io.OutputStream;

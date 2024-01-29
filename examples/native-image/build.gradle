@@ -1,0 +1,15 @@
+plugins {
+    id "org.springframework.boot"
+    id "org.graalvm.buildtools.native"
+}
+
+dependencies {
+    implementation(project(":starters:httpexchange-spring-boot-starter"))
+    implementation("org.springframework.cloud:spring-cloud-context")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+
+graalvmNative {
+    testSupport = false
+}

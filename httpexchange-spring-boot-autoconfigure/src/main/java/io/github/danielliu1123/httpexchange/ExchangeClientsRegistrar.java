@@ -34,7 +34,7 @@ class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar, Environ
         }
 
         this.properties = (properties == null ? Util.getProperties(environment) : properties);
-        this.registrar = (registrar == null ? new HttpClientBeanRegistrar(properties, registry) : registrar);
+        this.registrar = (registrar == null ? new HttpClientBeanRegistrar(registry, environment) : registrar);
 
         Map<String, Object> attrs = Optional.ofNullable(
                         metadata.getAnnotationAttributes(EnableExchangeClients.class.getName()))

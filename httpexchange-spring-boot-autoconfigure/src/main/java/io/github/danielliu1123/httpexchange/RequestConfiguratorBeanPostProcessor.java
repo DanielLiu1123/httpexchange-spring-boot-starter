@@ -7,7 +7,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
@@ -48,8 +47,7 @@ public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
     }
 
     private static Object createProxy(Object client, HttpExchangeMetadata metadata) {
-        Class<?>[] interfaces = Stream.concat(
-                        Arrays.stream(((Advised) client).getProxiedInterfaces()), Stream.of(RequestConfigurator.class))
+        Class<?>[] interfaces = Arrays.stream(((Advised) client).getProxiedInterfaces())
                 .distinct()
                 .toArray(Class[]::new);
         ProxyFactory proxyFactory = new ProxyFactory(interfaces);

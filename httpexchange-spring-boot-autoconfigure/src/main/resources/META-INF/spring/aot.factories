@@ -1,0 +1,2 @@
+org.springframework.aot.hint.RuntimeHintsRegistrar=\
+io.github.danielliu1123.httpexchange.HttpExchangeRuntimeHintsRegistrar

@@ -64,4 +64,12 @@ public class HttpExchangeAutoConfiguration implements DisposableBean {
         Cache.clear();
         HttpClientBeanRegistrar.clear();
     }
+
+    // AOT support
+
+    @Bean
+    static HttpExchangeBeanFactoryInitializationAotProcessor
+            httpExchangeStarterHttpExchangeBeanFactoryInitializationAotProcessor() {
+        return new HttpExchangeBeanFactoryInitializationAotProcessor();
+    }
 }

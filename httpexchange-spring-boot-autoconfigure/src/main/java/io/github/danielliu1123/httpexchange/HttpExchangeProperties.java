@@ -288,7 +288,11 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Whether to enable refresh exchange clients, default {@code false}.
          *
-         * <p> NOTE: this feature needs {@code spring-cloud-context} dependency in the classpath.
+         * <p> This feature needs {@code spring-cloud-context} dependency in the classpath.
+         *
+         * <p color="orange"> NOTE: This feature is not supported by native image.
+         *
+         * @see <a href="https://github.com/spring-cloud/spring-cloud-release/wiki/AOT-transformations-and-native-image-support#refresh-scope">Refresh Scope</a>
          */
         private boolean enabled = false;
     }
