@@ -288,6 +288,10 @@ http-exchange:
         - com.example.user.api.*Api
 ```
 
+### Native Image Support
+
+Support to generate native image using [GraalVM](https://www.graalvm.org/).
+
 ### Reactive Support
 
 Support to define reactive API.
