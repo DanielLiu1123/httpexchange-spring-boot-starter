@@ -1,9 +1,12 @@
 package io.github.danielliu1123.httpexchange;
 
 import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
+import static org.springframework.util.ClassUtils.getAllInterfacesForClass;
+import static org.springframework.util.ObjectUtils.addObjectToArray;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -65,7 +68,10 @@ class HttpExchangeBeanFactoryInitializationAotProcessor
         definitions.values().stream()
                 .map(beanDefinition -> beanDefinition.getResolvableType().resolve())
                 .filter(Objects::nonNull)
+                .map(e -> addObjectToArray(getAllInterfacesForClass(e), e))
+                .flatMap(Arrays::stream)
                 .distinct()
+                .filter(Util::isHttpExchangeInterface)
                 .map(AopProxyUtils::completeJdkProxyInterfaces)
                 .forEach(proxies::registerJdkProxy);
     }
