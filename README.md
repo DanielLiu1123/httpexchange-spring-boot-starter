@@ -80,7 +80,7 @@ The main goals of this project:
 Add dependency:
 
 ```groovy
-implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.2.1")
+implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.2.2")
 ```
 
 Write a classic Spring Boot application:
@@ -180,7 +180,7 @@ http-exchange:
 Generate base implementation for server, you can use the base implementation to implement the server side.
 
 ```groovy
-annotationProcessor("io.github.danielliu1123:httpexchange-processor:3.2.1")
+annotationProcessor("io.github.danielliu1123:httpexchange-processor:3.2.2")
 ```
 
 ```java
@@ -534,11 +534,11 @@ WebClientCustomizer webClientCustomizer() {
 ## Version Compatibility
 
 The project version aligns with Spring Boot 3.x. 
-For Spring Boot 3.2.x, use `httpexchange-spring-boot-starter` version 3.2.1.
+For Spring Boot 3.2.x, use `httpexchange-spring-boot-starter` version 3.2.2.
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.2.x       | 3.2.1                            |
+| 3.2.x       | 3.2.2                            |
 | 3.1.x       | 3.1.8                            |
 
 ## Code of Conduct
