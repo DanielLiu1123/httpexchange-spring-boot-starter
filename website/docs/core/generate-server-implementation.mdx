@@ -1,0 +1,117 @@
+---
+sidebar_position: 2
+---
+
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Generate Server Implementation
+
+Generate default implementation for server, you can use the base implementation to implement the server side.
+
+- Add Dependency
+
+    <Tabs>
+        <TabItem value="gradle" label="Gradle">
+            ```groovy
+            annotationProcessor("io.github.danielliu1123:httpexchange-processor:3.2.2")
+            ```
+        </TabItem>
+        <TabItem value="maven" label="Maven">
+            ```xml
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>io.github.danielliu1123</groupId>
+                            <artifactId>httpexchange-processor</artifactId>
+                            <version>3.2.2</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            ```
+        </TabItem>
+    </Tabs>
+
+- Generate Code
+
+    <Tabs>
+        <TabItem value="gradle" label="Gradle">
+            ```shell
+            ./gradlew clean compileJava
+            ```
+        </TabItem>
+        <TabItem value="maven" label="Maven">
+            ```shell
+            ./mvnw clean compile
+            ```
+        </TabItem>
+    </Tabs>
+
+<Tabs>
+    <TabItem value="source code" label="Source Code">
+        ```java
+        @HttpExchange("/user")
+        public interface UserApi {
+            @GetExchange("/{id}")
+            UserDTO getUser(@PathVariable("id") String id);
+        }
+        ```
+    </TabItem>
+    <TabItem value="generated code" label="Generated Code">
+        ```java
+        public abstract class UserApiBase implements UserApi {
+            @Override
+            public UserDTO getUser(String id) {
+                throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="using generated code" label="Using Generated Code">
+        ```java
+        @RestController
+        public class UserController extends UserApiBase {
+            @Override
+            public UserDTO getUser(String id) {
+                return new UserDTO(id, "Foo");
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+:::info
+Generated abstract class name is the interface name with suffix `Base` by default, can be configured by `httpexchange-processor.properties`.
+:::
+
+## Custom Configuration
+
+You can create a `httpexchange-processor.properties` file in any directory and put configuration directives in it.
+These apply to all source files in this directory and all child directories.
+
+| Property         | Description                                                                                     | Default Value                              |
+|------------------|-------------------------------------------------------------------------------------------------|--------------------------------------------|
+| enabled          | Enable the processor                                                                            | true                                       |
+| suffix           | Generated base implementation class name suffix                                                 | Base (if suffix and prefix are both empty) |
+| prefix           | Generated base implementation class name prefix                                                 |                                            |
+| packages         | Packages to scan, use comma to separate multiple packages, support `Ant-style` pattern          | All packages                               |
+| outputSubpackage | Generated base implementation class output subpackage, relative to the package of the interface |                                            |
+
+For example:
+
+```properties title="httpexchange-processor.properties"
+enabled=true
+suffix=Base
+prefix=
+packages=com.example.api
+outputSubpackage=generated
+```
+
+:::info
+`httpexchange-processor.properties` usually placed in project/module directory.
+Place it with `pom.xml` when using Maven, place it with `build.gradle` when using Gradle.
+:::

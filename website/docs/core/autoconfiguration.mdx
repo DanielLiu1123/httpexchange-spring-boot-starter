@@ -1,0 +1,56 @@
+---
+sidebar_position: 1
+---
+
+# Autoconfiguration
+
+To enable autoconfiguration for clients, there are two options.
+
+## Using Annotation
+
+To enable autoconfiguration for clients, simply add the `@EnableExchangeClients` annotation.
+This annotation functions similarly to `@EnableFeignClients`, telling the framework where to look for HttpExchange clients and then registering them as beans.
+
+It automatically scans the clients within the package of the annotated class by default.
+
+- Using `basePackages`
+
+    ```java
+    @EnableExchangeClients(basePackages = "com.example")
+    ```
+
+    :::info
+    If specific packages are specified, only those packages will be scanned, excluding the package of the annotated class.
+    :::
+
+- Using `clients`
+
+    ```java
+    @EnableExchangeClients(clients = {PostApi.class, UserApi.class})
+    ```
+
+    :::info
+    It's faster than using `basePackages` because it doesn't require scanning the classpath.
+    :::
+
+- Using both `basePackages` and `clients`
+
+    ```java
+    @EnableExchangeClients(basePackages = "com.example", clients = {PostApi.class, UserApi.class})
+    ```
+
+## Using Configuration
+
+If you prefer not to introduce external classes, you can achieve the same functionality through configuration:
+
+```yaml title="application.yml"
+http-exchange:
+   base-packages: com.example
+   clients:
+     - com.foo.PostApi
+     - com.bar.UserApi
+```
+
+:::info
+When both configuration and annotations are used, the value from the annotation takes precedence.
+:::
