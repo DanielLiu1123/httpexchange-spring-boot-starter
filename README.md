@@ -554,10 +554,10 @@ feature requests and submitting pull requests.
 
 If you would like to contribute to the project, please refer to [Contributing](./CONTRIBUTING.md).
 
-## Special Thanks
-
-Many thanks to [JetBrains](https://www.jetbrains.com/) for sponsoring this Open Source project with a license.
-
 ## License
 
 The MIT License.
+
+## Special Thanks
+
+Many thanks to [JetBrains](https://www.jetbrains.com/) for sponsoring this Open Source project with a license.
