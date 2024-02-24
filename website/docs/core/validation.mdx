@@ -1,0 +1,19 @@
+---
+sidebar_position: 4
+---
+
+
+# Validation
+
+Support work with `spring-boot-starter-validation`.
+
+```java
+@HttpExchange("${api.post.url}")
+@Validated
+public interface PostApi {
+    @GetExchange("/typicode/demo/posts/{id}")
+    Post getPost(@PathVariable("id") @Min(1) @Max(3) int id);
+}
+```
+
+This has the advantage of ensuring consistency of client and server validation rules.
