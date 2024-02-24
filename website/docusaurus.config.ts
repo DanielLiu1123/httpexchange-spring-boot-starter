@@ -37,15 +37,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/tree/main/docs',
-        },
-        blog: {
-          showReadingTime: true,
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/tree/main/docs',
+          editUrl: 'https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/tree/main/website',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -74,7 +66,6 @@ const config: Config = {
           href: 'https://github.com/danielliu1123/httpexchange-spring-boot-starter',
           label: 'GitHub',
           position: 'right',
-
         },
       ],
     },
