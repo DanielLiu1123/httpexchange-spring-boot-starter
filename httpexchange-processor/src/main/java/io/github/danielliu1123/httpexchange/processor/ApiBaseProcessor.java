@@ -3,7 +3,10 @@ package io.github.danielliu1123.httpexchange.processor;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -21,9 +24,12 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import lombok.SneakyThrows;
@@ -59,6 +65,21 @@ import org.springframework.web.server.ResponseStatusException;
     "org.springframework.web.bind.annotation.PatchMapping"
 })
 public class ApiBaseProcessor extends AbstractProcessor {
+
+    private static final String[] ANNOTATIONS = {
+        "org.springframework.web.service.annotation.HttpExchange",
+        "org.springframework.web.service.annotation.GetExchange",
+        "org.springframework.web.service.annotation.PostExchange",
+        "org.springframework.web.service.annotation.PutExchange",
+        "org.springframework.web.service.annotation.DeleteExchange",
+        "org.springframework.web.service.annotation.PatchExchange",
+        "org.springframework.web.bind.annotation.RequestMapping",
+        "org.springframework.web.bind.annotation.GetMapping",
+        "org.springframework.web.bind.annotation.PostMapping",
+        "org.springframework.web.bind.annotation.PutMapping",
+        "org.springframework.web.bind.annotation.DeleteMapping",
+        "org.springframework.web.bind.annotation.PatchMapping"
+    };
 
     private static final String DEFAULT_CLASS_SUFFIX = "Base";
     private static final String CONFIG_FILE_NAME = "httpexchange-processor.properties";
@@ -122,7 +143,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
             return;
         }
         if (isInterface(element) && !isGenericType(element)) {
-            processAnnotations(annotations, element);
+            processAnnotations(annotations, (TypeElement) element);
         } else {
             processNonInterfaceElement(annotations, element);
         }
@@ -147,7 +168,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
         }
     }
 
-    private void processAnnotations(Set<? extends TypeElement> annotations, Element element) {
+    private void processAnnotations(Set<? extends TypeElement> annotations, TypeElement element) {
         TypeSpec.Builder classBuilder = getTypeBuilder(element);
         boolean isNeedGenerateJavaFile = hasAnnotationMatched(annotations, element);
 
@@ -161,11 +182,14 @@ public class ApiBaseProcessor extends AbstractProcessor {
         }
 
         if (isNeedGenerateJavaFile) {
+
+            addMethodsFromParentInterfaces(element, classBuilder);
+
             generateJavaFile(element, classBuilder);
         }
     }
 
-    private TypeSpec.Builder getTypeBuilder(Element element) {
+    private TypeSpec.Builder getTypeBuilder(TypeElement element) {
         return switch (properties.obtain().generatedType()) {
             case INTERFACE:
                 yield createInterfaceBuilder(element);
@@ -174,7 +198,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
         };
     }
 
-    private TypeSpec.Builder createInterfaceBuilder(Element element) {
+    private TypeSpec.Builder createInterfaceBuilder(TypeElement element) {
         String generatedClassName = getGeneratedClassName(element);
         TypeSpec.Builder result = TypeSpec.interfaceBuilder(generatedClassName)
                 .addAnnotation(AnnotationSpec.builder(Generated.class)
@@ -215,7 +239,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
         return false;
     }
 
-    private TypeSpec.Builder createClassBuilder(Element element) {
+    private TypeSpec.Builder createClassBuilder(TypeElement element) {
         String generatedClassName = getGeneratedClassName(element);
         TypeSpec.Builder result = TypeSpec.classBuilder(generatedClassName)
                 .addModifiers(Modifier.ABSTRACT)
@@ -357,6 +381,120 @@ public class ApiBaseProcessor extends AbstractProcessor {
         }
 
         return methodBuilder.build();
+    }
+
+    private void addMethodsFromParentInterfaces(TypeElement interfaceElement, TypeSpec.Builder classBuilder) {
+        for (TypeMirror interfaceType : interfaceElement.getInterfaces()) {
+            DeclaredType declaredType = (DeclaredType) interfaceType;
+            TypeElement parentInterfaceElement = (TypeElement) declaredType.asElement();
+
+            Map<String, TypeMirror> typeVarToActualType = getTypeVarToActualTypeMap(declaredType);
+
+            for (Element enclosedElement : parentInterfaceElement.getEnclosedElements()) {
+                if (enclosedElement.getKind() == ElementKind.METHOD
+                        && !enclosedElement.getModifiers().contains(Modifier.DEFAULT)
+                        && isHttpMethod((ExecutableElement) enclosedElement)) {
+                    MethodSpec methodSpec = buildMethodSpecForGenericInterface(
+                            (ExecutableElement) enclosedElement, typeVarToActualType);
+
+                    classBuilder.addMethod(methodSpec);
+                }
+            }
+
+            addMethodsFromParentInterfaces(parentInterfaceElement, classBuilder);
+        }
+    }
+
+    private static boolean isHttpMethod(ExecutableElement methodElement) {
+        return methodElement.getAnnotationMirrors().stream().anyMatch(annotationMirror -> {
+            String annotation = ((TypeElement)
+                            annotationMirror.getAnnotationType().asElement())
+                    .getQualifiedName()
+                    .toString();
+            return Arrays.asList(ANNOTATIONS).contains(annotation);
+        });
+    }
+
+    private Map<String, TypeMirror> getTypeVarToActualTypeMap(DeclaredType declaredType) {
+        Map<String, TypeMirror> typeVarToActualType = new LinkedHashMap<>();
+        List<? extends TypeMirror> typeArguments = declaredType.getTypeArguments();
+        List<? extends TypeParameterElement> typeParameters =
+                ((TypeElement) declaredType.asElement()).getTypeParameters();
+
+        for (int i = 0; i < typeParameters.size(); i++) {
+            String typeVarName = typeParameters.get(i).getSimpleName().toString();
+            TypeMirror actualType = typeArguments.size() > i
+                    ? typeArguments.get(i)
+                    : typeParameters.get(i).asType();
+            typeVarToActualType.put(typeVarName, actualType);
+        }
+        return typeVarToActualType;
+    }
+
+    private MethodSpec buildMethodSpecForGenericInterface(
+            ExecutableElement methodElement, Map<String, TypeMirror> actualTypeArguments) {
+        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(
+                        methodElement.getSimpleName().toString())
+                .addModifiers(Modifier.PUBLIC, Modifier.DEFAULT)
+                .returns(TypeName.get(resolveActualType(methodElement.getReturnType(), actualTypeArguments)))
+                .addStatement("throw new $T($T.NOT_IMPLEMENTED)", ResponseStatusException.class, HttpStatus.class)
+                .addJavadoc(
+                        """
+                                $L
+                                @see $L#$L
+                                """,
+                        Optional.ofNullable(processingEnv.getElementUtils().getDocComment(methodElement))
+                                .orElse("")
+                                .stripTrailing(),
+                        ((TypeElement) methodElement.getEnclosingElement())
+                                .getQualifiedName()
+                                .toString(),
+                        methodElement.getSimpleName().toString());
+
+        for (VariableElement parameter : methodElement.getParameters()) {
+            ParameterSpec.Builder parameterBuilder = ParameterSpec.builder(
+                    TypeName.get(resolveActualType(parameter.asType(), actualTypeArguments)),
+                    parameter.getSimpleName().toString());
+
+            for (AnnotationMirror annotationMirror : parameter.getAnnotationMirrors()) {
+                parameterBuilder.addAnnotation(AnnotationSpec.get(annotationMirror));
+            }
+
+            methodBuilder.addParameter(parameterBuilder.build());
+        }
+
+        for (AnnotationMirror annotationMirror : methodElement.getAnnotationMirrors()) {
+            methodBuilder.addAnnotation(AnnotationSpec.get(annotationMirror));
+        }
+
+        return methodBuilder.build();
+    }
+
+    private TypeMirror resolveActualType(TypeMirror type, Map<String, TypeMirror> typeVarToActualTypeMap) {
+        // 处理泛型变量
+        if (type.getKind() == TypeKind.TYPEVAR) {
+            TypeVariable typeVar = (TypeVariable) type;
+            String typeVarName = typeVar.asElement().getSimpleName().toString();
+            if (typeVarToActualTypeMap.containsKey(typeVarName)) {
+                return typeVarToActualTypeMap.get(typeVarName);
+            }
+            // 如果映射中不存在，可能需要返回上界，或继续使用泛型变量
+            return typeVar.getUpperBound();
+        } else if (type.getKind() == TypeKind.DECLARED) {
+            // 处理已声明的类型（可能包含泛型参数）
+            DeclaredType declaredType = (DeclaredType) type;
+            List<TypeMirror> typeArguments = declaredType.getTypeArguments().stream()
+                    .map(arg -> resolveActualType(arg, typeVarToActualTypeMap))
+                    .toList();
+            if (!typeArguments.isEmpty()) {
+                return processingEnv
+                        .getTypeUtils()
+                        .getDeclaredType(
+                                (TypeElement) declaredType.asElement(), typeArguments.toArray(new TypeMirror[0]));
+            }
+        }
+        // 对于其他类型，直接返回
+        return type;
     }
 
     @SneakyThrows

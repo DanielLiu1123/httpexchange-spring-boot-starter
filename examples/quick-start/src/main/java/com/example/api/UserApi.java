@@ -10,7 +10,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 
 @Validated
 @HttpExchange("/user")
-public interface UserApi {
+public interface UserApi extends RestApi<String, UserApi.UserDTO> {
     record UserDTO(String id, String name, List<String> hobbies) {}
 
     @GetExchange("/getById/{id}")
