@@ -36,9 +36,7 @@ The main goals of this project:
     @EnableExchangeClients
     public class App {
         public static void main(String[] args) {
-            new SpringApplicationBuilder(QuickStartApp.class)
-                    .properties("http-exchange.base-url=https://my-json-server.typicode.com")
-                    .run(args);
+            SpringApplication.run(App.class, args);
         }
 
         @Bean
