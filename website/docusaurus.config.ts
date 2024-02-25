@@ -58,13 +58,19 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          type: 'docsVersionDropdown',
+          type: 'localeDropdown',
           position: 'right',
         },
         {
-          href: 'https://github.com/danielliu1123/httpexchange-spring-boot-starter',
-          label: 'GitHub',
+          type: 'docsVersionDropdown',
           position: 'right',
+        },
+        // Copy from https://github.com/facebook/docusaurus/blob/main/website/docusaurus.config.ts
+        {
+          href: 'https://github.com/danielliu1123/httpexchange-spring-boot-starter',
+          position: 'right',
+          className: 'header-github-link',
+          'aria-label': 'GitHub repository',
         },
       ],
     },
