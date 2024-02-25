@@ -1,0 +1,22 @@
+---
+sidebar_position: 40
+---
+
+# Dynamic Refresh
+
+Support to dynamically refresh the configuration of clients, you can put the configuration in the configuration
+center ([Consul](https://github.com/hashicorp/consul), [Apollo](https://github.com/apolloconfig/apollo), [Nacos](https://github.com/alibaba/nacos),
+etc.), and change the configuration (e.g. `base-url`, `timeout`, `headers`), the client will be refreshed automatically
+without restarting the application.
+
+Use the following configuration to enable this feature:
+
+```yaml title="application.yml"
+http-exchange:
+   refresh:
+      enabled: true # default is false
+```
+
+:::tip
+This feature needs `spring-cloud-context` in the classpath and a `RefreshEvent` was published.
+:::

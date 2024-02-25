@@ -1,0 +1,46 @@
+---
+sidebar_position: 30
+---
+
+# Configuration Properties
+
+This library provides a lot of configuration properties to customize the behavior of the client.
+You can configure the `base-url`, `read-timeout` for each channel, and each channel can apply to multiple clients.
+
+## Basic Usage
+
+```yaml title="application.yaml"
+http-exchange:
+  read-timeout: 5000
+  channels:
+    - base-url: http://user
+      read-timeout: 3000
+      clients:
+        - com.example.user.api.*Api
+    - base-url: http://order
+      clients:
+        - com.example.order.api.*Api
+```
+
+Using property `clients` or `classes` to identify the client, use `classes` first if configured.
+
+For example, there is a http client interface: `com.example.PostApi`, you can use the following configuration to identify the client
+
+```yaml title="application.yaml"
+http-exchange:
+  channels:
+    - base-url: http://service
+      clients: [com.example.PostApi] # Class canonical name
+    # clients: [post-api] Class simple name (Kebab-case)
+    # clients: [PostApi]  Class simple name (Pascal-case)
+    # clients: [com.**.*Api] (Ant-style pattern)
+      classes: [com.example.PostApi] # Class canonical name
+```
+
+## Configuration Properties
+
+See [Configuration Properties](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/blob/main/httpexchange-spring-boot-autoconfigure/src/main/java/io/github/danielliu1123/httpexchange/HttpExchangeProperties.java) for a complete list of properties.
+
+## Configuration Example
+
+See [configuration example](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/blob/main/httpexchange-spring-boot-autoconfigure/src/main/resources/application-http-exchange-statrer-example.yml) for usage example.

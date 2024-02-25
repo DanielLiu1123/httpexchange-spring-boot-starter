@@ -1,0 +1,21 @@
+---
+sidebar_position: 50
+---
+
+# Url Variables
+
+You can use url variables to define the base url of the client.
+
+```java
+@HttpExchange("${api.post.url}")
+public interface PostApi {
+    @GetExchange("/typicode/demo/posts/{id}")
+    Post getPost(@PathVariable("id") int id);
+}
+```
+
+```yaml title="application.yml"
+api:
+  post:
+    url: https://jsonplaceholder.typicode.com
+```

@@ -1,0 +1,23 @@
+---
+sidebar_position: 10
+---
+
+# `@RequestMapping` Support
+
+Support to use spring web annotations to generate HTTP clients, e.g., `@RequestMapping`, `@GetMapping`, `@PostMapping` etc.
+
+Supports all features of `@HttpExchange`.
+
+```java
+@RequestMapping("/typicode/demo")
+public interface PostApi {
+    @GetMapping("/posts/{id}")
+    Post getPost(@PathVariable("id") int id);
+}
+```
+
+:::info
+Since 3.2.0, `@RequestMapping` support is disabled by default, you can set `http-exchange.request-mapping-support-enabled=true` to enable it.
+
+Consider using `@HttpExchange` instead of `@RequestMapping` if possible.
+:::

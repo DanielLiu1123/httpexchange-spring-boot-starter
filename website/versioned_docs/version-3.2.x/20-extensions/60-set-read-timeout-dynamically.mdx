@@ -1,0 +1,59 @@
+---
+sidebar_position: 60
+---
+
+# Set Read Timeout Dynamically
+
+Spring does not provide a way to set the read timeout dynamically. This framework provides `EnhancedJdkClientHttpRequestFactory` to support this feature.
+
+There are two ways to set the read timeout dynamically.
+
+## Use `RequestConfigurator` Interface
+
+```java
+@HttpExchange("/users")
+interface UserApi extends RequestConfigurator<UserApi> {
+    @GetExchange
+    List<User> list();
+}
+
+@Service
+class UserService {
+    @Autowired
+    UserApi userApi;
+
+    List<User> listWithTimeout(int timeout) {
+        return userApi.withTimeout(timeout).list();
+    }
+}
+```
+
+Each time the `RequestConfigurator` method is called, a new proxy client will be created,
+and it inherits the original configuration and will not affect the original configuration.
+
+:::info
+`RequestConfigurator` is suitable for client-side use but not for defining a neutral API.
+Therefore, `Requester` is provided for a programmatic way to dynamically set the read timeout.
+:::
+
+## Use `Requester` Class
+
+```java
+List<User> users = Requester.create()
+                        .withTimeout(10000)
+                        .addHeader("X-Foo", "bar")
+                        .call(() -> userApi.list());
+```
+
+:::warning
+This feature needs to use `EnhancedJdkClientHttpRequestFactory` as the `ClientHttpRequestFactory` implementation,
+and this is the default behavior.
+:::
+
+## Reactive Client
+
+For `WebClient` client type, use `timeout` method to set the read timeout for each request.
+
+```java
+Flux<User> users = userApi.list().timeout(Duration.ofSeconds(10));
+```

@@ -1,0 +1,127 @@
+---
+sidebar_position: 1
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Introduction
+
+Spring 6 introduces native support for declarative HTTP clients through
+the [`@HttpExchange`](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html#rest-http-interface)
+annotation.
+The reliance on [Spring Cloud OpenFeign](https://github.com/spring-cloud/spring-cloud-openfeign) can effectively be
+replaced.
+
+Here is an example:
+
+```java
+@HttpExchange("https://my-json-server.typicode.com")
+interface PostApi {
+    @GetExchange("/typicode/demo/posts/{id}")
+    Post getPost(@PathVariable("id") int id);
+}
+
+@SpringBootApplication
+public class App {
+
+    public static void main(String[] args) {
+        new SpringApplicationBuilder(QuickStartApp.class).run(args);
+    }
+
+    // highlight-start
+    @Bean
+    PostApi postApi(RestClient.Builder builder) {
+        HttpServiceProxyFactory factory = HttpServiceProxyFactory
+                .builderFor(RestClientAdapter.create(builder.build()))
+                .build();
+        return factory.createClient(PostApi.class);
+    }
+    // highlight-end
+
+    // Imagine there are 100 HttpExchange clients 😇
+
+    @Bean
+    ApplicationRunner runner(PostApi api) {
+        return args -> api.getPost(1);
+    }
+}
+```
+
+What is the problem?
+
+- No Autoconfiguration
+
+    Autoconfiguration is not available for clients; they must be manually instantiated through client beans.
+    This process can become particularly tedious when dealing with numerous clients.
+
+    For those accustomed to using `Spring Cloud OpenFeign`,
+    the `@EnableFeignClients` annotation proves highly advantageous,
+    significantly reducing the amount of repetitive code.
+
+- Not support Spring web annotations
+
+    While native support for declarative HTTP clients is a welcome feature, it introduces a new suite of
+    annotations like `@GetExchange`, `@PostExchange`, and so forth. Unfortunately, `HttpServiceProxyFactory` does not support Spring web
+    annotations, such as `@GetMapping` and `@PostMapping`. This lack of support can significantly
+    hinder users accustomed to `Spring Cloud OpenFeign` who are considering a transition to Spring 6.x, making the
+    migration process notably challenging.
+
+The main goals of this project:
+
+- Promote the use of `@HttpExchange` as a neutral annotation to define API interfaces.
+- Provide a `Spring Cloud OpenFeign` like experience for Spring 6 declarative HTTP clients.
+- Support Spring web annotations (`@RequestMapping`, `@GetMapping`).
+- Not introduce external annotations, easy to migrate to other implementations.
+
+## Quick Start
+
+- Add dependency:
+
+    <Tabs>
+        <TabItem value="gradle" label="Gradle">
+            ```groovy
+            implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.2.2")
+            ```
+        </TabItem>
+        <TabItem value="maven" label="Maven">
+            ```xml
+            <dependency>
+                <groupId>io.github.danielliu1123</groupId>
+                <artifactId>httpexchange-spring-boot-starter</artifactId>
+                <version>3.2.2</version>
+            </dependency>
+            ```
+        </TabItem>
+    </Tabs>
+
+- Write a classic Spring Boot application:
+
+    ```java
+    @HttpExchange("https://my-json-server.typicode.com")
+    interface PostApi {
+        @GetExchange("/typicode/demo/posts/{id}")
+        Post getPost(@PathVariable("id") int id);
+    }
+
+    @SpringBootApplication
+    // highlight-next-line-as-added
+    @EnableExchangeClients
+    public class App {
+        public static void main(String[] args) {
+            new SpringApplicationBuilder(QuickStartApp.class)
+                    // highlight-next-line-as-added
+                    .properties("http-exchange.base-url=https://my-json-server.typicode.com")
+                    .run(args);
+        }
+
+        @Bean
+        ApplicationRunner runner(PostApi api) {
+            return args -> api.getPost(1);
+        }
+    }
+    ```
+
+:::success
+No more boilerplate code! 🎉
+:::
