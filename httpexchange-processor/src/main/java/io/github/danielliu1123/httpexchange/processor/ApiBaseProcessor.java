@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Generated;
 import javax.annotation.processing.RoundEnvironment;
@@ -20,6 +22,8 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import lombok.SneakyThrows;
@@ -61,17 +65,27 @@ public class ApiBaseProcessor extends AbstractProcessor {
     private static final String DUMMY_FILE_NAME = "httpexchange-processor.tmp";
 
     private static final AntPathMatcher matcher = new AntPathMatcher(".");
+
     private final SingletonSupplier<ProcessorProperties> properties = SingletonSupplier.of(this::loadProperties);
+    private final Set<String> generatedClasses = ConcurrentHashMap.newKeySet();
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (properties.obtain().enabled()) {
             for (Element element : roundEnv.getRootElements()) {
-                // Perhaps just process the interfaces to enhance compile performance?
-                processElement(annotations, element);
+                if (!isGeneratedClass(element)) {
+                    processElement(annotations, element);
+                }
             }
         }
         return true;
+    }
+
+    private boolean isGeneratedClass(Element element) {
+        if (element instanceof TypeElement typeElement) {
+            return generatedClasses.contains(typeElement.getQualifiedName().toString());
+        }
+        return false;
     }
 
     private ProcessorProperties loadProperties() {
@@ -89,7 +103,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
         } catch (IOException ignored) {
             // No-op
         }
-        return ProcessorProperties.of(prop);
+        return ProcessorProperties.from(prop);
     }
 
     private static boolean isInterface(Element element) {
@@ -134,7 +148,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
     }
 
     private void processAnnotations(Set<? extends TypeElement> annotations, Element element) {
-        TypeSpec.Builder classBuilder = createClassBuilder(element);
+        TypeSpec.Builder classBuilder = getTypeBuilder(element);
         boolean isNeedGenerateJavaFile = hasAnnotationMatched(annotations, element);
 
         for (Element enclosedElement : element.getEnclosedElements()) {
@@ -149,6 +163,47 @@ public class ApiBaseProcessor extends AbstractProcessor {
         if (isNeedGenerateJavaFile) {
             generateJavaFile(element, classBuilder);
         }
+    }
+
+    private TypeSpec.Builder getTypeBuilder(Element element) {
+        return switch (properties.obtain().generatedType()) {
+            case INTERFACE:
+                yield createInterfaceBuilder(element);
+            case ABSTRACT_CLASS:
+                yield createClassBuilder(element);
+        };
+    }
+
+    private TypeSpec.Builder createInterfaceBuilder(Element element) {
+        String generatedClassName = getGeneratedClassName(element);
+        TypeSpec.Builder result = TypeSpec.interfaceBuilder(generatedClassName)
+                .addAnnotation(AnnotationSpec.builder(Generated.class)
+                        .addMember("value", "$S", ApiBaseProcessor.class.getName())
+                        .build())
+                .addJavadoc(
+                        """
+                                Generated default implementation for the server-side.
+
+                                <p>
+                                How to use:
+                                <pre>{@code
+                                @RestController
+                                public class $L implements $L {
+                                    // ...
+                                }
+                                }</pre>
+                                """,
+                        element.getSimpleName().toString() + "Impl",
+                        generatedClassName);
+        if (element.getModifiers().contains(Modifier.PUBLIC)) {
+            result.addModifiers(Modifier.PUBLIC);
+        }
+
+        for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
+            result.addAnnotation(AnnotationSpec.get(annotationMirror));
+        }
+
+        return result;
     }
 
     private boolean hasAnnotationMatched(Set<? extends TypeElement> annotations, Element element) {
@@ -167,10 +222,6 @@ public class ApiBaseProcessor extends AbstractProcessor {
                 .addSuperinterface(TypeName.get(element.asType()))
                 .addAnnotation(AnnotationSpec.builder(Generated.class)
                         .addMember("value", "$S", ApiBaseProcessor.class.getName())
-                        .addMember(
-                                "comments",
-                                "$S",
-                                "Generated by the httpexchange-processor. Modification is strictly prohibited.")
                         .build())
                 .addJavadoc(
                         """
@@ -185,7 +236,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
                                 }
                                 }</pre>
                                 """,
-                        generatedClassName + "Impl",
+                        element.getSimpleName().toString() + "Impl",
                         generatedClassName);
         if (element.getModifiers().contains(Modifier.PUBLIC)) {
             result.addModifiers(Modifier.PUBLIC);
@@ -210,8 +261,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
         for (AnnotationMirror annotation : enclosedElement.getAnnotationMirrors()) {
             if (!enclosedElement.getModifiers().contains(Modifier.DEFAULT)
                     && isAnnotationMatched(annotations, annotation)) {
-                MethodSpec methodSpec = buildMethodSpec((ExecutableElement) enclosedElement);
-                classBuilder.addMethod(methodSpec);
+                classBuilder.addMethod(buildMethodSpec((ExecutableElement) enclosedElement));
                 return true;
             }
         }
@@ -219,31 +269,94 @@ public class ApiBaseProcessor extends AbstractProcessor {
     }
 
     private boolean isAnnotationMatched(Set<? extends TypeElement> annotations, AnnotationMirror annotation) {
-        return annotations.stream().anyMatch(a -> a.getQualifiedName()
-                .toString()
-                .equals(annotation.getAnnotationType().toString()));
+        for (TypeElement anno : annotations) {
+            if (Objects.equals(
+                    anno.getQualifiedName().toString(),
+                    annotation.getAnnotationType().toString())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private MethodSpec buildMethodSpec(ExecutableElement methodElement) {
+        return switch (properties.obtain().generatedType()) {
+            case INTERFACE:
+                yield buildInterfaceMethodSpec(methodElement);
+            case ABSTRACT_CLASS:
+                yield buildAbstractClassMethodSpec(methodElement);
+        };
+    }
+
+    private MethodSpec buildInterfaceMethodSpec(ExecutableElement methodElement) {
         MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(
                         methodElement.getSimpleName().toString())
-                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.PUBLIC, Modifier.DEFAULT)
                 .returns(TypeName.get(methodElement.getReturnType()))
-                .addAnnotation(Override.class);
+                .addStatement("throw new $T($T.NOT_IMPLEMENTED)", ResponseStatusException.class, HttpStatus.class)
+                .addJavadoc(
+                        """
+                                $L
+                                @see $L#$L($L)
+                                """,
+                        Optional.ofNullable(processingEnv.getElementUtils().getDocComment(methodElement))
+                                .orElse("")
+                                .stripTrailing(),
+                        ((TypeElement) methodElement.getEnclosingElement())
+                                .getQualifiedName()
+                                .toString(),
+                        methodElement.getSimpleName().toString(),
+                        getParameterTypes(methodElement));
 
-        addParametersToMethodBuilder(methodElement, methodBuilder);
-        methodBuilder.addStatement("throw new $T($T.NOT_IMPLEMENTED)", ResponseStatusException.class, HttpStatus.class);
+        for (VariableElement parameter : methodElement.getParameters()) {
+            ParameterSpec.Builder parameterBuilder = ParameterSpec.builder(
+                    TypeName.get(parameter.asType()), parameter.getSimpleName().toString());
+
+            for (AnnotationMirror annotationMirror : parameter.getAnnotationMirrors()) {
+                parameterBuilder.addAnnotation(AnnotationSpec.get(annotationMirror));
+            }
+
+            methodBuilder.addParameter(parameterBuilder.build());
+        }
+
+        for (AnnotationMirror annotationMirror : methodElement.getAnnotationMirrors()) {
+            methodBuilder.addAnnotation(AnnotationSpec.get(annotationMirror));
+        }
 
         return methodBuilder.build();
     }
 
-    private void addParametersToMethodBuilder(ExecutableElement methodElement, MethodSpec.Builder methodBuilder) {
+    private static String getParameterTypes(ExecutableElement methodElement) {
+        return methodElement.getParameters().stream()
+                .map(parameter -> {
+                    TypeMirror typeMirror = parameter.asType();
+                    if (typeMirror instanceof DeclaredType declaredType) {
+                        TypeElement typeElement = (TypeElement) declaredType.asElement();
+                        return typeElement.getQualifiedName().toString();
+                    } else {
+                        return typeMirror.toString();
+                    }
+                })
+                .reduce((p1, p2) -> p1 + ", " + p2)
+                .orElse("");
+    }
+
+    private MethodSpec buildAbstractClassMethodSpec(ExecutableElement methodElement) {
+        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(
+                        methodElement.getSimpleName().toString())
+                .addModifiers(Modifier.PUBLIC)
+                .returns(TypeName.get(methodElement.getReturnType()))
+                .addStatement("throw new $T($T.NOT_IMPLEMENTED)", ResponseStatusException.class, HttpStatus.class)
+                .addAnnotation(Override.class);
+
         for (VariableElement parameter : methodElement.getParameters()) {
-            methodBuilder.addParameter(ParameterSpec.builder(
-                            TypeName.get(parameter.asType()),
-                            parameter.getSimpleName().toString())
-                    .build());
+            ParameterSpec.Builder parameterBuilder = ParameterSpec.builder(
+                    TypeName.get(parameter.asType()), parameter.getSimpleName().toString());
+
+            methodBuilder.addParameter(parameterBuilder.build());
         }
+
+        return methodBuilder.build();
     }
 
     @SneakyThrows
@@ -251,6 +364,10 @@ public class ApiBaseProcessor extends AbstractProcessor {
         JavaFile javaFile = JavaFile.builder(getOutputPackage(element), classBuilder.build())
                 .build();
         javaFile.writeTo(processingEnv.getFiler());
+        generatedClasses.add(
+                StringUtils.hasText(javaFile.packageName)
+                        ? javaFile.packageName + "." + javaFile.typeSpec.name
+                        : javaFile.typeSpec.name);
     }
 
     private String getOutputPackage(Element element) {
