@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
 @RestController
-public class QuickStartApp extends UserApiBase {
+public class QuickStartApp implements UserApiBase {
 
     public static void main(String[] args) {
         SpringApplication.run(QuickStartApp.class, args);
