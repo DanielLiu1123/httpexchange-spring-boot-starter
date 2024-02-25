@@ -18,9 +18,14 @@ class QuickStartAppTest {
     @Autowired
     UserApi userApi;
 
+    @Autowired
+    UserApiBase userBaseApi;
+
     @Test
     void testGetUser_whenArgIsValid() {
-        assertThat(userApi).isNotInstanceOf(UserApiBase.class);
+        assertThat(userBaseApi).isNotInstanceOf(QuickStartApp.class);
+
+        assertThat(userApi.getById("1")).isEqualTo(userBaseApi.getById("1"));
 
         UserApi.UserDTO user = userApi.getById("1");
         assertThat(user.id()).isEqualTo("1");

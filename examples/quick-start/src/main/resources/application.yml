@@ -8,4 +8,4 @@ http-exchange:
   channels:
     - base-url: http://localhost:${server.port}
       clients:
-        - com.example.api.*Api
+        - com.example.api.*
