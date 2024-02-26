@@ -1,7 +1,7 @@
 package com.example.server;
 
 import com.example.api.UserApi;
-import com.example.api.UserApiBase;
+import com.example.api.serverbase.UserApiBase;
 import java.util.List;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

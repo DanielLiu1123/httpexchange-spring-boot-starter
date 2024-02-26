@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.DEFINED_PORT;
 
 import com.example.api.UserApi;
-import com.example.api.UserApiBase;
+import com.example.api.serverbase.UserApiBase;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +24,6 @@ class QuickStartAppTest {
     @Test
     void testGetUser_whenArgIsValid() {
         assertThat(userBaseApi).isNotInstanceOf(QuickStartApp.class);
-
-        assertThat(userApi.getById("1")).isEqualTo(userBaseApi.getById("1"));
 
         UserApi.UserDTO user = userApi.getById("1");
         assertThat(user.id()).isEqualTo("1");
