@@ -74,6 +74,17 @@ const config: Config = {
         },
       ],
     },
+    algolia: {
+      // The application ID provided by Algolia
+      appId: 'B5TXVPY7SP',
+      // Public API key: it is safe to commit it
+      apiKey: 'd1d0662c9bcd12936152178add34706d',
+      indexName: 'danielliu1123io',
+      // Optional: see doc section below
+      contextualSearch: true,
+      // Optional: path for search page that enabled by default (`false` to disable it)
+      searchPagePath: 'search',
+    },
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
