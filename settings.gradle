@@ -1,5 +1,4 @@
-rootProject.name = 'httpexchange-spring-boot-starter'
-
+rootProject.name = 'httpexchange-spring-boot-starter-root'
 
 include(":examples:loadbalancer")
 include(":examples:minimal")
