@@ -1,3 +1,11 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url "https://repo.spring.io/snapshot" }
+        maven { url "https://repo.spring.io/milestone" }
+    }
+}
+
 rootProject.name = 'httpexchange-spring-boot-starter-root'
 
 include(":examples:loadbalancer")
