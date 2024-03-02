@@ -1,0 +1,3 @@
+# TODO(Freeman): Remove this file after the Spring Cloud compatibility version is released.
+org.springframework.boot.env.EnvironmentPostProcessor=\
+  io.github.danielliu1123.httpexchange.SkipCompatibilityVerifierEnvironmentPostProcessor
