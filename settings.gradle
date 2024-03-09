@@ -19,6 +19,3 @@ include(":httpexchange-processor")
 include(":httpexchange-spring-boot-autoconfigure")
 
 include(":starters:httpexchange-spring-boot-starter")
-
-
-
