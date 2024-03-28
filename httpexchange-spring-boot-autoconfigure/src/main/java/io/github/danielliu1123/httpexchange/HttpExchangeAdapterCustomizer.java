@@ -8,7 +8,10 @@ import org.springframework.web.reactive.function.client.WebClient;
  * @author Freeman
  * @since 3.2.4
  */
-public interface HttpExchangeAdapterCustomizer<T> {
+public sealed interface HttpExchangeAdapterCustomizer<T>
+        permits HttpExchangeAdapterCustomizer.RestClientCustomizer,
+                HttpExchangeAdapterCustomizer.RestTemplateCustomizer,
+                HttpExchangeAdapterCustomizer.WebClientCustomizer {
 
     /**
      * Customize the client builder with the given config.
@@ -18,9 +21,9 @@ public interface HttpExchangeAdapterCustomizer<T> {
      */
     void customize(T clientBuilder, HttpExchangeProperties.Channel config);
 
-    interface RestClientCustomizer extends HttpExchangeAdapterCustomizer<RestClient.Builder> {}
+    non-sealed interface RestClientCustomizer extends HttpExchangeAdapterCustomizer<RestClient.Builder> {}
 
-    interface RestTemplateCustomizer extends HttpExchangeAdapterCustomizer<RestTemplate> {}
+    non-sealed interface RestTemplateCustomizer extends HttpExchangeAdapterCustomizer<RestTemplate> {}
 
-    interface WebClientCustomizer extends HttpExchangeAdapterCustomizer<WebClient.Builder> {}
+    non-sealed interface WebClientCustomizer extends HttpExchangeAdapterCustomizer<WebClient.Builder> {}
 }
