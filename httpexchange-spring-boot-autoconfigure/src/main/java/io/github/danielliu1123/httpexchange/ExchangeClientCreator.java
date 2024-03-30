@@ -35,7 +35,7 @@ import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
 import org.springframework.cloud.client.loadbalancer.DeferringLoadBalancerInterceptor;
-import org.springframework.cloud.client.loadbalancer.reactive.LoadBalancedExchangeFilterFunction;
+import org.springframework.cloud.client.loadbalancer.reactive.DeferringLoadBalancerExchangeFilterFunction;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
@@ -288,14 +288,11 @@ class ExchangeClientCreator {
         }
         if (isLoadBalancerEnabled(channelConfig)) {
             builder.filters(filters -> {
-                List<ExchangeFilterFunction> newFilters =
-                        beanFactory.getBeanProvider(ExchangeFilterFunction.class).stream()
-                                .filter(ExchangeClientCreator::notLoadBalancedFilter) // Actually use
-                                // DeferringLoadBalancerExchangeFilterFunction
-                                .toList();
-
                 Set<ExchangeFilterFunction> allFilters = new LinkedHashSet<>(filters);
-                allFilters.addAll(newFilters);
+
+                beanFactory
+                        .getBeanProvider(DeferringLoadBalancerExchangeFilterFunction.class)
+                        .forEach(allFilters::add);
 
                 filters.clear();
                 filters.addAll(allFilters);
@@ -360,10 +357,6 @@ class ExchangeClientCreator {
                 .forEach(customizer -> customizer.customize(builder, channelConfig));
 
         return builder.build();
-    }
-
-    private static boolean notLoadBalancedFilter(ExchangeFilterFunction e) {
-        return !LoadBalancedExchangeFilterFunction.class.isAssignableFrom(e.getClass());
     }
 
     private ClientHttpRequestFactory getRequestFactory(HttpExchangeProperties.Channel channelConfig) {
