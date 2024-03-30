@@ -252,6 +252,11 @@ class ExchangeClientCreator {
 
         setTimeoutByConfig(restTemplate.getRequestFactory(), channelConfig);
 
+        beanFactory
+                .getBeanProvider(HttpClientCustomizer.RestTemplateCustomizer.class)
+                .orderedStream()
+                .forEach(customizer -> customizer.customize(restTemplate, channelConfig));
+
         return restTemplate;
     }
 
@@ -290,6 +295,12 @@ class ExchangeClientCreator {
                 AnnotationAwareOrderComparator.sort(filters);
             });
         }
+
+        beanFactory
+                .getBeanProvider(HttpClientCustomizer.WebClientCustomizer.class)
+                .orderedStream()
+                .forEach(customizer -> customizer.customize(builder, channelConfig));
+
         return builder.build();
     }
 
@@ -331,6 +342,12 @@ class ExchangeClientCreator {
                 AnnotationAwareOrderComparator.sort(interceptors);
             });
         }
+
+        beanFactory
+                .getBeanProvider(HttpClientCustomizer.RestClientCustomizer.class)
+                .orderedStream()
+                .forEach(customizer -> customizer.customize(builder, channelConfig));
+
         return builder.build();
     }
 
