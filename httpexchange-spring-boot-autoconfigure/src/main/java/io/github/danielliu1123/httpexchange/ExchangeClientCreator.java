@@ -253,7 +253,7 @@ class ExchangeClientCreator {
         setTimeoutByConfig(restTemplate.getRequestFactory(), channelConfig);
 
         beanFactory
-                .getBeanProvider(HttpExchangeAdapterCustomizer.RestTemplateCustomizer.class)
+                .getBeanProvider(HttpClientCustomizer.RestTemplateCustomizer.class)
                 .orderedStream()
                 .forEach(customizer -> customizer.customize(restTemplate, channelConfig));
 
@@ -297,7 +297,7 @@ class ExchangeClientCreator {
         }
 
         beanFactory
-                .getBeanProvider(HttpExchangeAdapterCustomizer.WebClientCustomizer.class)
+                .getBeanProvider(HttpClientCustomizer.WebClientCustomizer.class)
                 .orderedStream()
                 .forEach(customizer -> customizer.customize(builder, channelConfig));
 
@@ -344,7 +344,7 @@ class ExchangeClientCreator {
         }
 
         beanFactory
-                .getBeanProvider(HttpExchangeAdapterCustomizer.RestClientCustomizer.class)
+                .getBeanProvider(HttpClientCustomizer.RestClientCustomizer.class)
                 .orderedStream()
                 .forEach(customizer -> customizer.customize(builder, channelConfig));
 
