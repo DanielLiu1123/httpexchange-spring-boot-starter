@@ -34,6 +34,7 @@ import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
+import org.springframework.cloud.client.loadbalancer.DeferringLoadBalancerInterceptor;
 import org.springframework.cloud.client.loadbalancer.reactive.LoadBalancedExchangeFilterFunction;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -71,6 +72,8 @@ class ExchangeClientCreator {
             ClassUtils.isPresent("org.springframework.web.reactive.function.client.WebClient", null);
     private static final boolean LOADBALANCER_PRESENT =
             ClassUtils.isPresent("org.springframework.cloud.client.loadbalancer.LoadBalancerClient", null);
+    private static final boolean DEFERRING_LOADBALANCER_INTERCEPTOR_PRESENT = ClassUtils.isPresent(
+            "org.springframework.cloud.client.loadbalancer.DeferringLoadBalancerInterceptor", null);
 
     private static final Field exchangeAdapterField;
     private static final Field customArgumentResolversField;
@@ -236,11 +239,15 @@ class ExchangeClientCreator {
         builder = builder.requestFactory(() -> getRequestFactory(channelConfig));
 
         if (isLoadBalancerEnabled(channelConfig)) {
-            List<ClientHttpRequestInterceptor> interceptors = beanFactory
-                    .getBeanProvider(ClientHttpRequestInterceptor.class)
-                    .orderedStream()
-                    .toList();
-            builder = builder.additionalInterceptors(interceptors);
+            Set<ClientHttpRequestInterceptor> allInterceptors = new LinkedHashSet<>();
+            if (DEFERRING_LOADBALANCER_INTERCEPTOR_PRESENT) {
+                beanFactory
+                        .getBeanProvider(DeferringLoadBalancerInterceptor.class)
+                        .forEach(allInterceptors::add);
+            } else {
+                beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).forEach(allInterceptors::add);
+            }
+            builder = builder.additionalInterceptors(allInterceptors);
         }
 
         // Default request factory will be replaced by user's RestTemplateCustomizer bean here
@@ -330,12 +337,16 @@ class ExchangeClientCreator {
 
         if (isLoadBalancerEnabled(channelConfig)) {
             builder.requestInterceptors(interceptors -> {
-                List<ClientHttpRequestInterceptor> newInterceptors =
-                        beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).stream()
-                                .toList();
-
                 Set<ClientHttpRequestInterceptor> allInterceptors = new LinkedHashSet<>(interceptors);
-                allInterceptors.addAll(newInterceptors);
+                if (DEFERRING_LOADBALANCER_INTERCEPTOR_PRESENT) {
+                    beanFactory
+                            .getBeanProvider(DeferringLoadBalancerInterceptor.class)
+                            .forEach(allInterceptors::add);
+                } else {
+                    beanFactory
+                            .getBeanProvider(ClientHttpRequestInterceptor.class)
+                            .forEach(allInterceptors::add);
+                }
 
                 interceptors.clear();
                 interceptors.addAll(allInterceptors);
