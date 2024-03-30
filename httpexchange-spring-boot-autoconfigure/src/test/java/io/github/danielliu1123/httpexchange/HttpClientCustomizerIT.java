@@ -47,7 +47,7 @@ class HttpClientCustomizerIT {
     static class RestClientCfg implements Api {
         @Bean
         HttpClientCustomizer.RestClientCustomizer restClientCustomizer() {
-            return (client, config) -> client.requestInterceptor((request, body, execution) -> {
+            return (client, channel) -> client.requestInterceptor((request, body, execution) -> {
                 log.info("Customizing the REST_CLIENT...");
                 return execution.execute(request, body);
             });
@@ -55,7 +55,7 @@ class HttpClientCustomizerIT {
 
         @Bean
         HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer() {
-            return (restTemplate, config) -> restTemplate.getInterceptors().add((request, body, execution) -> {
+            return (restTemplate, channel) -> restTemplate.getInterceptors().add((request, body, execution) -> {
                 log.info("Customizing the REST_TEMPLATE...");
                 return execution.execute(request, body);
             });
@@ -63,7 +63,7 @@ class HttpClientCustomizerIT {
 
         @Bean
         HttpClientCustomizer.WebClientCustomizer webClientCustomizer() {
-            return (webClient, config) -> webClient.filter((request, next) -> {
+            return (webClient, channel) -> webClient.filter((request, next) -> {
                 log.info("Customizing the WEB_CLIENT...");
                 return next.exchange(request);
             });

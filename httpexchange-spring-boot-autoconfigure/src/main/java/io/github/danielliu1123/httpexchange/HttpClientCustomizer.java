@@ -23,9 +23,9 @@ public sealed interface HttpClientCustomizer<T>
      * Customize the client builder with the given config.
      *
      * @param client the http client to customize
-     * @param config the current channel config to use
+     * @param channel the current channel config to use
      */
-    void customize(T client, HttpExchangeProperties.Channel config);
+    void customize(T client, HttpExchangeProperties.Channel channel);
 
     non-sealed interface RestClientCustomizer extends HttpClientCustomizer<RestClient.Builder> {}
 
