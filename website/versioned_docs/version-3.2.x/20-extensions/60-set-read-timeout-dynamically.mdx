@@ -4,7 +4,42 @@ sidebar_position: 60
 
 # Set Read Timeout Dynamically
 
-Spring does not provide a way to set the read timeout dynamically. This framework provides `EnhancedJdkClientHttpRequestFactory` to support this feature.
+Spring does not provide a way to set the read timeout dynamically,
+see [issue](https://github.com/spring-projects/spring-framework/issues/31926).
+This framework provides `EnhancedJdkClientHttpRequestFactory` to support this feature.
+
+:::note
+**This feature needs to use `EnhancedJdkClientHttpRequestFactory` as the `ClientHttpRequestFactory` implementation**,
+~and this is the default behavior.~
+
+To avoid changing Spring's default behavior,
+starting from version `3.2.4`, the `HttpClientCustomizer` interface was added.
+It no longer uses `EnhancedJdkClientHttpRequestFactory` as the default implementation
+but instead uses the built-in `JdkClientHttpRequestFactory`.
+To use `EnhancedJdkClientHttpRequestFactory`, it must be explicitly configured in `HttpClientCustomizer`.
+
+```java
+// For RestClient
+@Bean
+HttpClientCustomizer.RestClientCustomizer restClientCustomizer() {
+    return (client, channel) -> {
+        EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory();
+        requestFactory.setReadTimeout(channel.getReadTimeout());
+        client.requestFactory(requestFactory);
+    };
+}
+
+// For RestTemplate
+@Bean
+HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer() {
+    return (client, channel) -> {
+        EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory();
+        requestFactory.setReadTimeout(channel.getReadTimeout());
+        client.setRequestFactory(requestFactory);
+    };
+}
+```
+:::
 
 There are two ways to set the read timeout dynamically.
 
@@ -44,11 +79,6 @@ List<User> users = Requester.create()
                         .addHeader("X-Foo", "bar")
                         .call(() -> userApi.list());
 ```
-
-:::warning
-This feature needs to use `EnhancedJdkClientHttpRequestFactory` as the `ClientHttpRequestFactory` implementation,
-and this is the default behavior.
-:::
 
 ## Reactive Client
 
