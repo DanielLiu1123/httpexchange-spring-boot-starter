@@ -4,6 +4,7 @@ import static io.github.danielliu1123.PortGetter.availablePort;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.Size;
 import lombok.SneakyThrows;
@@ -13,6 +14,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.endpoint.event.RefreshEvent;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -89,6 +91,16 @@ class DynamicRefreshTests {
     @EnableExchangeClients(clients = {FooApi.class, BarApi.class, BazApi.class})
     @RestController
     static class Cfg {
+
+        @Bean
+        HttpClientCustomizer.RestClientCustomizer restClientCustomizer() {
+            return (client, channel) -> client.requestFactory(new EnhancedJdkClientHttpRequestFactory());
+        }
+
+        @Bean
+        HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer() {
+            return (client, channel) -> client.setRequestFactory(new EnhancedJdkClientHttpRequestFactory());
+        }
 
         @GetMapping("/get")
         @SneakyThrows
