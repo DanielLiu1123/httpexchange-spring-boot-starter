@@ -7,6 +7,7 @@ import static java.util.concurrent.CompletableFuture.runAsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -14,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -24,7 +26,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.service.annotation.GetExchange;
 
 /**
- * {@link RequestConfigurator} tester.
+ * {@link Requester} tester.
  *
  * @author Freeman
  */
@@ -104,6 +106,24 @@ class RequesterTests {
     @EnableExchangeClients
     @RestController
     static class Cfg {
+
+        @Bean
+        HttpClientCustomizer.RestClientCustomizer restClientCustomizer() {
+            return (client, channel) -> {
+                EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory();
+                requestFactory.setReadTimeout(channel.getReadTimeout());
+                client.requestFactory(requestFactory);
+            };
+        }
+
+        @Bean
+        HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer() {
+            return (client, channel) -> {
+                EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory();
+                requestFactory.setReadTimeout(channel.getReadTimeout());
+                client.setRequestFactory(requestFactory);
+            };
+        }
 
         @SneakyThrows
         @RequestMapping("/api")

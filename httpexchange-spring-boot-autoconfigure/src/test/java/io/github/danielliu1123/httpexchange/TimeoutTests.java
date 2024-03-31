@@ -4,12 +4,15 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import io.github.danielliu1123.PortGetter;
+import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import lombok.SneakyThrows;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -142,6 +145,24 @@ class TimeoutTests {
     @EnableExchangeClients(clients = DelayApi.class)
     @RestController
     static class TimeoutConfig implements DelayApi {
+
+        @Bean
+        HttpClientCustomizer.RestClientCustomizer restClientCustomizer() {
+            return (client, channel) -> {
+                EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory();
+                Optional.ofNullable(channel.getReadTimeout()).ifPresent(requestFactory::setReadTimeout);
+                client.requestFactory(requestFactory);
+            };
+        }
+
+        @Bean
+        HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer() {
+            return (client, channel) -> {
+                EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory();
+                Optional.ofNullable(channel.getReadTimeout()).ifPresent(requestFactory::setReadTimeout);
+                client.setRequestFactory(requestFactory);
+            };
+        }
 
         @Override
         @SneakyThrows
