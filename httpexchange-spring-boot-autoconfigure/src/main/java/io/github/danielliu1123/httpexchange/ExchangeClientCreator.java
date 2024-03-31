@@ -9,10 +9,8 @@ import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
-import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,14 +26,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
-import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
 import org.springframework.cloud.client.loadbalancer.DeferringLoadBalancerInterceptor;
-import org.springframework.cloud.client.loadbalancer.reactive.LoadBalancedExchangeFilterFunction;
+import org.springframework.cloud.client.loadbalancer.reactive.DeferringLoadBalancerExchangeFilterFunction;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
@@ -43,6 +40,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.client.AbstractClientHttpRequestFactoryWrapper;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -239,15 +237,15 @@ class ExchangeClientCreator {
         builder = builder.requestFactory(() -> getRequestFactory(channelConfig));
 
         if (isLoadBalancerEnabled(channelConfig)) {
-            Set<ClientHttpRequestInterceptor> allInterceptors = new LinkedHashSet<>();
+            Set<ClientHttpRequestInterceptor> lbInterceptors = new LinkedHashSet<>();
             if (DEFERRING_LOADBALANCER_INTERCEPTOR_PRESENT) {
                 beanFactory
                         .getBeanProvider(DeferringLoadBalancerInterceptor.class)
-                        .forEach(allInterceptors::add);
+                        .forEach(lbInterceptors::add);
             } else {
-                beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).forEach(allInterceptors::add);
+                beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).forEach(lbInterceptors::add);
             }
-            builder = builder.additionalInterceptors(allInterceptors);
+            builder = builder.additionalInterceptors(lbInterceptors);
         }
 
         // Default request factory will be replaced by user's RestTemplateCustomizer bean here
@@ -288,14 +286,11 @@ class ExchangeClientCreator {
         }
         if (isLoadBalancerEnabled(channelConfig)) {
             builder.filters(filters -> {
-                List<ExchangeFilterFunction> newFilters =
-                        beanFactory.getBeanProvider(ExchangeFilterFunction.class).stream()
-                                .filter(ExchangeClientCreator::notLoadBalancedFilter) // Actually use
-                                // DeferringLoadBalancerExchangeFilterFunction
-                                .toList();
-
                 Set<ExchangeFilterFunction> allFilters = new LinkedHashSet<>(filters);
-                allFilters.addAll(newFilters);
+
+                beanFactory
+                        .getBeanProvider(DeferringLoadBalancerExchangeFilterFunction.class)
+                        .forEach(allFilters::add);
 
                 filters.clear();
                 filters.addAll(allFilters);
@@ -337,19 +332,19 @@ class ExchangeClientCreator {
 
         if (isLoadBalancerEnabled(channelConfig)) {
             builder.requestInterceptors(interceptors -> {
-                Set<ClientHttpRequestInterceptor> allInterceptors = new LinkedHashSet<>(interceptors);
+                Set<ClientHttpRequestInterceptor> lbInterceptors = new LinkedHashSet<>(interceptors);
                 if (DEFERRING_LOADBALANCER_INTERCEPTOR_PRESENT) {
                     beanFactory
                             .getBeanProvider(DeferringLoadBalancerInterceptor.class)
-                            .forEach(allInterceptors::add);
+                            .forEach(lbInterceptors::add);
                 } else {
                     beanFactory
                             .getBeanProvider(ClientHttpRequestInterceptor.class)
-                            .forEach(allInterceptors::add);
+                            .forEach(lbInterceptors::add);
                 }
 
                 interceptors.clear();
-                interceptors.addAll(allInterceptors);
+                interceptors.addAll(lbInterceptors);
                 AnnotationAwareOrderComparator.sort(interceptors);
             });
         }
@@ -362,10 +357,6 @@ class ExchangeClientCreator {
         return builder.build();
     }
 
-    private static boolean notLoadBalancedFilter(ExchangeFilterFunction e) {
-        return !LoadBalancedExchangeFilterFunction.class.isAssignableFrom(e.getClass());
-    }
-
     private ClientHttpRequestFactory getRequestFactory(HttpExchangeProperties.Channel channelConfig) {
         ClientHttpRequestFactorySettings settings = new ClientHttpRequestFactorySettings(
                 Optional.ofNullable(channelConfig.getConnectTimeout())
@@ -375,8 +366,7 @@ class ExchangeClientCreator {
                         .map(Duration::ofMillis)
                         .orElse(null),
                 (SslBundle) null);
-        // For support Requester.create().call(..) and RequestConfigurator
-        return createEnhancedJdkClientHttpRequestFactory(settings);
+        return ClientHttpRequestFactories.get(JdkClientHttpRequestFactory.class, settings);
     }
 
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
@@ -477,29 +467,6 @@ class ExchangeClientCreator {
             return true;
         }
         return false;
-    }
-
-    /**
-     * @see ClientHttpRequestFactories.Jdk#get(ClientHttpRequestFactorySettings)
-     */
-    private static EnhancedJdkClientHttpRequestFactory createEnhancedJdkClientHttpRequestFactory(
-            ClientHttpRequestFactorySettings settings) {
-        HttpClient httpClient = createHttpClient(settings.connectTimeout(), settings.sslBundle());
-        EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory(httpClient);
-        PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-        map.from(settings::readTimeout).to(requestFactory::setReadTimeout);
-        return requestFactory;
-    }
-
-    private static HttpClient createHttpClient(Duration connectTimeout, SslBundle sslBundle) {
-        HttpClient.Builder builder = HttpClient.newBuilder();
-        if (connectTimeout != null) {
-            builder.connectTimeout(connectTimeout);
-        }
-        if (sslBundle != null) {
-            builder.sslContext(sslBundle.createSslContext());
-        }
-        return builder.build();
     }
 
     @SuppressWarnings("unchecked")
