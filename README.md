@@ -4,9 +4,8 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.danielliu1123/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/io.github.danielliu1123/httpexchange-spring-boot-starter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Spring 6 introduces native support for declarative HTTP clients through
-the [`@HttpExchange`](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html#rest-http-interface) annotation.
-The reliance on [Spring Cloud OpenFeign](https://github.com/spring-cloud/spring-cloud-openfeign) can effectively be replaced.
+Spring 6 now directly supports creating HTTP clients with the [`@HttpExchange`](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html#rest-http-interface) annotation. 
+This means you can use Spring instead of needing [Spring Cloud OpenFeign](https://github.com/spring-cloud/spring-cloud-openfeign).
 
 The main goals of this project:
 
