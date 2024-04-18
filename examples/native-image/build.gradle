@@ -13,3 +13,5 @@ dependencies {
 graalvmNative {
     testSupport = false
 }
+
+compileJava.dependsOn clean

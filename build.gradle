@@ -25,8 +25,6 @@ allprojects {
         }
     }
 
-    compileJava.dependsOn clean // clean before every build
-
     apply plugin: "io.spring.dependency-management"
     dependencyManagement {
         imports {
@@ -81,10 +79,3 @@ allprojects {
         omitVisitors.addAll("FindReturnRef", "DontReusePublicIdentifiers")
     }
 }
-
-tasks.register("installGitHook", Copy) {
-    from "$rootProject.rootDir/.githooks"
-    into { new File(rootProject.rootDir, ".git/hooks") }
-    fileMode 0775
-}
-installGitHook

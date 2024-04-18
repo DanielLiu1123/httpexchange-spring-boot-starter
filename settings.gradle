@@ -19,3 +19,10 @@ include(":httpexchange-processor")
 include(":httpexchange-spring-boot-autoconfigure")
 
 include(":starters:httpexchange-spring-boot-starter")
+
+new File("${rootDir}/.githooks").eachFile(groovy.io.FileType.FILES) {
+    def f = new File("${rootDir}/.git/hooks")
+    if (f.exists() && f.isDirectory()) {
+        java.nio.file.Files.copy(it.toPath(), new File("${rootDir}/.git/hooks", it.name).toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    }
+}
