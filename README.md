@@ -19,7 +19,7 @@ The main goals of this project:
 - Add dependency:
 
     ```groovy
-    implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.2.4")
+    implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.2.5")
     ```
 
 - Write a classic Spring Boot application:
@@ -53,7 +53,7 @@ Go to [Documentation](https://danielliu1123.github.io/httpexchange-spring-boot-s
 
 | Spring Boot | httpexchange-spring-boot-starter |
 |-------------|----------------------------------|
-| 3.2.x       | 3.2.4                            |
+| 3.2.x       | 3.2.5                            |
 | 3.1.x       | 3.1.8                            |
 
 ## Code of Conduct
