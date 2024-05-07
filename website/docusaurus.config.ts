@@ -99,7 +99,7 @@ const config: Config = {
         // Customized
         {
           className: 'code-line-deleted',
-          line: 'highlight-next-deleted-as-deleted',
+          line: 'highlight-next-line-as-deleted',
           block: {start: 'highlight-deleted-start', end: 'highlight-deleted-end'},
         },
         {
