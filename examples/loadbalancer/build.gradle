@@ -1,7 +1,7 @@
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation(project(":starters:httpexchange-spring-boot-starter"))
-    implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
+    implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer:${springCloudStarterLoadBalancerVersion}")
 
     implementation("org.springframework:spring-webflux")
     implementation("org.springframework.retry:spring-retry")
