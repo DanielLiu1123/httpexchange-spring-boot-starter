@@ -19,9 +19,13 @@ allprojects {
         maven { url "https://repo.spring.io/milestone" }
     }
 
+    sourceSets {
+        optionalSupport
+    }
+
     java {
         registerFeature("optionalSupport") {
-            usingSourceSet(sourceSets.main)
+            usingSourceSet(sourceSets.optionalSupport)
         }
     }
 
@@ -29,7 +33,6 @@ allprojects {
     dependencyManagement {
         imports {
             mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
-            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
         }
     }
     dependencies {
