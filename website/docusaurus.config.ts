@@ -61,10 +61,10 @@ const config: Config = {
           type: 'localeDropdown',
           position: 'right',
         },
-        {
-          type: 'docsVersionDropdown',
-          position: 'right',
-        },
+        // {
+        //   type: 'docsVersionDropdown',
+        //   position: 'right',
+        // },
         // Copy from https://github.com/facebook/docusaurus/blob/main/website/docusaurus.config.ts
         {
           href: 'https://github.com/danielliu1123/httpexchange-spring-boot-starter',

@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.rodnansol:spring-configuration-property-documenter-gradle-plugin:${springConfigurationPropertyDocumenterVersion}"
+    }
+}
+
 plugins {
     id "com.diffplug.spotless" version "${spotlessVersion}" apply false
     id "com.github.spotbugs" version "${spotbugsVersion}" apply false
@@ -82,3 +91,5 @@ allprojects {
         omitVisitors.addAll("FindReturnRef", "DontReusePublicIdentifiers")
     }
 }
+
+apply from: "${rootDir}/gradle/generate-configuration-properties-docs.gradle"
