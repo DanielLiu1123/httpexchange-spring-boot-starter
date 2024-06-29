@@ -48,11 +48,11 @@ public class HttpExchangeProperties implements InitializingBean {
      * <p> If loadbalancer is enabled, this value means the service id.
      *
      * <ul>
-     *     <li>localhost:8080</li>
-     *     <li>http://localhost:8080</li>
-     *     <li>https://localhost:8080</li>
-     *     <li>localhost:8080/api</li>
-     *     <li>user(service id)</li>
+     *     <li> localhost:8080 </li>
+     *     <li> http://localhost:8080 </li>
+     *     <li> https://localhost:8080 </li>
+     *     <li> localhost:8080/api </li>
+     *     <li> user(service id) </li>
      * </ul>
      */
     private String baseUrl;
