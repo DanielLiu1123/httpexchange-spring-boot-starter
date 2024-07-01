@@ -414,25 +414,17 @@ class ExchangeClientCreator {
     }
 
     /**
-     * Copy from {@link ClientHttpRequestFactories.Reflective#unwrapRequestFactoryIfNecessary(ClientHttpRequestFactory)}
-     *
      * @see ClientHttpRequestFactories.Reflective#unwrapRequestFactoryIfNecessary(ClientHttpRequestFactory)
      */
     private static ClientHttpRequestFactory unwrapRequestFactoryIfNecessary(ClientHttpRequestFactory requestFactory) {
-        if (!(requestFactory instanceof AbstractClientHttpRequestFactoryWrapper)) {
-            return requestFactory;
+        if (requestFactory instanceof AbstractClientHttpRequestFactoryWrapper wrapper) {
+            var delegate = wrapper.getDelegate();
+            while (delegate instanceof AbstractClientHttpRequestFactoryWrapper w) {
+                delegate = w.getDelegate();
+            }
+            return delegate;
         }
-        Field field = ReflectionUtils.findField(AbstractClientHttpRequestFactoryWrapper.class, "requestFactory");
-        Assert.notNull(
-                field,
-                "requestFactory field not found in " + requestFactory.getClass().getName());
-        ReflectionUtils.makeAccessible(field);
-        ClientHttpRequestFactory unwrappedRequestFactory = requestFactory;
-        while (unwrappedRequestFactory instanceof AbstractClientHttpRequestFactoryWrapper) {
-            unwrappedRequestFactory =
-                    (ClientHttpRequestFactory) ReflectionUtils.getField(field, unwrappedRequestFactory);
-        }
-        return unwrappedRequestFactory;
+        return requestFactory;
     }
 
     private static void setTimeoutByConfig(

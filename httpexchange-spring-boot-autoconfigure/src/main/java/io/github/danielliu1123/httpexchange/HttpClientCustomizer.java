@@ -14,10 +14,7 @@ import org.springframework.web.reactive.function.client.WebClient;
  * @see ExchangeClientCreator#buildWebClient(HttpExchangeProperties.Channel)
  * @since 3.2.4
  */
-public sealed interface HttpClientCustomizer<T>
-        permits HttpClientCustomizer.RestClientCustomizer,
-                HttpClientCustomizer.RestTemplateCustomizer,
-                HttpClientCustomizer.WebClientCustomizer {
+public sealed interface HttpClientCustomizer<T> {
 
     /**
      * Customize the client builder with the given config.
