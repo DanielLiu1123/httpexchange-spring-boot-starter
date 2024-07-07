@@ -17,7 +17,7 @@ The main goals of this project:
 - Add dependency:
 
     ```groovy
-    implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.3.0")
+    implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.3.1")
     ```
 
 - Write a classic Spring Boot application:
