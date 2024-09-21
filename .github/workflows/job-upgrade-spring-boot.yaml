@@ -29,7 +29,8 @@ jobs:
             exit 1
           fi
           
-          sed -i "s/springBootVersion=.*/springBootVersion=$latest_version/" gradle.properties
+          sed -i "s/^springBootVersion=.*/springBootVersion=$latest_version/" gradle.properties
+          sed -i "s/^version=.*/version=${latest_version}-SNAPSHOT/" gradle.properties 
           
           echo "current_version=$current_version" >> $GITHUB_ENV
           echo "latest_version=$latest_version" >> $GITHUB_ENV
