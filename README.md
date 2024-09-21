@@ -1,7 +1,5 @@
 # HttpExchange Spring Boot Starter [![Build](https://img.shields.io/github/actions/workflow/status/DanielLiu1123/httpexchange-spring-boot-starter/build.yml?branch=main)](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/actions) [![Maven Central](https://img.shields.io/maven-central/v/io.github.danielliu1123/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/io.github.danielliu1123/httpexchange-spring-boot-starter) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[Documentation](https://danielliu1123.github.io/httpexchange-spring-boot-starter/)
-
 Spring 6 now directly supports creating HTTP clients with the [`@HttpExchange`](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html#rest-http-interface) annotation. 
 This means you can use Spring instead of needing [Spring Cloud OpenFeign](https://github.com/spring-cloud/spring-cloud-openfeign).
 
@@ -17,7 +15,7 @@ The main goals of this project:
 - Add dependency:
 
     ```groovy
-    implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.3.2")
+    implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:<latest>")
     ```
 
 - Write a classic Spring Boot application:
@@ -42,6 +40,12 @@ The main goals of this project:
         }
     }
     ```
+
+Refer to [quick-start](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/tree/main/examples/quick-start).
+
+## Documentation
+
+Go to [Reference Documentation](https://danielliu1123.github.io/httpexchange-spring-boot-starter/docs/intro) for more information.
 
 ## Code of Conduct
 
