@@ -32,18 +32,7 @@ jobs:
             exit 1
           fi
           
-#          git config --global user.name "github-actions[bot]"
-#          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-#          git branch -D upgrade-spring-boot-version-$latest_version || true
-#          git checkout -b upgrade-spring-boot-version-$latest_version
-          
           sed -i "s/springBootVersion=.*/springBootVersion=$latest_version/" gradle.properties
-          
-#          git commit -am "Update Spring Boot version to $latest_version"
-#          
-#          git push --delete origin upgrade-spring-boot-version-$latest_version || true
-#          git push --set-upstream origin upgrade-spring-boot-version-$latest_version
           
           echo "current_version=$current_version" >> $GITHUB_ENV
           echo "latest_version=$latest_version" >> $GITHUB_ENV
@@ -53,6 +42,5 @@ jobs:
         with:
           commit-message: "Update Spring Boot version to ${{ env.latest_version }}"
           title: "Update Spring Boot version to ${{ env.latest_version }}"
-#          base: main
           body: ""
           branch: upgrade-spring-boot-version-${{ env.latest_version }}
