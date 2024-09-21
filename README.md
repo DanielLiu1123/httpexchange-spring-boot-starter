@@ -41,7 +41,7 @@ The main goals of this project:
     }
     ```
 
-Refer to [quick-start](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/tree/main/examples/quick-start).
+Refer to [quick-start](examples/quick-start).
 
 ## Documentation
 
