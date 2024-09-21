@@ -3,9 +3,6 @@ name: Update Spring Boot Version
 on:
   schedule:
     - cron: '0 4 * * *'
-  push:
-    branches:
-      - job-upgrade-spring-boot
 
 permissions:
   contents: write
