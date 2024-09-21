@@ -48,5 +48,6 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           branch: upgrade-spring-boot-version-${{ env.latest_version }}
+          base: main
           title: "Update Spring Boot version to ${{ env.latest_version }}"
           body: ""
