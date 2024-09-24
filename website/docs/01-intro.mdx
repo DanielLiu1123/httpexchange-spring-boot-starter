@@ -7,11 +7,10 @@ import TabItem from '@theme/TabItem';
 
 # Introduction
 
-Spring 6 introduces native support for declarative HTTP clients through
-the [`@HttpExchange`](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html#rest-http-interface)
-annotation.
-The reliance on [Spring Cloud OpenFeign](https://github.com/spring-cloud/spring-cloud-openfeign) can effectively be
-replaced.
+Spring 6 brings native support for declarative HTTP clients with the
+[`@HttpExchange`](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html#rest-http-interface)
+annotation. This new feature allows you to replace the dependency on
+[Spring Cloud OpenFeign](https://github.com/spring-cloud/spring-cloud-openfeign) effectively.
 
 Here is an example:
 
@@ -47,32 +46,24 @@ public class App {
     }
 }
 ```
+## Identified Issues
 
-What is the problem?
+- Lack of Autoconfiguration
 
-- No Autoconfiguration
+    Currently, autoconfiguration is not available for clients, requiring manual instantiation through client beans.
+    This process can become particularly cumbersome when managing numerous clients.
 
-    Autoconfiguration is not available for clients; they must be manually instantiated through client beans.
-    This process can become particularly tedious when dealing with numerous clients.
+    For users familiar with `Spring Cloud OpenFeign`,
+    the `@EnableFeignClients` annotation is highly beneficial,
+    significantly reducing repetitive code.
 
-    For those accustomed to using `Spring Cloud OpenFeign`,
-    the `@EnableFeignClients` annotation proves highly advantageous,
-    significantly reducing the amount of repetitive code.
+- Absence of Support for Spring Web Annotations
 
-- Not support Spring web annotations
-
-    While native support for declarative HTTP clients is a welcome feature, it introduces a new suite of
-    annotations like `@GetExchange`, `@PostExchange`, and so forth. Unfortunately, `HttpServiceProxyFactory` does not support Spring web
-    annotations, such as `@GetMapping` and `@PostMapping`. This lack of support can significantly
-    hinder users accustomed to `Spring Cloud OpenFeign` who are considering a transition to Spring 6.x, making the
-    migration process notably challenging.
-
-The main goals of this project:
-
-- Promote the use of `@HttpExchange` as a neutral annotation to define API interfaces.
-- Provide a `Spring Cloud OpenFeign` like experience for Spring 6 declarative HTTP clients.
-- Support Spring web annotations (`@RequestMapping`, `@GetMapping`).
-- Not introduce external annotations, easy to migrate to other implementations.
+    Although native support for declarative HTTP clients is a valuable addition, it introduces a new set of
+    annotations like `@GetExchange`, `@PostExchange`, etc. Unfortunately, `HttpServiceProxyFactory` does not support Spring web
+    annotations, such as `@GetMapping` and `@PostMapping`. This lack of support can be a significant
+    obstacle for users accustomed to `Spring Cloud OpenFeign` who are considering migrating to Spring 6.x, making the
+    transition process more challenging.
 
 ## Quick Start
 
