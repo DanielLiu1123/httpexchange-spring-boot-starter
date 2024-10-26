@@ -10,8 +10,15 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
+// https://graalvm.github.io/native-build-tools/latest/gradle-plugin.html#configuration-options
 graalvmNative {
     testSupport = false
+    binaries {
+        main {
+            verbose = true
+            sharedLibrary = false
+        }
+    }
 }
 
 compileJava.dependsOn clean
