@@ -21,4 +21,4 @@ jobs:
           cache: 'gradle'
 
       - name: Release Snapshot
-        run: OSSRH_USER=${{ secrets.OSSRH_USER }} OSSRH_PASSWORD=${{ secrets.OSSRH_PASSWORD }} ./gradlew publish
+        run: OSSRH_USER=${{ secrets.OSSRH_USER }} OSSRH_PASSWORD=${{ secrets.OSSRH_PASSWORD }} ./gradlew clean publish --no-daemon --stacktrace

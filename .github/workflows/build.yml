@@ -26,4 +26,4 @@ jobs:
           cache: 'gradle'
 
       - name: Build
-        run: ./gradlew build --no-daemon
+        run: ./gradlew clean build --no-daemon --stacktrace
