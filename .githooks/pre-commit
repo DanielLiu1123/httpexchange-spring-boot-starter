@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
+set -e
+
 ./gradlew spotlessApply > /dev/null
 
 # generate configuration properties docs
 ./gradlew classes generateConfigurationPropertiesDocs > /dev/null
 
 # escape {} in md
-perl -pi -e 's/}/\\}/g' build/configuration-properties.md
+perl -pi -e 's/{/\\{/g' build/configuration-properties.md
 # add sidebar_position
 perl -pi -e 'print "---\nsidebar_position: 40\n---\n\n" if $. == 1' build/configuration-properties.md
 # remove generated time
