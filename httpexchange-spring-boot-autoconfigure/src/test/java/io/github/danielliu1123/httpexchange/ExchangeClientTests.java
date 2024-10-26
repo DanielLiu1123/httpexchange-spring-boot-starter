@@ -33,120 +33,115 @@ class ExchangeClientTests {
 
     @Test
     void testNotEnableHttpExchange() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(NotEnableHttpExchange.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(NotEnableHttpExchange.class)
                 .web(WebApplicationType.NONE)
-                .run();
+                .run()) {
 
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(UserApi.class));
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-                .isThrownBy(() -> ctx.getBean(UserHobbyApi.class));
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(OrderApi.class));
-
-        ctx.close();
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(UserApi.class));
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
+                    .isThrownBy(() -> ctx.getBean(UserHobbyApi.class));
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
+                    .isThrownBy(() -> ctx.getBean(OrderApi.class));
+        }
     }
 
     @Test
     void testDefaultConfig() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(DefaultConfig.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(DefaultConfig.class)
                 .web(WebApplicationType.NONE)
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(PostApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(PostApi.class)).doesNotThrowAnyException();
 
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(UserApi.class));
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(OrderApi.class));
-
-        ctx.close();
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(UserApi.class));
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
+                    .isThrownBy(() -> ctx.getBean(OrderApi.class));
+        }
     }
 
     @Test
     void testBasePackage_whenParentPackage() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(ParentPackage.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(ParentPackage.class)
                 .web(WebApplicationType.NONE)
                 .properties("logging.level.io.github.danielliu1123=DEBUG")
                 .properties("logging.level.org.springframework.web=DEBUG")
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(PostApi.class)).doesNotThrowAnyException();
-        assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
-        assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
-        assertThatCode(() -> ctx.getBean(UserHobbyApi.class)).doesNotThrowAnyException();
-
-        ctx.close();
+            assertThatCode(() -> ctx.getBean(PostApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(UserHobbyApi.class)).doesNotThrowAnyException();
+        }
     }
 
     @Test
     void testBasePackage_whenWildcard() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Wildcard.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Wildcard.class)
                 .web(WebApplicationType.NONE)
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
-        assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
 
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
-
-        ctx.close();
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
+        }
     }
 
     @Test
     void testBasePackage_whenSpecificPackage() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(SpecificPackage.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(SpecificPackage.class)
                 .web(WebApplicationType.NONE)
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
 
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(UserApi.class));
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
-
-        ctx.close();
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(UserApi.class));
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
+        }
     }
 
     @Test
     void testBasePackage_whenSpecificPackageAndClients_thenBasePackageShouldWork(CapturedOutput output) {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(SpecificPackageAndClients.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(SpecificPackageAndClients.class)
                 .web(WebApplicationType.NONE)
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
-        assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
 
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(PostApi.class));
 
-        assertThat(output)
-                .contains(
-                        "Remove @HttpExchanges client 'io.github.danielliu1123.order.api.OrderApi' from 'clients' property; it's already in base packages");
-
-        ctx.close();
+            assertThat(output)
+                    .contains(
+                            "Remove @HttpExchanges client 'io.github.danielliu1123.order.api.OrderApi' from 'clients' property; it's already in base packages");
+        }
     }
 
     @Test
     void testClientsProperty() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(ClientsProperty.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(ClientsProperty.class)
                 .web(WebApplicationType.NONE)
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(PostApi.class)).doesNotThrowAnyException();
-        assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(PostApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
 
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> ctx.getBean(OrderApi.class));
-
-        ctx.close();
+            assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
+                    .isThrownBy(() -> ctx.getBean(OrderApi.class));
+        }
     }
 
     @Test
     void testDefaultMethodBehavior() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(ParentPackage.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(ParentPackage.class)
                 .web(WebApplicationType.NONE)
-                .run();
+                .run()) {
 
-        PostApi postApi = ctx.getBean(PostApi.class);
+            PostApi postApi = ctx.getBean(PostApi.class);
 
-        assertThatCode(postApi::getDeletedPosts).isInstanceOf(UndeclaredThrowableException.class);
-
-        ctx.close();
+            assertThatCode(postApi::getDeletedPosts).isInstanceOf(UndeclaredThrowableException.class);
+        }
     }
 
     @Configuration(proxyBeanMethods = false)

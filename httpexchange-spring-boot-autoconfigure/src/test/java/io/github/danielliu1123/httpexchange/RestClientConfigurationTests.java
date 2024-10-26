@@ -27,16 +27,15 @@ class RestClientConfigurationTests {
     @Test
     void testRestClientCustomizer(CapturedOutput output) {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(Controller.class)
+        try (var ctx = new SpringApplicationBuilder(Controller.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
-                .run();
-        Api api = ctx.getBean(Api.class);
+                .run()) {
+            Api api = ctx.getBean(Api.class);
 
-        assertThatCode(api::get).doesNotThrowAnyException();
-        assertThat(output).contains("Intercepted!");
-
-        ctx.close();
+            assertThatCode(api::get).doesNotThrowAnyException();
+            assertThat(output).contains("Intercepted!");
+        }
     }
 
     interface Api {

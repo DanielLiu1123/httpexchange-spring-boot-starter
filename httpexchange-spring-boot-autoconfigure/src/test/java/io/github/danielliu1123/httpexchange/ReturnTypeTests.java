@@ -28,23 +28,22 @@ class ReturnTypeTests {
     @Test
     void testReturnType() {
         int port = availablePort();
-        var ctx = new SpringApplicationBuilder(Cfg.class)
+        try (var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.base-url=localhost:" + port)
-                .run();
+                .run()) {
 
-        Api api = ctx.getBean(Api.class);
+            Api api = ctx.getBean(Api.class);
 
-        assertThatCode(api::get).doesNotThrowAnyException();
-        assertThatCode(() -> Requester.create().addHeader("error", "true").call(api::get))
-                .isInstanceOf(
-                        HttpClientErrorException.BadRequest
-                                .class); // return void will throw exception, not like Spring Cloud OpenFeign
-        assertThat(api.getBody()).containsEntry("name", "Freeman");
-        assertThat(api.getHeaders()).containsEntry("foo", List.of("bar"));
-        assertThat(api.getResponseEntity().getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ctx.close();
+            assertThatCode(api::get).doesNotThrowAnyException();
+            assertThatCode(() -> Requester.create().addHeader("error", "true").call(api::get))
+                    .isInstanceOf(
+                            HttpClientErrorException.BadRequest
+                                    .class); // return void will throw exception, not like Spring Cloud OpenFeign
+            assertThat(api.getBody()).containsEntry("name", "Freeman");
+            assertThat(api.getHeaders()).containsEntry("foo", List.of("bar"));
+            assertThat(api.getResponseEntity().getStatusCode()).isEqualTo(HttpStatus.OK);
+        }
     }
 
     interface Api {

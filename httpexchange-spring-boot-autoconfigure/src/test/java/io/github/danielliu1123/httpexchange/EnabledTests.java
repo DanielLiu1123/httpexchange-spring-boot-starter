@@ -20,25 +20,23 @@ class EnabledTests {
 
     @Test
     void testDisabled() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(EnabledConfig.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(EnabledConfig.class)
                 .web(WebApplicationType.NONE)
                 .properties(HttpExchangeProperties.PREFIX + ".enabled=false")
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(EnabledApi.class)).isInstanceOf(NoSuchBeanDefinitionException.class);
-
-        ctx.close();
+            assertThatCode(() -> ctx.getBean(EnabledApi.class)).isInstanceOf(NoSuchBeanDefinitionException.class);
+        }
     }
 
     @Test
     void testEnabled() {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(EnabledConfig.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(EnabledConfig.class)
                 .web(WebApplicationType.NONE)
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(EnabledApi.class)).doesNotThrowAnyException();
-
-        ctx.close();
+            assertThatCode(() -> ctx.getBean(EnabledApi.class)).doesNotThrowAnyException();
+        }
     }
 
     interface EnabledApi {

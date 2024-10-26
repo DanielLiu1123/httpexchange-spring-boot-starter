@@ -20,16 +20,15 @@ class ClassesConfigTests {
     @Test
     void clientClassConfig() {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(FooController.class)
+        try (var ctx = new SpringApplicationBuilder(FooController.class)
                 .profiles("ClassesConfigTests")
                 .properties("server.port=" + port)
-                .run();
+                .run()) {
 
-        FooApi fooApi = ctx.getBean(FooApi.class);
+            FooApi fooApi = ctx.getBean(FooApi.class);
 
-        assertThat(fooApi.getById("1")).isEqualTo("foo");
-
-        ctx.close();
+            assertThat(fooApi.getById("1")).isEqualTo("foo");
+        }
     }
 
     @HttpExchange("/foo")

@@ -37,53 +37,52 @@ class DynamicRefreshTests {
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testDynamicRefresh(String clientType) {
         int port = availablePort();
-        var ctx = new SpringApplicationBuilder(Cfg.class)
+        try (var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.base-url=http://localhost:" + port)
                 .properties("http-exchange.client-type=" + clientType)
                 .properties("http-exchange.refresh.enabled=true")
-                .run();
+                .run()) {
 
-        // Two beans: api bean, proxied api bean
-        assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(2);
-        assertThat(ctx.getBeanProvider(BarApi.class)).hasSize(2);
-        assertThat(ctx.getBeanProvider(BazApi.class)).hasSize(2);
+            // Two beans: api bean, proxied api bean
+            assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(2);
+            assertThat(ctx.getBeanProvider(BarApi.class)).hasSize(2);
+            assertThat(ctx.getBeanProvider(BazApi.class)).hasSize(2);
 
-        FooApi fooApi = ctx.getBean(FooApi.class);
-        BarApi barApi = ctx.getBean(BarApi.class);
-        BazApi bazApi = ctx.getBean(BazApi.class);
+            FooApi fooApi = ctx.getBean(FooApi.class);
+            BarApi barApi = ctx.getBean(BarApi.class);
+            BazApi bazApi = ctx.getBean(BazApi.class);
 
-        assertThat(fooApi.get()).isEqualTo("OK");
-        assertThat(barApi.get()).isEqualTo("OK");
-        assertThat(bazApi.get("aaaaa")).isEqualTo("OK");
-        assertThatCode(() -> bazApi.get("aaaaaa"))
-                .isInstanceOf(ConstraintViolationException.class)
-                .hasMessageContaining("size must be between 0 and 5");
+            assertThat(fooApi.get()).isEqualTo("OK");
+            assertThat(barApi.get()).isEqualTo("OK");
+            assertThat(bazApi.get("aaaaa")).isEqualTo("OK");
+            assertThatCode(() -> bazApi.get("aaaaaa"))
+                    .isInstanceOf(ConstraintViolationException.class)
+                    .hasMessageContaining("size must be between 0 and 5");
 
-        assertThat(barApi.withTimeout(100).get()).isEqualTo("OK");
-        assertThatCode(() -> barApi.withTimeout(100).withTimeout(1).get())
-                .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("timed out");
+            assertThat(barApi.withTimeout(100).get()).isEqualTo("OK");
+            assertThatCode(() -> barApi.withTimeout(100).withTimeout(1).get())
+                    .isInstanceOf(ResourceAccessException.class)
+                    .hasMessageContaining("timed out");
 
-        System.setProperty("http-exchange.base-url", "http://localhost:" + port + "/v2");
-        ctx.publishEvent(new RefreshEvent(ctx, null, null));
+            System.setProperty("http-exchange.base-url", "http://localhost:" + port + "/v2");
+            ctx.publishEvent(new RefreshEvent(ctx, null, null));
 
-        // base-url changed
-        assertThat(fooApi.get()).isEqualTo("OK v2");
-        assertThat(barApi.get()).isEqualTo("OK v2");
-        assertThat(barApi.withTimeout(100).get()).isEqualTo("OK v2");
-        assertThatCode(() -> barApi.withTimeout(5).get())
-                .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("timed out");
-        assertThat(bazApi.get("aaaaa")).isEqualTo("OK v2");
-        assertThatCode(() -> bazApi.get("aaaaaa"))
-                .isInstanceOf(ConstraintViolationException.class)
-                .hasMessageContaining("size must be between 0 and 5");
-        assertThatCode(() -> bazApi.withTimeout(5).get("aaaaa"))
-                .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("timed out");
-
-        ctx.close();
+            // base-url changed
+            assertThat(fooApi.get()).isEqualTo("OK v2");
+            assertThat(barApi.get()).isEqualTo("OK v2");
+            assertThat(barApi.withTimeout(100).get()).isEqualTo("OK v2");
+            assertThatCode(() -> barApi.withTimeout(5).get())
+                    .isInstanceOf(ResourceAccessException.class)
+                    .hasMessageContaining("timed out");
+            assertThat(bazApi.get("aaaaa")).isEqualTo("OK v2");
+            assertThatCode(() -> bazApi.get("aaaaaa"))
+                    .isInstanceOf(ConstraintViolationException.class)
+                    .hasMessageContaining("size must be between 0 and 5");
+            assertThatCode(() -> bazApi.withTimeout(5).get("aaaaa"))
+                    .isInstanceOf(ResourceAccessException.class)
+                    .hasMessageContaining("timed out");
+        }
     }
 
     @Configuration(proxyBeanMethods = false)

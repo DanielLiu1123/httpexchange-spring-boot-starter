@@ -24,18 +24,17 @@ class ValidationTests {
     @Test
     void worksFine_whenSpringBootGreater3_0_3() {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(ValidateController.class)
+        try (var ctx = new SpringApplicationBuilder(ValidateController.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
-                .run();
-        ValidateApi api = ctx.getBean(ValidateApi.class);
+                .run()) {
+            ValidateApi api = ctx.getBean(ValidateApi.class);
 
-        assertThatExceptionOfType(ConstraintViolationException.class).isThrownBy(() -> api.validate(0));
-        assertThatCode(() -> api.validate(1)).doesNotThrowAnyException();
-        assertThatCode(() -> api.validate(2)).doesNotThrowAnyException();
-        assertThatExceptionOfType(ConstraintViolationException.class).isThrownBy(() -> api.validate(3));
-
-        ctx.close();
+            assertThatExceptionOfType(ConstraintViolationException.class).isThrownBy(() -> api.validate(0));
+            assertThatCode(() -> api.validate(1)).doesNotThrowAnyException();
+            assertThatCode(() -> api.validate(2)).doesNotThrowAnyException();
+            assertThatExceptionOfType(ConstraintViolationException.class).isThrownBy(() -> api.validate(3));
+        }
     }
 
     @Validated

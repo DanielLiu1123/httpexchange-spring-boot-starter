@@ -20,46 +20,43 @@ class BaseUrlTests {
     @Test
     void testDefaultBaseUrl() {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(BaseUrlController.class)
+        try (var ctx = new SpringApplicationBuilder(BaseUrlController.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
-                .run();
-        BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
+                .run()) {
+            BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
 
-        assertThatCode(() -> api.delay(10)).doesNotThrowAnyException();
-
-        ctx.close();
+            assertThatCode(() -> api.delay(10)).doesNotThrowAnyException();
+        }
     }
 
     @Test
     void testNoBaseUrl() {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(BaseUrlController.class)
+        try (var ctx = new SpringApplicationBuilder(BaseUrlController.class)
                 .properties("server.port=" + port)
-                .run();
-        BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
+                .run()) {
+            BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
 
-        assertThatCode(() -> api.delay(10))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("URI with undefined scheme");
-
-        ctx.close();
+            assertThatCode(() -> api.delay(10))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("URI with undefined scheme");
+        }
     }
 
     @Test
     void testBaseUrl_whenClientHasBaseUrl_thenOverrideDefaultBaseUrl() {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(BaseUrlController.class)
+        try (var ctx = new SpringApplicationBuilder(BaseUrlController.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].base-url=localhost:" + (port + 1))
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].clients[0]=BaseUrlApi")
-                .run();
-        BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
+                .run()) {
+            BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
 
-        assertThatCode(() -> api.delay(10)).isInstanceOf(ResourceAccessException.class);
-
-        ctx.close();
+            assertThatCode(() -> api.delay(10)).isInstanceOf(ResourceAccessException.class);
+        }
     }
 
     @Configuration(proxyBeanMethods = false)

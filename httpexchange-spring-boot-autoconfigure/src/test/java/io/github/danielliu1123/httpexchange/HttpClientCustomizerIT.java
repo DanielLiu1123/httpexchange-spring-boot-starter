@@ -26,18 +26,17 @@ class HttpClientCustomizerIT {
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE", "WEB_CLIENT"})
     void testRestClient(String clientType, CapturedOutput output) {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(RestClientCfg.class)
+        try (var ctx = new SpringApplicationBuilder(RestClientCfg.class)
                 .web(WebApplicationType.SERVLET)
                 .properties("server.port=" + port)
                 .properties("http-exchange.client-type=" + clientType)
                 .properties("http-exchange.base-url=localhost:" + port)
-                .run();
+                .run()) {
 
-        ctx.getBean(Api.class).get();
+            ctx.getBean(Api.class).get();
 
-        assertThat(output).contains("Customizing the " + clientType + "...");
-
-        ctx.close();
+            assertThat(output).contains("Customizing the " + clientType + "...");
+        }
     }
 
     @Configuration(proxyBeanMethods = false)

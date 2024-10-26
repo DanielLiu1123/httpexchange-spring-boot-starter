@@ -32,61 +32,59 @@ class BeanParamArgumentResolverTests {
     @Test
     void convertObjectPropertiesToRequestParameters() {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(FooController.class)
+        try (var ctx = new SpringApplicationBuilder(FooController.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=http://localhost:" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".bean-to-query-enabled=true")
-                .run();
+                .run()) {
 
-        FooApi fooApi = ctx.getBean(FooApi.class);
+            FooApi fooApi = ctx.getBean(FooApi.class);
 
-        assertThat(fooApi).isNotInstanceOf(FooController.class);
+            assertThat(fooApi).isNotInstanceOf(FooController.class);
 
-        assertThat(fooApi.findAll(new Foo("1", "foo1"))).isEqualTo(List.of(new Foo("1", "foo1")));
-        assertThat(fooApi.post(new Foo("1", "foo"))).isEqualTo(new Foo("1", "foo"));
-        assertThat(fooApi.put(new Foo("1", "foo"))).isEqualTo(new Foo("1", "foo"));
-        assertThat(fooApi.delete(new Foo("1", "foo"))).isEqualTo(new Foo("1", "foo"));
+            assertThat(fooApi.findAll(new Foo("1", "foo1"))).isEqualTo(List.of(new Foo("1", "foo1")));
+            assertThat(fooApi.post(new Foo("1", "foo"))).isEqualTo(new Foo("1", "foo"));
+            assertThat(fooApi.put(new Foo("1", "foo"))).isEqualTo(new Foo("1", "foo"));
+            assertThat(fooApi.delete(new Foo("1", "foo"))).isEqualTo(new Foo("1", "foo"));
 
-        assertThat(fooApi.complex(new Foo("1", "foo1"), new Foo("2", "foo2")))
-                .isEqualTo(List.of(new Foo("1", "foo1"), new Foo("2", "foo2")));
+            assertThat(fooApi.complex(new Foo("1", "foo1"), new Foo("2", "foo2")))
+                    .isEqualTo(List.of(new Foo("1", "foo1"), new Foo("2", "foo2")));
 
-        // test @QueryMap
-        assertThat(fooApi.testBeanParam(new Foo("1", "foo1"))).isEqualTo(new Foo("1", "foo1"));
+            // test @QueryMap
+            assertThat(fooApi.testBeanParam(new Foo("1", "foo1"))).isEqualTo(new Foo("1", "foo1"));
 
-        // test @RequestParam for Map
-        assertThat(fooApi.testRequestParamForMap(Map.of("id", "1", "name", "foo1")))
-                .isEqualTo(Map.of("id", "1", "name", "foo1"));
+            // test @RequestParam for Map
+            assertThat(fooApi.testRequestParamForMap(Map.of("id", "1", "name", "foo1")))
+                    .isEqualTo(Map.of("id", "1", "name", "foo1"));
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> fooApi.findAll(Map.of()))
-                .withMessageContaining("No suitable resolver");
+            assertThatExceptionOfType(IllegalStateException.class)
+                    .isThrownBy(() -> fooApi.findAll(Map.of()))
+                    .withMessageContaining("No suitable resolver");
 
-        assertThatCode(() -> fooApi.findAll(new EmptyBean())).doesNotThrowAnyException();
+            assertThatCode(() -> fooApi.findAll(new EmptyBean())).doesNotThrowAnyException();
 
-        Date date = new Date();
-        FooWithArrProp resp = fooApi.testArrProp(new FooWithArrProp(
-                "1", new String[] {"a", "b"}, List.of(1, 2), date, URI.create("http://localhost:8080")));
-        assertThat(resp.id()).isEqualTo("1");
-        assertThat(resp.arr()).isEqualTo(new String[] {"a", "b"});
-        assertThat(resp.list()).isEqualTo(List.of(1, 2));
-        assertThat(resp.date()).isNotNull();
-        assertThat(resp.date()).isNotEqualTo(date); // FIXME(Freeman): known issue, loss milliseconds
-        assertThat(resp.url()).isEqualTo(URI.create("http://localhost:8080"));
-
-        ctx.close();
+            Date date = new Date();
+            FooWithArrProp resp = fooApi.testArrProp(new FooWithArrProp(
+                    "1", new String[] {"a", "b"}, List.of(1, 2), date, URI.create("http://localhost:8080")));
+            assertThat(resp.id()).isEqualTo("1");
+            assertThat(resp.arr()).isEqualTo(new String[] {"a", "b"});
+            assertThat(resp.list()).isEqualTo(List.of(1, 2));
+            assertThat(resp.date()).isNotNull();
+            assertThat(resp.date()).isNotEqualTo(date); // FIXME(Freeman): known issue, loss milliseconds
+            assertThat(resp.url()).isEqualTo(URI.create("http://localhost:8080"));
+        }
     }
 
     @Test
     void hasQueryMapArgumentResolverBean_whenDefaultConfig() {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(FooController.class)
+        try (var ctx = new SpringApplicationBuilder(FooController.class)
                 .web(WebApplicationType.NONE)
                 .properties("server.port=" + port)
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(BeanParamArgumentResolver.class)).doesNotThrowAnyException();
-
-        ctx.close();
+            assertThatCode(() -> ctx.getBean(BeanParamArgumentResolver.class)).doesNotThrowAnyException();
+        }
     }
 
     record Foo(String id, String name) {}

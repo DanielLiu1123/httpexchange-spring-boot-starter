@@ -28,17 +28,16 @@ class RestClientCustomizerIT {
     @Test
     void testAddInterceptor(CapturedOutput output) {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(Cfg.class)
+        try (var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
-                .run();
+                .run()) {
 
-        String resp = ctx.getBean(FooApi.class).get();
+            String resp = ctx.getBean(FooApi.class).get();
 
-        assertThat(resp).isEqualTo("Hello World!");
-        assertThat(output).contains("Response status: 200 OK");
-
-        ctx.close();
+            assertThat(resp).isEqualTo("Hello World!");
+            assertThat(output).contains("Response status: 200 OK");
+        }
     }
 
     @Configuration(proxyBeanMethods = false)

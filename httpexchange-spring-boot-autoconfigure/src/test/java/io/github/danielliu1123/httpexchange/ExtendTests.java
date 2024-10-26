@@ -21,24 +21,23 @@ class ExtendTests {
     @Test
     void userApiFirst_whenHaveControllerAndApiBeans() {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(FooController.class)
+        try (var ctx = new SpringApplicationBuilder(FooController.class)
                 .profiles("ControllerApiTests")
                 .properties("server.port=" + port)
-                .run();
-        assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(2);
+                .run()) {
+            assertThat(ctx.getBeanProvider(FooApi.class)).hasSize(2);
 
-        FooApi fooApi = ctx.getBean(FooApi.class);
-        assertThat(fooApi).isNotInstanceOf(FooController.class);
+            FooApi fooApi = ctx.getBean(FooApi.class);
+            assertThat(fooApi).isNotInstanceOf(FooController.class);
 
-        assertThat(fooApi.getById("1")).isEqualTo(new Foo("1", "foo"));
+            assertThat(fooApi.getById("1")).isEqualTo(new Foo("1", "foo"));
 
-        // Can't pass Object as query param by default,
-        // but we have QueryArgumentResolver to resolve it,
-        // if no QueryArgumentResolver, it will throw IllegalStateException
-        // assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> fooApi.findAll(new Foo("1",
-        // "foo1")));
-
-        ctx.close();
+            // Can't pass Object as query param by default,
+            // but we have QueryArgumentResolver to resolve it,
+            // if no QueryArgumentResolver, it will throw IllegalStateException
+            // assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> fooApi.findAll(new Foo("1",
+            // "foo1")));
+        }
     }
 
     record Foo(String id, String name) {}

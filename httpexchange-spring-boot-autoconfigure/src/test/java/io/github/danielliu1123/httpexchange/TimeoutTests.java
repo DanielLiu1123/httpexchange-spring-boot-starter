@@ -28,19 +28,18 @@ class TimeoutTests {
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testDefaultTimeout_whenExceed(String clientType) {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+        try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".read-timeout=100")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
-                .run();
-        DelayApi api = ctx.getBean(DelayApi.class);
+                .run()) {
+            DelayApi api = ctx.getBean(DelayApi.class);
 
-        assertThatExceptionOfType(ResourceAccessException.class)
-                .isThrownBy(() -> api.delay(200))
-                .withMessageContaining("timed out");
-
-        ctx.close();
+            assertThatExceptionOfType(ResourceAccessException.class)
+                    .isThrownBy(() -> api.delay(200))
+                    .withMessageContaining("timed out");
+        }
     }
 
     @ParameterizedTest

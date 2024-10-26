@@ -28,20 +28,19 @@ class BasePackagesConfigTests {
                 "**.api",
             })
     void testBasePackages(String pkg) {
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Cfg.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Cfg.class)
                 .web(WebApplicationType.NONE)
                 .properties(HttpExchangeProperties.PREFIX + ".base-packages=" + pkg)
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(HttpClientBeanDefinitionRegistry.class))
-                .doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(HttpClientBeanDefinitionRegistry.class))
+                    .doesNotThrowAnyException();
 
-        assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
-        assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
-        assertThatCode(() -> ctx.getBean(UserHobbyApi.class)).doesNotThrowAnyException();
-        assertThatCode(() -> ctx.getBean(DummyApi.class)).isInstanceOf(NoSuchBeanDefinitionException.class);
-
-        ctx.close();
+            assertThatCode(() -> ctx.getBean(OrderApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(UserApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(UserHobbyApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(DummyApi.class)).isInstanceOf(NoSuchBeanDefinitionException.class);
+        }
     }
 
     @Configuration(proxyBeanMethods = false)

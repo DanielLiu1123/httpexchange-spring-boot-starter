@@ -22,18 +22,17 @@ class UrlVariableTests {
     @Test
     void testUrlVariable() {
         int port = PortGetter.availablePort();
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(UrlVariableController.class)
+        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(UrlVariableController.class)
                 .properties("server.port=" + port)
-                .run("--api.url=http://localhost:" + port);
+                .run("--api.url=http://localhost:" + port)) {
 
-        assertThatCode(() -> ctx.getBean(UrlVariableApi.class)).doesNotThrowAnyException();
+            assertThatCode(() -> ctx.getBean(UrlVariableApi.class)).doesNotThrowAnyException();
 
-        UrlVariableApi api = ctx.getBean(UrlVariableApi.class);
-        List<Post> posts = api.getPosts();
+            UrlVariableApi api = ctx.getBean(UrlVariableApi.class);
+            List<Post> posts = api.getPosts();
 
-        assertThat(posts).isEmpty();
-
-        ctx.close();
+            assertThat(posts).isEmpty();
+        }
     }
 
     @HttpExchange("${api.url}")

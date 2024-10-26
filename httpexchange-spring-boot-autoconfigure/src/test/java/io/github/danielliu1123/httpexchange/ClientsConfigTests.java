@@ -29,16 +29,15 @@ class ClientsConfigTests {
             })
     void notThrow_whenClientMatchesCanonicalClassName(String client) {
         int port = PortGetter.availablePort();
-        var ctx = new SpringApplicationBuilder(Cfg.class)
+        try (var ctx = new SpringApplicationBuilder(Cfg.class)
                 .web(WebApplicationType.NONE)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].base-url=${server.port}")
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].clients[0]=" + client)
-                .run();
+                .run()) {
 
-        assertThatCode(() -> ctx.getBean(FooApi.class)).doesNotThrowAnyException();
-
-        ctx.close();
+            assertThatCode(() -> ctx.getBean(FooApi.class)).doesNotThrowAnyException();
+        }
     }
 
     @HttpExchange("/foo")

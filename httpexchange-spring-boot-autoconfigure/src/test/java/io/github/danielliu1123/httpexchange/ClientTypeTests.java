@@ -21,17 +21,16 @@ class ClientTypeTests {
     @ValueSource(strings = {"rest_client", "web_client", "rest_template"})
     void testRestClient(String clientType) {
         int port = availablePort();
-        var ctx = new SpringApplicationBuilder(Cfg.class)
+        try (var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.client-type=" + clientType)
                 .properties("http-exchange.base-url=localhost:" + port)
-                .run();
+                .run()) {
 
-        Api api = ctx.getBean(Api.class);
+            Api api = ctx.getBean(Api.class);
 
-        assertThat(api.hi()).isEqualTo("Hi");
-
-        ctx.close();
+            assertThat(api.hi()).isEqualTo("Hi");
+        }
     }
 
     @Configuration(proxyBeanMethods = false)
