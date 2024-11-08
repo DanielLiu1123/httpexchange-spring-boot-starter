@@ -90,10 +90,10 @@ public class ApiBaseProcessor extends AbstractProcessor {
 
     private ProcessorProperties loadProperties() {
         Properties prop = new Properties();
+        FileObject tempFile = null;
         try {
-            FileObject virtualFile =
-                    processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", DUMMY_FILE_NAME);
-            String classOutputPath = virtualFile.toUri().getPath().replace(DUMMY_FILE_NAME, "");
+            tempFile = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", DUMMY_FILE_NAME);
+            String classOutputPath = tempFile.toUri().getPath().replace(DUMMY_FILE_NAME, "");
             File configFile = Finder.findFile(new File(classOutputPath), CONFIG_FILE_NAME);
             if (configFile != null) {
                 try (InputStream is = configFile.toURI().toURL().openStream()) {
@@ -102,6 +102,10 @@ public class ApiBaseProcessor extends AbstractProcessor {
             }
         } catch (IOException ignored) {
             // No-op
+        } finally {
+            if (tempFile != null) {
+                tempFile.delete();
+            }
         }
         return ProcessorProperties.from(prop);
     }
