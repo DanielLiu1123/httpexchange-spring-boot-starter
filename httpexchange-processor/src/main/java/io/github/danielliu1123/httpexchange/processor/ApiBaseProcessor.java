@@ -203,6 +203,10 @@ public class ApiBaseProcessor extends AbstractProcessor {
             result.addAnnotation(AnnotationSpec.get(annotationMirror));
         }
 
+        // Incremental compilation (Isolating) must have exactly one originating element.
+        // See https://docs.gradle.org/current/userguide/java_plugin.html#isolating_annotation_processors
+        result.originatingElements.add(element);
+
         return result;
     }
 
@@ -241,6 +245,11 @@ public class ApiBaseProcessor extends AbstractProcessor {
         if (element.getModifiers().contains(Modifier.PUBLIC)) {
             result.addModifiers(Modifier.PUBLIC);
         }
+
+        // Incremental compilation (Isolating) must have exactly one originating element.
+        // See https://docs.gradle.org/current/userguide/java_plugin.html#isolating_annotation_processors
+        result.originatingElements.add(element);
+
         return result;
     }
 
