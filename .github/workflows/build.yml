@@ -27,3 +27,22 @@ jobs:
 
       - name: Build
         run: ./gradlew clean build --no-daemon --stacktrace
+
+  native-image-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '17'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+
+      - name: Build native image
+        run: |
+          ./gradlew clean nativeRun --no-daemon --stacktrace
