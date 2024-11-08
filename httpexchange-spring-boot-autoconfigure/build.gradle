@@ -10,6 +10,8 @@ dependencies {
 
     // dynamic refresh configuration for exchange clients
     compileOnly("org.springframework.cloud:spring-cloud-context:${springCloudContextVersion}")
+    // support @SpringQueryMap
+    compileOnly("org.springframework.cloud:spring-cloud-openfeign-core:${springCloudOpenFeignVersion}")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
@@ -21,6 +23,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-validation")
     testImplementation("org.springframework.cloud:spring-cloud-context:${springCloudContextVersion}")
+    testImplementation("org.springframework.cloud:spring-cloud-openfeign-core:${springCloudOpenFeignVersion}")
 }
 
 apply from: "${rootDir}/gradle/deploy.gradle"

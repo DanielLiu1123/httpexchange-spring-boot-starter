@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -53,6 +54,9 @@ class BeanParamArgumentResolverTests {
             // test @QueryMap
             assertThat(fooApi.testBeanParam(new Foo("1", "foo1"))).isEqualTo(new Foo("1", "foo1"));
 
+            // test @SpringQueryMap
+            assertThat(fooApi.testSpringQueryMap(new Foo("1", "foo1"))).isEqualTo(new Foo("1", "foo1"));
+
             // test @RequestParam for Map
             assertThat(fooApi.testRequestParamForMap(Map.of("id", "1", "name", "foo1")))
                     .isEqualTo(Map.of("id", "1", "name", "foo1"));
@@ -72,6 +76,55 @@ class BeanParamArgumentResolverTests {
             assertThat(resp.date()).isNotNull();
             assertThat(resp.date()).isNotEqualTo(date); // FIXME(Freeman): known issue, loss milliseconds
             assertThat(resp.url()).isEqualTo(URI.create("http://localhost:8080"));
+        }
+    }
+
+    @Test
+    void convertObjectPropertiesToRequestParameters_whenBeanToQueryDisabled() {
+        int port = PortGetter.availablePort();
+        try (var ctx = new SpringApplicationBuilder(FooController.class)
+                .properties("server.port=" + port)
+                .properties(HttpExchangeProperties.PREFIX + ".base-url=http://localhost:" + port)
+                .run()) {
+
+            FooApi fooApi = ctx.getBean(FooApi.class);
+
+            assertThat(fooApi).isNotInstanceOf(FooController.class);
+
+            assertThatCode(() -> fooApi.findAll(new Foo("1", "foo1")))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("No suitable resolver");
+            assertThatCode(() -> fooApi.post(new Foo("1", "foo")))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("No suitable resolver");
+            assertThatCode(() -> fooApi.put(new Foo("1", "foo")))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("No suitable resolver");
+            assertThatCode(() -> fooApi.delete(new Foo("1", "foo")))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("No suitable resolver");
+
+            assertThatCode(() -> fooApi.complex(new Foo("1", "foo1"), new Foo("2", "foo2")))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("No suitable resolver");
+
+            assertThatCode(() -> fooApi.findAll(Map.of()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("No suitable resolver");
+
+            assertThatCode(() -> fooApi.findAll(new EmptyBean()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("No suitable resolver");
+
+            // test @QueryMap
+            assertThat(fooApi.testBeanParam(new Foo("1", "foo1"))).isEqualTo(new Foo("1", "foo1"));
+
+            // test @SpringQueryMap
+            assertThat(fooApi.testSpringQueryMap(new Foo("1", "foo1"))).isEqualTo(new Foo("1", "foo1"));
+
+            // test @RequestParam for Map
+            assertThat(fooApi.testRequestParamForMap(Map.of("id", "1", "name", "foo1")))
+                    .isEqualTo(Map.of("id", "1", "name", "foo1"));
         }
     }
 
@@ -123,6 +176,9 @@ class BeanParamArgumentResolverTests {
         @GetExchange("/foo/testBeanParam")
         Foo testBeanParam(@BeanParam Foo foo);
 
+        @GetExchange("/foo/testSpringQueryMap")
+        Foo testSpringQueryMap(@SpringQueryMap Foo foo);
+
         @GetExchange("/foo/testRequestParamForMap")
         Map<String, String> testRequestParamForMap(@RequestParam Map<String, String> map);
     }
@@ -170,6 +226,11 @@ class BeanParamArgumentResolverTests {
 
         @Override
         public Foo testBeanParam(Foo foo) {
+            return foo;
+        }
+
+        @Override
+        public Foo testSpringQueryMap(Foo foo) {
             return foo;
         }
 
