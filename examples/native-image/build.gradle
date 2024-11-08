@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
     implementation(project(":starters:httpexchange-spring-boot-starter"))
-    implementation("org.springframework.cloud:spring-cloud-context:${springCloudContextVersion}")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
@@ -20,5 +19,3 @@ graalvmNative {
         }
     }
 }
-
-compileJava.dependsOn clean

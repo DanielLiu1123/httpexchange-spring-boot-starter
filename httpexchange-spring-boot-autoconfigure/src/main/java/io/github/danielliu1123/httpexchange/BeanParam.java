@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  *
  * @author Freeman
  * @since 3.1.2
+ * @see BeanParamArgumentResolver
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER})

@@ -15,9 +15,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
+import org.springframework.util.ClassUtils;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.service.invoker.HttpRequestValues;
@@ -39,6 +41,9 @@ import org.springframework.web.util.UriBuilderFactory;
 public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, Ordered {
     private static final Logger log = LoggerFactory.getLogger(BeanParamArgumentResolver.class);
 
+    private static final boolean springQueryMapPresent = ClassUtils.isPresent(
+            "org.springframework.cloud.openfeign.SpringQueryMap", BeanParamArgumentResolver.class.getClassLoader());
+
     public static final int ORDER = 0;
 
     private static final String WEB_BIND_ANNOTATION_PACKAGE = RequestParam.class.getPackageName();
@@ -56,7 +61,8 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
             return false;
         }
 
-        if (hasAnnotation(parameter, BeanParam.class)) {
+        if (hasAnnotation(parameter, BeanParam.class)
+                || (springQueryMapPresent && hasAnnotation(parameter, SpringQueryMap.class))) {
             return process(argument, requestValues);
         }
 
