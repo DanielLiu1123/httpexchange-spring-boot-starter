@@ -15,7 +15,12 @@ Generate default implementation for server, you can use the base implementation 
     <Tabs>
         <TabItem value="gradle" label="Gradle">
             ```groovy
-            annotationProcessor("io.github.danielliu1123:httpexchange-processor:latest")
+            dependencies {
+                annotationProcessor("io.github.danielliu1123:httpexchange-processor:latest")
+            }
+            compileJava {
+                options.compilerArgs.add("-AhttpExchangeConfig=${projectDir}/httpexchange-processor.properties")
+            }
             ```
         </TabItem>
         <TabItem value="maven" label="Maven">
@@ -30,6 +35,9 @@ Generate default implementation for server, you can use the base implementation 
                             <version>latest</version>
                         </path>
                     </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-AhttpExchangeConfig=${project.basedir}/httpexchange-processor.properties</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             ```
@@ -123,6 +131,11 @@ Example:
 You can create a `httpexchange-processor.properties` file in any directory and put configuration directives in it.
 These apply to all source files in this directory and all child directories.
 
+:::tip
+Starting from version 3.3.5.1, please use the `httpExchangeConfig` option to specify the configuration file path,
+it's friendly for incremental compilation.
+:::
+
 | Property         | Description                                                                                     | Default Value                              |
 |------------------|-------------------------------------------------------------------------------------------------|--------------------------------------------|
 | enabled          | Enable the processor                                                                            | true                                       |
@@ -147,4 +160,7 @@ outputSubpackage=generated
 The `httpexchange-processor.properties` file should be located in the project or module directory.<br/>
 For Maven projects, it should be placed alongside the `pom.xml` file.<br/>
 For Gradle projects, it should be placed alongside the `build.gradle` file.
+
+When the version >= 3.3.5.1, please use the `httpExchangeConfig` option to specify the configuration file path.
+You can place the configuration file anywhere.
 :::
