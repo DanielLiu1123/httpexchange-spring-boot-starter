@@ -11,8 +11,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Generated;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedOptions;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
@@ -24,6 +26,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import lombok.SneakyThrows;
@@ -37,7 +40,6 @@ import org.springframework.javapoet.TypeSpec;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.util.function.SingletonSupplier;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
@@ -58,20 +60,33 @@ import org.springframework.web.server.ResponseStatusException;
     "org.springframework.web.bind.annotation.DeleteMapping",
     "org.springframework.web.bind.annotation.PatchMapping"
 })
+@SupportedOptions({ApiBaseProcessor.configOptionName})
 public class ApiBaseProcessor extends AbstractProcessor {
 
     private static final String DEFAULT_CLASS_SUFFIX = "Base";
+
+    // Auto-detect the config file
     private static final String CONFIG_FILE_NAME = "httpexchange-processor.properties";
     private static final String DUMMY_FILE_NAME = "httpexchange-processor.tmp";
 
+    // -AhttpExchangeConfig=${projectDir}/httpexchange-processor.properties
+    static final String configOptionName = "httpExchangeConfig";
+
     private static final AntPathMatcher matcher = new AntPathMatcher(".");
 
-    private final SingletonSupplier<ProcessorProperties> properties = SingletonSupplier.of(this::loadProperties);
+    private ProcessorProperties properties;
     private final Set<String> generatedClasses = ConcurrentHashMap.newKeySet();
 
     @Override
+    public synchronized void init(ProcessingEnvironment processingEnv) {
+        super.init(processingEnv);
+
+        properties = loadProperties(processingEnv);
+    }
+
+    @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        if (properties.obtain().enabled()) {
+        if (properties.enabled()) {
             for (Element element : roundEnv.getRootElements()) {
                 if (!isGeneratedClass(element)) {
                     processElement(annotations, element);
@@ -88,7 +103,42 @@ public class ApiBaseProcessor extends AbstractProcessor {
         return false;
     }
 
-    private ProcessorProperties loadProperties() {
+    private static ProcessorProperties loadProperties(ProcessingEnvironment processingEnv) {
+
+        var cfg = processingEnv.getOptions().get(configOptionName);
+
+        var prop = StringUtils.hasText(cfg)
+                ? buildFromConfig(processingEnv, cfg) // incremental compilation friendly
+                : buildFromProcessingEnv(processingEnv);
+
+        return ProcessorProperties.from(prop);
+    }
+
+    private static Properties buildFromConfig(ProcessingEnvironment processingEnv, String cfg) {
+        var result = new Properties();
+        var file = new File(cfg);
+        if (!file.exists()) {
+            processingEnv
+                    .getMessager()
+                    .printMessage(Diagnostic.Kind.WARNING, "[http-exchange processor] Config file not found: " + cfg);
+            return result;
+        }
+        if (file.isDirectory()) {
+            processingEnv
+                    .getMessager()
+                    .printMessage(
+                            Diagnostic.Kind.WARNING, "[http-exchange processor] Config file is a directory: " + cfg);
+            return result;
+        }
+        try (var is = file.toURI().toURL().openStream()) {
+            result.load(is);
+        } catch (IOException ignored) {
+            // No-op
+        }
+        return result;
+    }
+
+    private static Properties buildFromProcessingEnv(ProcessingEnvironment processingEnv) {
         Properties prop = new Properties();
         FileObject tempFile = null;
         try {
@@ -107,7 +157,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
                 tempFile.delete();
             }
         }
-        return ProcessorProperties.from(prop);
+        return prop;
     }
 
     private static boolean isInterface(Element element) {
@@ -133,7 +183,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
     }
 
     private boolean isTargetPackage(Element element) {
-        List<String> targetPatterns = properties.obtain().packages();
+        List<String> targetPatterns = properties.packages();
         if (ObjectUtils.isEmpty(targetPatterns)) {
             return true;
         }
@@ -170,7 +220,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
     }
 
     private TypeSpec.Builder getTypeBuilder(Element element) {
-        return switch (properties.obtain().generatedType()) {
+        return switch (properties.generatedType()) {
             case INTERFACE:
                 yield createInterfaceBuilder(element);
             case ABSTRACT_CLASS:
@@ -258,8 +308,8 @@ public class ApiBaseProcessor extends AbstractProcessor {
     }
 
     private String getGeneratedClassName(Element element) {
-        String suffix = properties.obtain().suffix();
-        String prefix = properties.obtain().prefix();
+        String suffix = properties.suffix();
+        String prefix = properties.prefix();
         boolean hasSuffix = StringUtils.hasText(suffix);
         boolean hasPrefix = StringUtils.hasText(prefix);
         if (!hasPrefix && !hasSuffix) {
@@ -293,7 +343,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
     }
 
     private MethodSpec buildMethodSpec(ExecutableElement methodElement) {
-        return switch (properties.obtain().generatedType()) {
+        return switch (properties.generatedType()) {
             case INTERFACE:
                 yield buildInterfaceMethodSpec(methodElement);
             case ABSTRACT_CLASS:
@@ -390,7 +440,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
                 .getQualifiedName()
                 .toString();
         String outputSubpackage =
-                Optional.ofNullable(properties.obtain().outputSubpackage()).orElse("");
+                Optional.ofNullable(properties.outputSubpackage()).orElse("");
         if (!StringUtils.hasText(originalPackage)) {
             return outputSubpackage;
         }
