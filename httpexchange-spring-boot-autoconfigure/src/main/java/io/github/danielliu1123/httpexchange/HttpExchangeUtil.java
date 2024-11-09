@@ -1,7 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
 import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
-import static org.springframework.beans.factory.support.AbstractBeanDefinition.AUTOWIRE_BY_TYPE;
 import static org.springframework.core.NativeDetector.inNativeImage;
 
 import lombok.experimental.UtilityClass;
@@ -51,7 +50,6 @@ public class HttpExchangeUtil {
 
         beanDefinition.setLazyInit(true);
         beanDefinition.setPrimary(true);
-        beanDefinition.setAutowireMode(AUTOWIRE_BY_TYPE);
 
         String className = clz.getName();
         try {
