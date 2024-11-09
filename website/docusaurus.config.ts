@@ -57,10 +57,10 @@ const config: Config = {
           position: 'left',
           label: 'Docs',
         },
-        {
-          type: 'localeDropdown',
-          position: 'right',
-        },
+        // {
+        //   type: 'localeDropdown',
+        //   position: 'right',
+        // },
         // {
         //   type: 'docsVersionDropdown',
         //   position: 'right',
