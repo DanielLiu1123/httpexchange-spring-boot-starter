@@ -24,6 +24,7 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
 import org.springframework.boot.ssl.SslBundle;
@@ -234,7 +235,10 @@ class ExchangeClientCreator {
         }
 
         // Set default request factory
-        builder = builder.requestFactory(() -> getRequestFactory(channelConfig));
+        // No need to do this when Spring Boot version >= 3.4.0
+        if (isSpringBootVersionLessThan340()) {
+            builder = builder.requestFactory(() -> getRequestFactory(channelConfig));
+        }
 
         if (isLoadBalancerEnabled(channelConfig)) {
             Set<ClientHttpRequestInterceptor> lbInterceptors = new LinkedHashSet<>();
@@ -322,12 +326,14 @@ class ExchangeClientCreator {
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
 
-        ClientHttpRequestFactory requestFactory =
-                unwrapRequestFactoryIfNecessary(getFieldValue(builder, "requestFactory"));
-        if (requestFactory == null) {
-            builder.requestFactory(getRequestFactory(channelConfig));
-        } else {
-            setTimeoutByConfig(requestFactory, channelConfig);
+        if (isSpringBootVersionLessThan340()) {
+            ClientHttpRequestFactory requestFactory =
+                    unwrapRequestFactoryIfNecessary(getFieldValue(builder, "requestFactory"));
+            if (requestFactory == null) {
+                builder.requestFactory(getRequestFactory(channelConfig));
+            } else {
+                setTimeoutByConfig(requestFactory, channelConfig);
+            }
         }
 
         if (isLoadBalancerEnabled(channelConfig)) {
@@ -355,6 +361,10 @@ class ExchangeClientCreator {
                 .forEach(customizer -> customizer.customize(builder, channelConfig));
 
         return builder.build();
+    }
+
+    private static boolean isSpringBootVersionLessThan340() {
+        return SpringBootVersion.getVersion().compareTo("3.4.0") < 0;
     }
 
     private ClientHttpRequestFactory getRequestFactory(HttpExchangeProperties.Channel channelConfig) {

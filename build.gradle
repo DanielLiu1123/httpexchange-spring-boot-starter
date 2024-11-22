@@ -60,7 +60,14 @@ allprojects {
     }
 
     test {
+        systemProperties("spring.cloud.compatibility-verifier.enabled": "false")
         useJUnitPlatform()
+    }
+
+    tasks.configureEach {
+        doFirst {
+            System.setProperty("spring.cloud.compatibility-verifier.enabled", "false")
+        }
     }
 
     apply plugin: "com.diffplug.spotless"
