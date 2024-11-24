@@ -65,11 +65,8 @@ allprojects {
     }
 
     afterEvaluate {
-        def bootRunTask = tasks.findByName("bootRun")
-        if (bootRunTask != null) {
-            bootRunTask.configure {
-                systemProperty("spring.cloud.compatibility-verifier.enabled", "false")
-            }
+        tasks.findByName("bootRun")?.configure {
+            systemProperty("spring.cloud.compatibility-verifier.enabled", "false")
         }
     }
 
