@@ -64,9 +64,12 @@ allprojects {
         useJUnitPlatform()
     }
 
-    tasks.configureEach {
-        doFirst {
-            System.setProperty("spring.cloud.compatibility-verifier.enabled", "false")
+    afterEvaluate {
+        def bootRunTask = tasks.findByName("bootRun")
+        if (bootRunTask != null) {
+            bootRunTask.configure {
+                systemProperty("spring.cloud.compatibility-verifier.enabled", "false")
+            }
         }
     }
 
