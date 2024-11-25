@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
+import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.http.client.AbstractClientHttpRequestFactoryWrapper;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -46,6 +47,9 @@ class HttpExchangeRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
         // See ConfigurerCopier
         reflection.registerType(RestClientBuilderConfigurer.class, MemberCategory.values());
         reflection.registerType(RestTemplateBuilderConfigurer.class, MemberCategory.values());
+
+        // I don't know this is necessary; maybe Spring uses it for reflection?
+        reflection.registerType(ClientHttpRequestFactorySettings.class, MemberCategory.values());
     }
 
     private void registerForClientHttpRequestFactories(ReflectionHints reflection) {
