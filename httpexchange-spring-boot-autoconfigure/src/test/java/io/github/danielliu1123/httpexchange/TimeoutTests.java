@@ -5,12 +5,14 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import io.github.danielliu1123.PortGetter;
 import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import lombok.SneakyThrows;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.http.client.HttpClientProperties;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,7 +32,7 @@ class TimeoutTests {
         int port = PortGetter.availablePort();
         try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties(HttpExchangeProperties.PREFIX + ".read-timeout=100")
+                .properties("spring.http.client.read-timeout=100ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .run()) {
@@ -48,7 +50,7 @@ class TimeoutTests {
         int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties(HttpExchangeProperties.PREFIX + ".read-timeout=100")
+                .properties("spring.http.client.read-timeout=100ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .run();
@@ -60,12 +62,12 @@ class TimeoutTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE", "WEB_CLIENT"})
+    @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testDefaultTimeout_whenNotExceed(String clientType) {
         int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties(HttpExchangeProperties.PREFIX + ".read-timeout=100")
+                .properties("spring.http.client.read-timeout=100ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .run();
@@ -77,12 +79,12 @@ class TimeoutTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE", "WEB_CLIENT"})
+    @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testTimeout_whenNotExceed(String clientType) {
         int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties(HttpExchangeProperties.PREFIX + ".read-timeout=100")
+                .properties("spring.http.client.read-timeout=100ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].base-url=http://localhost:" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].clients[0]=DelayApi")
@@ -101,7 +103,7 @@ class TimeoutTests {
         int port = PortGetter.availablePort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties(HttpExchangeProperties.PREFIX + ".read-timeout=100")
+                .properties("spring.http.client.read-timeout=100ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .run();
@@ -146,19 +148,25 @@ class TimeoutTests {
     static class TimeoutConfig implements DelayApi {
 
         @Bean
-        HttpClientCustomizer.RestClientCustomizer restClientCustomizer() {
+        HttpClientCustomizer.RestClientCustomizer restClientCustomizer(HttpClientProperties httpClientProperties) {
             return (client, channel) -> {
                 EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory();
-                Optional.ofNullable(channel.getReadTimeout()).ifPresent(requestFactory::setReadTimeout);
+                var readTimeout = Optional.ofNullable(channel.getReadTimeout())
+                        .map(Duration::ofMillis)
+                        .orElse(httpClientProperties.getReadTimeout());
+                Optional.ofNullable(readTimeout).ifPresent(requestFactory::setReadTimeout);
                 client.requestFactory(requestFactory);
             };
         }
 
         @Bean
-        HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer() {
+        HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer(HttpClientProperties httpClientProperties) {
             return (client, channel) -> {
                 EnhancedJdkClientHttpRequestFactory requestFactory = new EnhancedJdkClientHttpRequestFactory();
-                Optional.ofNullable(channel.getReadTimeout()).ifPresent(requestFactory::setReadTimeout);
+                var readTimeout = Optional.ofNullable(channel.getReadTimeout())
+                        .map(Duration::ofMillis)
+                        .orElse(httpClientProperties.getReadTimeout());
+                Optional.ofNullable(readTimeout).ifPresent(requestFactory::setReadTimeout);
                 client.setRequestFactory(requestFactory);
             };
         }

@@ -33,8 +33,10 @@ package io.github.danielliu1123.httpexchange;
  * @see RequestConfiguratorBeanPostProcessor
  * @see Requester
  * @since 3.2.1
+ * @deprecated from 3.4.0, too hacky, this will be removed in 3.5.0.
  */
 @SuppressWarnings("unchecked")
+@Deprecated(since = "3.4.0", forRemoval = true)
 public interface RequestConfigurator<T extends RequestConfigurator<T>> {
 
     /**

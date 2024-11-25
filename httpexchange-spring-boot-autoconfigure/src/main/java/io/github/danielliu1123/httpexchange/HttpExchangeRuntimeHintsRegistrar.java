@@ -43,6 +43,7 @@ class HttpExchangeRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
         registerForClientHttpRequestFactories(reflection);
 
+        // See ConfigurerCopier
         reflection.registerType(RestClientBuilderConfigurer.class, MemberCategory.values());
         reflection.registerType(RestTemplateBuilderConfigurer.class, MemberCategory.values());
     }
