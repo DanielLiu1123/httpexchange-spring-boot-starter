@@ -9,6 +9,7 @@ import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
+import jakarta.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Duration;
@@ -24,6 +25,7 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
 import org.springframework.boot.ssl.SslBundle;
@@ -218,11 +220,9 @@ class ExchangeClientCreator {
 
     private RestTemplate buildRestTemplate(HttpExchangeProperties.Channel channelConfig) {
         RestTemplateBuilder builder = new RestTemplateBuilder();
-        RestTemplateBuilderConfigurer configurer =
-                beanFactory.getBeanProvider(RestTemplateBuilderConfigurer.class).getIfUnique();
-        if (configurer != null) {
-            builder = configurer.configure(builder);
-        }
+
+        builder = configureRestTemplateBuilder(builder, channelConfig);
+
         if (StringUtils.hasText(channelConfig.getBaseUrl())) {
             builder = builder.rootUri(getRealBaseUrl(channelConfig));
         }
@@ -234,7 +234,10 @@ class ExchangeClientCreator {
         }
 
         // Set default request factory
-        builder = builder.requestFactory(() -> getRequestFactory(channelConfig));
+        // No need to do this when Spring Boot version >= 3.4.0
+        if (isSpringBootVersionLessThan340()) {
+            builder = builder.requestFactory(() -> getRequestFactory(channelConfig));
+        }
 
         if (isLoadBalancerEnabled(channelConfig)) {
             Set<ClientHttpRequestInterceptor> lbInterceptors = new LinkedHashSet<>();
@@ -255,7 +258,9 @@ class ExchangeClientCreator {
         restTemplate.setInterceptors(
                 restTemplate.getInterceptors().stream().distinct().toList());
 
-        setTimeoutByConfig(restTemplate.getRequestFactory(), channelConfig);
+        if (isSpringBootVersionLessThan340()) {
+            setTimeoutByConfig(restTemplate.getRequestFactory(), channelConfig);
+        }
 
         beanFactory
                 .getBeanProvider(HttpClientCustomizer.RestTemplateCustomizer.class)
@@ -280,10 +285,12 @@ class ExchangeClientCreator {
                     .forEach(header -> builder.defaultHeader(
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
-        if (channelConfig.getReadTimeout() != null) {
-            builder.filter((request, next) ->
-                    next.exchange(request).timeout(Duration.ofMillis(channelConfig.getReadTimeout())));
+
+        var readTimeout = getReadTimeout(channelConfig);
+        if (readTimeout != null) {
+            builder.filter((request, next) -> next.exchange(request).timeout(readTimeout));
         }
+
         if (isLoadBalancerEnabled(channelConfig)) {
             builder.filters(filters -> {
                 Set<ExchangeFilterFunction> allFilters = new LinkedHashSet<>(filters);
@@ -306,12 +313,33 @@ class ExchangeClientCreator {
         return builder.build();
     }
 
+    @Nullable
+    private Duration getReadTimeout(HttpExchangeProperties.Channel channelConfig) {
+        var duration = Optional.ofNullable(channelConfig.getReadTimeout())
+                .map(Duration::ofMillis)
+                .orElse(null);
+        if (duration != null) { // Channel config has higher priority
+            return duration;
+        }
+
+        // less than 3.4.0, there is no org.springframework.boot.http.client.ClientHttpRequestFactorySettings
+        if (isSpringBootVersionLessThan340()) {
+            return null;
+        }
+
+        // Spring Boot 3.4.0+
+        var settings = beanFactory
+                .getBeanProvider(org.springframework.boot.http.client.ClientHttpRequestFactorySettings.class)
+                .getIfUnique(org.springframework.boot.http.client.ClientHttpRequestFactorySettings::defaults);
+        return settings.readTimeout();
+    }
+
     private RestClient buildRestClient(HttpExchangeProperties.Channel channelConfig) {
         // Do not use RestClient.Builder bean here, because we can't know requestFactory is configured by user or not
         RestClient.Builder builder = RestClient.builder();
-        beanFactory
-                .getBeanProvider(RestClientBuilderConfigurer.class)
-                .ifUnique(configurer -> configurer.configure(builder));
+
+        configureRestClientBuilder(builder, channelConfig);
+
         if (StringUtils.hasText(channelConfig.getBaseUrl())) {
             builder.baseUrl(getRealBaseUrl(channelConfig));
         }
@@ -322,12 +350,14 @@ class ExchangeClientCreator {
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
 
-        ClientHttpRequestFactory requestFactory =
-                unwrapRequestFactoryIfNecessary(getFieldValue(builder, "requestFactory"));
-        if (requestFactory == null) {
-            builder.requestFactory(getRequestFactory(channelConfig));
-        } else {
-            setTimeoutByConfig(requestFactory, channelConfig);
+        if (isSpringBootVersionLessThan340()) {
+            ClientHttpRequestFactory requestFactory =
+                    unwrapRequestFactoryIfNecessary(getFieldValue(builder, "requestFactory"));
+            if (requestFactory == null) {
+                builder.requestFactory(getRequestFactory(channelConfig));
+            } else {
+                setTimeoutByConfig(requestFactory, channelConfig);
+            }
         }
 
         if (isLoadBalancerEnabled(channelConfig)) {
@@ -355,6 +385,61 @@ class ExchangeClientCreator {
                 .forEach(customizer -> customizer.customize(builder, channelConfig));
 
         return builder.build();
+    }
+
+    private void configureRestClientBuilder(RestClient.Builder builder, HttpExchangeProperties.Channel channelConfig) {
+        var configurer = beanFactory
+                .getBeanProvider(RestClientBuilderConfigurer.class)
+                .getIfUnique(RestClientBuilderConfigurer::new);
+
+        // requestFactorySettings have been available since Spring Boot 3.4.0
+        var f = ReflectionUtils.findField(RestClientBuilderConfigurer.class, "requestFactorySettings");
+        if (f != null) {
+            var copied = ConfigurerCopier.copyRestClientBuilderConfigurer(configurer);
+            ConfigurerCopier.setRestClientBuilderConfigurerProperty(
+                    copied, "requestFactorySettings", getClientHttpRequestFactorySettings(channelConfig));
+
+            configurer = copied;
+        }
+
+        configurer.configure(builder);
+    }
+
+    private RestTemplateBuilder configureRestTemplateBuilder(
+            RestTemplateBuilder builder, HttpExchangeProperties.Channel channelConfig) {
+        RestTemplateBuilderConfigurer configurer = beanFactory
+                .getBeanProvider(RestTemplateBuilderConfigurer.class)
+                .getIfUnique(RestTemplateBuilderConfigurer::new);
+
+        // requestFactorySettings have been available since Spring Boot 3.4.0
+        var f = ReflectionUtils.findField(RestTemplateBuilderConfigurer.class, "requestFactorySettings");
+        if (f != null) {
+            var copied = ConfigurerCopier.copyRestTemplateBuilderConfigurer(configurer);
+            ConfigurerCopier.setRestTemplateBuilderConfigurerProperty(
+                    copied, "requestFactorySettings", getClientHttpRequestFactorySettings(channelConfig));
+
+            configurer = copied;
+        }
+
+        return configurer.configure(builder);
+    }
+
+    private org.springframework.boot.http.client.ClientHttpRequestFactorySettings getClientHttpRequestFactorySettings(
+            HttpExchangeProperties.Channel channelConfig) {
+        var settings = beanFactory
+                .getBeanProvider(org.springframework.boot.http.client.ClientHttpRequestFactorySettings.class)
+                .getIfUnique(org.springframework.boot.http.client.ClientHttpRequestFactorySettings::defaults);
+        if (channelConfig.getConnectTimeout() != null) {
+            settings = settings.withConnectTimeout(Duration.ofMillis(channelConfig.getConnectTimeout()));
+        }
+        if (channelConfig.getReadTimeout() != null) {
+            settings = settings.withReadTimeout(Duration.ofMillis(channelConfig.getReadTimeout()));
+        }
+        return settings;
+    }
+
+    private static boolean isSpringBootVersionLessThan340() {
+        return SpringBootVersion.getVersion().compareTo("3.4.0") < 0;
     }
 
     private ClientHttpRequestFactory getRequestFactory(HttpExchangeProperties.Channel channelConfig) {

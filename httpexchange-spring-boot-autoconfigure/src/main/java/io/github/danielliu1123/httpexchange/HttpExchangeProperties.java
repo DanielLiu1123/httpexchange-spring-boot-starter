@@ -12,11 +12,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.boot.autoconfigure.http.client.HttpClientProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.service.annotation.HttpExchange;
 
 /**
  * Http Clients Configuration Properties.
@@ -89,25 +93,38 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     private ClientType clientType;
     /**
-     * whether to process {@link org.springframework.web.bind.annotation.RequestMapping} based annotation,
+     * whether to process {@link RequestMapping} based annotation,
      * default {@code false}.
      *
-     * <p color="red"> Recommending to use {@link org.springframework.web.service.annotation.HttpExchange} instead of {@link org.springframework.web.bind.annotation.RequestMapping}.
+     * <p color="red"> Recommending to use {@link HttpExchange} instead of {@link RequestMapping}.
      *
      * @since 3.2.0
+     * @deprecated From Spring Boot 3.4.0, prefer to use {@link HttpExchange} instead of {@link RequestMapping},
+     * this configuration will be removed in the 3.5.0.
      */
+    @Deprecated(since = "3.4.0", forRemoval = true)
     private boolean requestMappingSupportEnabled = false;
     /**
      * Connect timeout duration, specified in milliseconds.
      *
+     * @see HttpClientProperties#connectTimeout
      * @since 3.2.0
+     * @deprecated From Spring Boot 3.4.0, prefer {@code spring.http.client.connect-timeout},
+     * this configuration will override {@code spring.http.client.connect-timeout},
+     * this configuration will be removed in the 3.5.0.
      */
+    @Deprecated(since = "3.4.0", forRemoval = true)
     private Integer connectTimeout;
     /**
      * Read timeout duration, specified in milliseconds.
      *
+     * @see HttpClientProperties#readTimeout
      * @since 3.2.0
+     * @deprecated From Spring Boot 3.4.0, prefer {@code spring.http.client.read-timeout},
+     * this configuration will override {@code spring.http.client.read-timeout},
+     * this configuration will be removed in the 3.5.0.
      */
+    @Deprecated(since = "3.4.0", forRemoval = true)
     private Integer readTimeout;
     /**
      * Whether to check unused configuration, default {@code true}.
@@ -135,6 +152,22 @@ public class HttpExchangeProperties implements InitializingBean {
      * @since 3.2.2
      */
     private boolean httpClientReuseEnabled = true;
+
+    @DeprecatedConfigurationProperty(
+            since = "3.4.0",
+            reason = "Use 'spring.http.client.connect-timeout' instead",
+            replacement = "spring.http.client.connect-timeout")
+    public Integer getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    @DeprecatedConfigurationProperty(
+            since = "3.4.0",
+            reason = "Use 'spring.http.client.read-timeout' instead",
+            replacement = "spring.http.client.read-timeout")
+    public Integer getReadTimeout() {
+        return readTimeout;
+    }
 
     @Data
     @NoArgsConstructor

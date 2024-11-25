@@ -20,7 +20,10 @@ import org.springframework.util.ObjectUtils;
  * @author Freeman
  * @see RequestConfigurator
  * @since 3.2.1
+ * @deprecated from 3.4.0, Spring does not provide a way to set read timeout for a single request, this implementation is too hacky.
+ * This will be removed in 3.5.0.
  */
+@Deprecated(since = "3.4.0", forRemoval = true)
 public final class Requester {
 
     private Requester() {}
