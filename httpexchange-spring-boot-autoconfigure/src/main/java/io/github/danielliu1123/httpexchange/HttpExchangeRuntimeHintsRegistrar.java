@@ -11,11 +11,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.ReflectionHints;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
+import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.http.client.AbstractClientHttpRequestFactoryWrapper;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -39,6 +42,9 @@ class HttpExchangeRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
         reflection.registerType(HttpServiceProxyFactory.Builder.class, DECLARED_FIELDS);
 
         registerForClientHttpRequestFactories(reflection);
+
+        reflection.registerType(RestClientBuilderConfigurer.class, MemberCategory.values());
+        reflection.registerType(RestTemplateBuilderConfigurer.class, MemberCategory.values());
     }
 
     private void registerForClientHttpRequestFactories(ReflectionHints reflection) {
