@@ -99,10 +99,7 @@ public class HttpExchangeProperties implements InitializingBean {
      * <p color="red"> Recommending to use {@link HttpExchange} instead of {@link RequestMapping}.
      *
      * @since 3.2.0
-     * @deprecated From Spring Boot 3.4.0, prefer to use {@link HttpExchange} instead of {@link RequestMapping},
-     * this configuration will be removed in the 3.5.0.
      */
-    @Deprecated(since = "3.4.0", forRemoval = true)
     private boolean requestMappingSupportEnabled = false;
     /**
      * Connect timeout duration, specified in milliseconds.

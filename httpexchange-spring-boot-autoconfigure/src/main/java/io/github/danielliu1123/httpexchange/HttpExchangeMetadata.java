@@ -14,8 +14,10 @@ import lombok.Data;
  * @see HttpExchangeClientHttpRequestInterceptor
  * @see RequestConfiguratorBeanPostProcessor
  * @since 3.2.1
+ * @deprecated This class will be removed in the 3.5.0.
  */
 @Data
+@Deprecated(since = "3.4.0", forRemoval = true)
 public class HttpExchangeMetadata {
 
     private static final ThreadLocal<HttpExchangeMetadata> HOLDER = new InheritableThreadLocal<>();

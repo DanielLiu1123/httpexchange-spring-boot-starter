@@ -27,7 +27,9 @@ import org.springframework.web.service.annotation.HttpExchange;
  *
  * @author Freeman
  * @since 3.2.1
+ * @deprecated This class will be removed in the 3.5.0.
  */
+@Deprecated(since = "3.4.0", forRemoval = true)
 public class RequestConfiguratorBeanPostProcessor implements BeanPostProcessor {
 
     private static final Method WITH_TIMEOUT_METHOD = getWithTimeoutMethod();

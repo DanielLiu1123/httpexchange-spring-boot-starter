@@ -11,7 +11,9 @@ import org.springframework.util.ObjectUtils;
 
 /**
  * @author Freeman
+ * @deprecated This class will be removed in the 3.5.0.
  */
+@Deprecated(since = "3.4.0", forRemoval = true)
 public class HttpExchangeClientHttpRequestInterceptor implements ClientHttpRequestInterceptor {
 
     public static final String REQUEST_TIMEOUT_HEADER = "X-HttpExchange-Request-Timeout";

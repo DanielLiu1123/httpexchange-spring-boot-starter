@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestParam;
  * User get(@BeanParam Map<String, Object> user); // use @RequestParam instead
  * }</pre>
  *
+ * <p> This annotation is equivalent to <a href="https://docs.spring.io/spring-cloud-openfeign/docs/current/reference/html/#feign-querymap-support">SpringQueryMap</a> in Spring Cloud OpenFeign.
+ *
  * @author Freeman
  * @since 3.1.2
  * @see BeanParamArgumentResolver
