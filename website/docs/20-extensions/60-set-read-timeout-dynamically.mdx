@@ -4,6 +4,13 @@ sidebar_position: 60
 
 # Set Read Timeout Dynamically
 
+:::warning
+**Stop using this feature!**
+
+Spring does not support setting a separate read timeout for each request.
+The implementation of this feature is too hacky, **it will be removed** in version 3.5.0.
+:::
+
 Spring does not provide a way to set the read timeout dynamically,
 see [issue](https://github.com/spring-projects/spring-framework/issues/31926).
 This framework provides `EnhancedJdkClientHttpRequestFactory` to support this feature.

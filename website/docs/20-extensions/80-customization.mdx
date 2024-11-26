@@ -28,39 +28,52 @@ http-exchange:
 
 The framework will choose the appropriate adapter according to the http client interface.
 If any method in the interface returns a reactive type (Mono/Flux), then `WebClient` will be used, otherwise `RestClient` will be used.
-**In most cases, there's no need to explicitly specify the client type.**
+**In most cases, you don't need to explicitly specify the client type.**
 
 :::warning
 The `connectTimeout` settings are not supported by `WEB_CLIENT`.
 :::
 
-## Change Http Client Implementation
+## HttpClientCustomizer
 
-For `RestClient` and `RestTemplate`, there are many built-in implementations of [`ClientHttpRequestFactory`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/http/client/ClientHttpRequestFactory.html),
-use `JdkClientHttpRequestFactory` by default.
+Using [`HttpClientCustomizer`](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/blob/main/httpexchange-spring-boot-autoconfigure/src/main/java/io/github/danielliu1123/httpexchange/HttpClientCustomizer.java),
+you can more freely customize the underlying Http client, such as setting up a proxy, setting up SSL, etc.
 
 ```java
-// Change ClientHttpRequestFactory for RestClient
+// For RestClient
 @Bean
-RestClientCustomizer restClientCustomizer() {
-    return builder -> builder.requestFactory(new ReactorNettyClientRequestFactory());
-}
-
-// Change ClientHttpRequestFactory for RestTemplate
-@Bean
-RestTemplateCustomizer restTemplateCustomizer() {
-    return restTemplate -> restTemplate.setRequestFactory(new ReactorNettyClientRequestFactory());
-}
-
-// Change ClientHttpConnector for WebClient
-@Bean
-WebClientCustomizer webClientCustomizer() {
-    return builder -> builder.clientConnector(new ReactorClientHttpConnector());
+HttpClientCustomizer.RestClientCustomizer restClientCustomizer() {
+    return (restClientBuilder, channel) -> {
+        if (Objects.equals(channel.getName(), "whichChannelYouWantToCustomize")) {
+            var httpClient = HttpClient.newBuilder().build();
+            restClientBuilder.requestFactory(new JdkClientHttpRequestFactory(httpClient));
+        }
+    };
 }
 ```
 
-:::note
-Dynamic `read-timeout` for single request is only supported by `EnhancedJdkClientHttpRequestFactory`.
-Spring does not provide an extension point to support this feature,
-see [issue](https://github.com/spring-projects/spring-framework/issues/31926).
-:::
+```java
+// For RestTemplate
+@Bean
+HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer() {
+    return (restTemplate, channel) -> {
+        if (Objects.equals(channel.getName(), "whichChannelYouWantToCustomize")) {
+            var httpClient = HttpClient.newBuilder().build();
+            restTemplate.setRequestFactory(new JdkClientHttpRequestFactory(httpClient));
+        }
+    };
+}
+```
+
+```java
+// For WebClient
+@Bean
+HttpClientCustomizer.WebClientCustomizer webClientCustomizer() {
+    return (webClientBuilder, channel) -> {
+        if (Objects.equals(channel.getName(), "whichChannelYouWantToCustomize")) {
+            var httpClient = HttpClient.newBuilder().build();
+            webClientBuilder.clientConnector(new JdkClientHttpConnector(httpClient));
+        }
+    };
+}
+```

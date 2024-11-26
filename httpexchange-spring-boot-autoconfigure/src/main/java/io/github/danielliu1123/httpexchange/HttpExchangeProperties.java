@@ -84,7 +84,7 @@ public class HttpExchangeProperties implements InitializingBean {
      *     <li> Use {@link ClientType#WEB_CLIENT} if any method in the client returns Reactive type.
      * </ul>
      *
-     * <p> In most cases, there's no need to explicitly specify the client type.
+     * <p> In most cases, you don't need to explicitly specify the client type.
      *
      * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ClientType#WEB_CLIENT}.
      *
