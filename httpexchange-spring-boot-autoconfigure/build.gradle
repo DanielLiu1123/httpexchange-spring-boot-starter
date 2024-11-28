@@ -23,7 +23,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-validation")
     testImplementation("org.springframework.cloud:spring-cloud-context:${springCloudCommonsVersion}")
-    testImplementation("org.springframework.cloud:spring-cloud-openfeign-core:${springCloudOpenFeignVersion}")
+    testImplementation("org.springframework.cloud:spring-cloud-starter-openfeign:${springCloudOpenFeignVersion}")
 }
 
 apply from: "${rootDir}/gradle/deploy.gradle"
