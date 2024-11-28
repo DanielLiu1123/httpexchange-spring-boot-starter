@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
+import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
@@ -83,5 +84,9 @@ class Util {
             }
         }
         return false;
+    }
+
+    public static boolean isSpringBootVersionLessThan340() {
+        return SpringBootVersion.getVersion().compareTo("3.4.0") < 0;
     }
 }

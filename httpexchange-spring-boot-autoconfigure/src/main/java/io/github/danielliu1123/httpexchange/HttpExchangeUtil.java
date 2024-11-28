@@ -50,6 +50,7 @@ public class HttpExchangeUtil {
 
         beanDefinition.setLazyInit(true);
         beanDefinition.setPrimary(true);
+        beanDefinition.setResourceDescription("registered by httpexchange-spring-boot-starter");
 
         String className = clz.getName();
         try {

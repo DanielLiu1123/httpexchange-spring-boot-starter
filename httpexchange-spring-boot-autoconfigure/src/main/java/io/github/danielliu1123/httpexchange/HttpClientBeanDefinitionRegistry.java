@@ -1,7 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
 import jakarta.annotation.Nonnull;
-import java.util.Set;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -15,37 +14,39 @@ import org.springframework.util.ObjectUtils;
  */
 class HttpClientBeanDefinitionRegistry implements BeanDefinitionRegistryPostProcessor, EnvironmentAware {
 
+    static final ScanInfo scanInfo = new ScanInfo();
+
     private Environment environment;
-    private HttpExchangeProperties properties;
-    private HttpClientBeanRegistrar registrar;
+
+    @Override
+    public void setEnvironment(@Nonnull Environment environment) {
+        this.environment = environment;
+    }
 
     @Override
     public void postProcessBeanDefinitionRegistry(@Nonnull BeanDefinitionRegistry registry) throws BeansException {
-        // check if already processed by ExchangeClientsRegistrar
-        if (HttpClientBeanRegistrar.hasRegistered(registry)) {
+        boolean enabled = environment.getProperty(HttpExchangeProperties.PREFIX + ".enabled", Boolean.class, true);
+        if (!enabled) {
             return;
         }
 
-        this.properties = (properties == null ? Util.getProperties(environment) : properties);
-        this.registrar = (registrar == null ? new HttpClientBeanRegistrar(registry, environment) : registrar);
+        var properties = Util.getProperties(environment);
 
-        String[] basePackages = properties.getBasePackages().toArray(String[]::new);
-        if (!ObjectUtils.isEmpty(basePackages)) {
-            registrar.register(basePackages);
+        var registrar = new HttpClientBeanRegistrar(registry, environment);
+
+        scanInfo.basePackages.addAll(properties.getBasePackages());
+        if (!ObjectUtils.isEmpty(scanInfo.basePackages)) {
+            registrar.register(scanInfo.basePackages.toArray(String[]::new));
         }
-        Set<Class<?>> clients = properties.getClients();
-        if (!ObjectUtils.isEmpty(clients)) {
-            registrar.register(clients.toArray(Class<?>[]::new));
+
+        scanInfo.clients.addAll(properties.getClients());
+        if (!ObjectUtils.isEmpty(scanInfo.clients)) {
+            registrar.register(scanInfo.clients.toArray(Class<?>[]::new));
         }
     }
 
     @Override
     public void postProcessBeanFactory(@Nonnull ConfigurableListableBeanFactory beanFactory) throws BeansException {
         // nothing to do
-    }
-
-    @Override
-    public void setEnvironment(@Nonnull Environment environment) {
-        this.environment = environment;
     }
 }

@@ -6,6 +6,7 @@ import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.Client
 import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
 import static io.github.danielliu1123.httpexchange.Util.hasAnnotation;
 import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
+import static io.github.danielliu1123.httpexchange.Util.isSpringBootVersionLessThan340;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
@@ -25,7 +26,6 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
 import org.springframework.boot.ssl.SslBundle;
@@ -436,10 +436,6 @@ class ExchangeClientCreator {
             settings = settings.withReadTimeout(Duration.ofMillis(channelConfig.getReadTimeout()));
         }
         return settings;
-    }
-
-    private static boolean isSpringBootVersionLessThan340() {
-        return SpringBootVersion.getVersion().compareTo("3.4.0") < 0;
     }
 
     private ClientHttpRequestFactory getRequestFactory(HttpExchangeProperties.Channel channelConfig) {
