@@ -21,7 +21,7 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 class ManualRegisterBeanTests {
 
     @Test
-    void useAutoRegisterBean_whenNoManualRegisterBean() {
+    void useAutoRegisteredBean_whenNoManualRegisteredBean() {
         var port = PortGetter.availablePort();
 
         try (var ctx = new SpringApplicationBuilder(Cfg.class)
@@ -38,7 +38,7 @@ class ManualRegisterBeanTests {
     }
 
     @Test
-    void useManualRegisterBean_whenManualRegisterBeanExists() {
+    void useManualRegisteredBean_whenManualRegisteredBeanExists() {
         var port = PortGetter.availablePort();
 
         try (var ctx = new SpringApplicationBuilder(Cfg.class, ApiCfg.class)
