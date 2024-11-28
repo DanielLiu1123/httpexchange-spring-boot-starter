@@ -62,7 +62,7 @@ public class HttpExchangeAutoConfiguration implements DisposableBean {
     @Override
     public void destroy() {
         Cache.clear();
-        HttpClientBeanRegistrar.clear();
+        HttpClientBeanDefinitionRegistry.scanInfo.clear();
     }
 
     // AOT support
