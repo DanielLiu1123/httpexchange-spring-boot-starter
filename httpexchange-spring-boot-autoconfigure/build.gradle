@@ -2,14 +2,14 @@ dependencies {
     api("org.springframework.boot:spring-boot-autoconfigure")
     api("org.springframework:spring-web")
     compileOnly("org.springframework:spring-webflux")
-    compileOnly("org.springframework.cloud:spring-cloud-starter-loadbalancer:${springCloudStarterLoadBalancerVersion}")
+    compileOnly("org.springframework.cloud:spring-cloud-starter-loadbalancer:${springCloudCommonsVersion}")
 
     compileOnly("com.github.spotbugs:spotbugs-annotations:${spotbugsAnnotationsVersion}")
 
     compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
     // dynamic refresh configuration for exchange clients
-    compileOnly("org.springframework.cloud:spring-cloud-context:${springCloudContextVersion}")
+    compileOnly("org.springframework.cloud:spring-cloud-context:${springCloudCommonsVersion}")
     // support @SpringQueryMap
     compileOnly("org.springframework.cloud:spring-cloud-openfeign-core:${springCloudOpenFeignVersion}")
 
@@ -22,7 +22,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-validation")
-    testImplementation("org.springframework.cloud:spring-cloud-context:${springCloudContextVersion}")
+    testImplementation("org.springframework.cloud:spring-cloud-context:${springCloudCommonsVersion}")
     testImplementation("org.springframework.cloud:spring-cloud-openfeign-core:${springCloudOpenFeignVersion}")
 }
 
