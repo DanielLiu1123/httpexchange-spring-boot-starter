@@ -84,7 +84,9 @@ class HttpClientBeanRegistrar {
         initClassNameToBeanDefinitions(bf);
 
         if (hasManualRegistered(className)) {
-            log.debug("HTTP client bean '{}' is already registered, skip auto registration", className);
+            if (log.isDebugEnabled()) {
+                log.debug("HTTP client bean '{}' is already registered, skip auto registration", className);
+            }
             return;
         }
 
