@@ -29,16 +29,15 @@ class HttpClientBeanDefinitionRegistry implements BeanDefinitionRegistryPostProc
         if (!enabled) {
             return;
         }
+        registerBeans(new HttpClientBeanRegistrar(registry, environment));
+    }
 
+    /*private*/ void registerBeans(HttpClientBeanRegistrar registrar) {
         var properties = Util.getProperties(environment);
-
-        var registrar = new HttpClientBeanRegistrar(registry, environment);
-
         scanInfo.basePackages.addAll(properties.getBasePackages());
         if (!ObjectUtils.isEmpty(scanInfo.basePackages)) {
             registrar.register(scanInfo.basePackages.toArray(String[]::new));
         }
-
         scanInfo.clients.addAll(properties.getClients());
         if (!ObjectUtils.isEmpty(scanInfo.clients)) {
             registrar.register(scanInfo.clients.toArray(Class<?>[]::new));
