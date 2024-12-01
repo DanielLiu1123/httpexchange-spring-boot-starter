@@ -62,8 +62,8 @@ class HttpClientBeanRegistrar {
     /**
      * Register HTTP client beans the specified class name.
      *
-     * @param registry  {@link BeanDefinitionRegistry}
-     * @param className class name of HTTP client interface
+     * @param registry {@link BeanDefinitionRegistry}
+     * @param clz      class name
      */
     @SneakyThrows
     private void registerHttpClientBean(BeanDefinitionRegistry registry, Class<?> clz) {
@@ -79,7 +79,7 @@ class HttpClientBeanRegistrar {
             throw new IllegalArgumentException("BeanDefinitionRegistry is not a DefaultListableBeanFactory");
         }
 
-        initClassToBeanDefinitions(bf);
+        addBeanDefinitionCache(bf);
 
         if (hasManualRegistered(registry, clz)) {
             if (log.isDebugEnabled()) {
@@ -91,7 +91,7 @@ class HttpClientBeanRegistrar {
         HttpExchangeUtil.registerHttpExchangeBean(bf, environment, clz);
     }
 
-    private static void initClassToBeanDefinitions(DefaultListableBeanFactory bf) {
+    private static void addBeanDefinitionCache(DefaultListableBeanFactory bf) {
         if (beanDefinitionMap.containsKey(bf)) {
             return;
         }
@@ -107,7 +107,7 @@ class HttpClientBeanRegistrar {
         }
     }
 
-    private boolean hasManualRegistered(BeanDefinitionRegistry registry, Class<?> clz) {
+    private static boolean hasManualRegistered(BeanDefinitionRegistry registry, Class<?> clz) {
         return !beanDefinitionMap
                 .getOrDefault(registry, Map.of())
                 .getOrDefault(clz, List.of())
@@ -147,7 +147,7 @@ class HttpClientBeanRegistrar {
         }
     }
 
-    static void clear(BeanDefinitionRegistry registry) {
-        beanDefinitionMap.remove(registry);
+    static void clearBeanDefinitionCache(BeanDefinitionRegistry registry) {
+        beanDefinitionMap.remove(registry); // Only used in startup phase
     }
 }

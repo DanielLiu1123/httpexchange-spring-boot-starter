@@ -30,7 +30,7 @@ public class HttpExchangeAutoConfiguration implements DisposableBean, Applicatio
     public void onApplicationEvent(ApplicationReadyEvent event) {
         var bf = event.getApplicationContext().getBeanFactory();
         if (bf instanceof BeanDefinitionRegistry bdr) {
-            HttpClientBeanRegistrar.clear(bdr);
+            HttpClientBeanRegistrar.clearBeanDefinitionCache(bdr);
         }
     }
 
