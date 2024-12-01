@@ -1,6 +1,5 @@
 package issues.issue73;
 
-import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
@@ -15,8 +14,8 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 public class HttpClientConfiguration {
 
     @Bean
-    public UserApi userApi(RestClient.Builder builder, WebServerApplicationContext ctx) {
-        builder.baseUrl("http://localhost:" + ctx.getWebServer().getPort());
+    public UserApi userApi(RestClient.Builder builder) {
+        builder.baseUrl("http://localhost:" + Issue73Test.port);
         return HttpServiceProxyFactory.builderFor(RestClientAdapter.create(builder.build()))
                 .build()
                 .createClient(UserApi.class);

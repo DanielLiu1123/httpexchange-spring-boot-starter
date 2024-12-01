@@ -65,75 +65,71 @@ class TimeoutTests {
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testDefaultTimeout_whenNotExceed(String clientType) {
         int port = findAvailableTcpPort();
-        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+        try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties("spring.http.client.read-timeout=100ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
-                .run();
-        DelayApi api = ctx.getBean(DelayApi.class);
+                .run()) {
+            DelayApi api = ctx.getBean(DelayApi.class);
 
-        assertThatCode(() -> api.delay(20)).doesNotThrowAnyException();
-
-        ctx.close();
+            assertThatCode(() -> api.delay(20)).doesNotThrowAnyException();
+        }
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testTimeout_whenNotExceed(String clientType) {
         int port = findAvailableTcpPort();
-        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+        try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties("spring.http.client.read-timeout=100ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].base-url=http://localhost:" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].clients[0]=DelayApi")
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].read-timeout=300")
-                .run();
-        DelayApi api = ctx.getBean(DelayApi.class);
+                .run()) {
+            DelayApi api = ctx.getBean(DelayApi.class);
 
-        assertThatCode(() -> api.delay(200)).doesNotThrowAnyException();
-
-        ctx.close();
+            assertThatCode(() -> api.delay(200)).doesNotThrowAnyException();
+        }
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testTimeoutForSingleRequest_whenUsingBlockingClient_thenWorksFine(String clientType) {
         int port = findAvailableTcpPort();
-        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+        try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties("spring.http.client.read-timeout=100ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
-                .run();
+                .run()) {
 
-        DelayApi api = ctx.getBean(DelayApi.class);
+            DelayApi api = ctx.getBean(DelayApi.class);
 
-        assertThatCode(() -> api.delay(120))
-                .isInstanceOf(ResourceAccessException.class)
-                .hasMessageContaining("timed out");
-        assertThatCode(() -> api.withTimeout(200).delay(120)).doesNotThrowAnyException();
-
-        ctx.close();
+            assertThatCode(() -> api.delay(120))
+                    .isInstanceOf(ResourceAccessException.class)
+                    .hasMessageContaining("timed out");
+            assertThatCode(() -> api.withTimeout(200).delay(120)).doesNotThrowAnyException();
+        }
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"WEB_CLIENT"})
     void testTimeoutForSingleRequest_whenUsingReactiveClient_thenNotWork(String clientType) {
         int port = findAvailableTcpPort();
-        var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
+        try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
-                .run();
+                .run()) {
 
-        DelayApi api = ctx.getBean(DelayApi.class);
+            DelayApi api = ctx.getBean(DelayApi.class);
 
-        assertThatCode(() -> api.delay(120)).doesNotThrowAnyException();
-        assertThatCode(() -> api.withTimeout(50).delay(120)).doesNotThrowAnyException(); // Not work
-
-        ctx.close();
+            assertThatCode(() -> api.delay(120)).doesNotThrowAnyException();
+            assertThatCode(() -> api.withTimeout(50).delay(120)).doesNotThrowAnyException(); // Not work
+        }
     }
 
     interface DelayApi extends RequestConfigurator<DelayApi> {

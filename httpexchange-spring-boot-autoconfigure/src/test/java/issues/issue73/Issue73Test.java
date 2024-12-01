@@ -15,9 +15,10 @@ import org.springframework.web.client.ResourceAccessException;
  */
 class Issue73Test {
 
+    static int port = findAvailableTcpPort();
+
     @Test
     void useManualRegisteredBean_whenManualRegisteredBeanExists() {
-        var port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(CfgWithHttpClientConfiguration.class)
                 .web(WebApplicationType.SERVLET)
                 .properties("server.port=" + port)
@@ -35,9 +36,7 @@ class Issue73Test {
     }
 
     @Test
-    void useAutoRegisteredBean_whenNoManualRegisteredBean() {
-        var port = findAvailableTcpPort();
-
+    void useAutoRegisteredBean_whenNoManualRegisteredBeanAndUsingWrongBaseUrl_thenThrowException() {
         try (var ctx = new SpringApplicationBuilder(CfgWithoutHttpClientConfiguration.class)
                 .web(WebApplicationType.SERVLET)
                 .properties("server.port=" + port)
@@ -51,7 +50,11 @@ class Issue73Test {
                     .isInstanceOf(ResourceAccessException.class)
                     .hasMessageContaining("I/O error");
         }
+    }
 
+    @Test
+    void useAutoRegisteredBean_whenNoManualRegisteredBeanAndUsingCorrectBaseUrl_thenGotCorrectResult() {
+        var port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(CfgWithoutHttpClientConfiguration.class)
                 .web(WebApplicationType.SERVLET)
                 .properties("server.port=" + port)
