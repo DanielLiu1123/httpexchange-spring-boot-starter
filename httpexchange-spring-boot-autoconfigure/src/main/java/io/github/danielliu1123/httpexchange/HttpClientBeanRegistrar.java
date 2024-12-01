@@ -18,7 +18,6 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.ClassMetadata;
@@ -36,7 +35,8 @@ class HttpClientBeanRegistrar {
     private final BeanDefinitionRegistry registry;
     private final Environment environment;
 
-    private Map<String, List<BeanDefinition>> classNameToBeanDefinitions;
+    private static final HashMap<BeanDefinitionRegistry, Map<Class<?>, List<BeanDefinition>>> beanDefinitionMap =
+            new HashMap<>();
 
     public HttpClientBeanRegistrar(BeanDefinitionRegistry registry, Environment environment) {
         this.registry = registry;
@@ -55,22 +55,20 @@ class HttpClientBeanRegistrar {
 
     public void register(Class<?>... clients) {
         for (Class<?> client : clients) {
-            registerHttpClientBean(registry, client.getName());
+            registerHttpClientBean(registry, client);
         }
     }
 
     /**
      * Register HTTP client beans the specified class name.
      *
-     * @param registry  {@link BeanDefinitionRegistry}
-     * @param className class name of HTTP client interface
+     * @param registry {@link BeanDefinitionRegistry}
+     * @param clz      class name
      */
     @SneakyThrows
-    private void registerHttpClientBean(BeanDefinitionRegistry registry, String className) {
-        Class<?> clz = Class.forName(className);
-
+    private void registerHttpClientBean(BeanDefinitionRegistry registry, Class<?> clz) {
         if (!clz.isInterface()) {
-            throw new IllegalArgumentException(className + " is not an interface");
+            throw new IllegalArgumentException(clz.getName() + " is not an interface");
         }
 
         if (!isHttpExchangeInterface(clz)) {
@@ -81,11 +79,11 @@ class HttpClientBeanRegistrar {
             throw new IllegalArgumentException("BeanDefinitionRegistry is not a DefaultListableBeanFactory");
         }
 
-        initClassNameToBeanDefinitions(bf);
+        addBeanDefinitionCache(bf);
 
-        if (hasManualRegistered(className)) {
+        if (hasManualRegistered(registry, clz)) {
             if (log.isDebugEnabled()) {
-                log.debug("HTTP client bean '{}' is already registered, skip auto registration", className);
+                log.debug("HTTP client bean '{}' is already registered, skip auto registration", clz.getName());
             }
             return;
         }
@@ -93,27 +91,27 @@ class HttpClientBeanRegistrar {
         HttpExchangeUtil.registerHttpExchangeBean(bf, environment, clz);
     }
 
-    private void initClassNameToBeanDefinitions(DefaultListableBeanFactory bf) {
-        if (classNameToBeanDefinitions == null) {
-            classNameToBeanDefinitions = new HashMap<>();
-            for (var beanDefinitionName : bf.getBeanDefinitionNames()) {
-                var beanDefinition = bf.getBeanDefinition(beanDefinitionName);
-                var type = beanDefinition.getResolvableType();
-                if (!ResolvableType.NONE.equalsType(type)) {
-                    Class<?> clz = type.resolve();
-                    if (clz != null) {
-                        classNameToBeanDefinitions
-                                .computeIfAbsent(clz.getName(), k -> new ArrayList<>())
-                                .add(beanDefinition);
-                    }
-                }
+    private static void addBeanDefinitionCache(DefaultListableBeanFactory bf) {
+        if (beanDefinitionMap.containsKey(bf)) {
+            return;
+        }
+        for (var beanDefinitionName : bf.getBeanDefinitionNames()) {
+            var beanDefinition = bf.getBeanDefinition(beanDefinitionName);
+            var clz = Util.getBeanDefinitionClass(beanDefinition);
+            if (clz != null) {
+                beanDefinitionMap
+                        .computeIfAbsent(bf, k -> new HashMap<>())
+                        .computeIfAbsent(clz, k -> new ArrayList<>())
+                        .add(beanDefinition);
             }
         }
     }
 
-    private boolean hasManualRegistered(String className) {
-        var bds = classNameToBeanDefinitions.getOrDefault(className, List.of());
-        return !bds.isEmpty();
+    private static boolean hasManualRegistered(BeanDefinitionRegistry registry, Class<?> clz) {
+        return !beanDefinitionMap
+                .getOrDefault(registry, Map.of())
+                .getOrDefault(clz, List.of())
+                .isEmpty();
     }
 
     private static ClassPathScanningCandidateComponentProvider getScanner() {
@@ -141,10 +139,15 @@ class HttpClientBeanRegistrar {
         for (String pkg : basePackages) {
             Set<BeanDefinition> beanDefinitions = scanner.findCandidateComponents(pkg);
             for (BeanDefinition bd : beanDefinitions) {
-                if (bd.getBeanClassName() != null) {
-                    registerHttpClientBean(registry, bd.getBeanClassName());
+                var clz = Util.getBeanDefinitionClass(bd);
+                if (clz != null) {
+                    registerHttpClientBean(registry, clz);
                 }
             }
         }
+    }
+
+    static void clearBeanDefinitionCache(BeanDefinitionRegistry registry) {
+        beanDefinitionMap.remove(registry); // Only used in startup phase
     }
 }

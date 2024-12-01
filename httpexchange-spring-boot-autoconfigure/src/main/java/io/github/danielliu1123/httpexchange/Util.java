@@ -1,13 +1,17 @@
 package io.github.danielliu1123.httpexchange;
 
+import jakarta.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
+import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.util.AntPathMatcher;
@@ -88,5 +92,43 @@ class Util {
 
     public static boolean isSpringBootVersionLessThan340() {
         return SpringBootVersion.getVersion().compareTo("3.4.0") < 0;
+    }
+
+    /**
+     * Get class of bean definition.
+     *
+     * @param beanDefinition bean definition
+     * @return class of bean definition
+     */
+    @Nullable
+    public static Class<?> getBeanDefinitionClass(BeanDefinition beanDefinition) {
+        // try to get class from factory method metadata
+        // @Configuration + @Bean
+        if (beanDefinition instanceof AnnotatedBeanDefinition abd) {
+            var metadata = abd.getFactoryMethodMetadata();
+            if (metadata != null) {
+                // Maybe there has @Conditional on the method,
+                // Class may not present.
+                return forName(metadata.getReturnTypeName());
+            }
+        }
+        var rt = beanDefinition.getResolvableType();
+        if (ResolvableType.NONE.equalsType(rt)) {
+            var beanClassName = beanDefinition.getBeanClassName();
+            if (beanClassName == null) {
+                return null;
+            }
+            return forName(beanClassName);
+        }
+        return rt.resolve();
+    }
+
+    @Nullable
+    public static Class<?> forName(String beanClassName) {
+        try {
+            return Class.forName(beanClassName);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
     }
 }

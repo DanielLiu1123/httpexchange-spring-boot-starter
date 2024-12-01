@@ -3,13 +3,16 @@ package io.github.danielliu1123.httpexchange;
 import static io.github.danielliu1123.httpexchange.Checker.checkUnusedConfig;
 
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.boot.web.client.RestTemplateCustomizer;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 
@@ -21,7 +24,15 @@ import org.springframework.context.annotation.Lazy;
 @AutoConfiguration
 @ConditionalOnProperty(prefix = HttpExchangeProperties.PREFIX, name = "enabled", matchIfMissing = true)
 @EnableConfigurationProperties(HttpExchangeProperties.class)
-public class HttpExchangeAutoConfiguration implements DisposableBean {
+public class HttpExchangeAutoConfiguration implements DisposableBean, ApplicationListener<ApplicationReadyEvent> {
+
+    @Override
+    public void onApplicationEvent(ApplicationReadyEvent event) {
+        var bf = event.getApplicationContext().getBeanFactory();
+        if (bf instanceof BeanDefinitionRegistry bdr) {
+            HttpClientBeanRegistrar.clearBeanDefinitionCache(bdr);
+        }
+    }
 
     @Bean
     static HttpClientBeanDefinitionRegistry httpClientBeanDefinitionRegistry() {
