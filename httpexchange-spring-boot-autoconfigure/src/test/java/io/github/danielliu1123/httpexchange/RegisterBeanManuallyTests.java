@@ -18,7 +18,7 @@ import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
-class ManualRegisterBeanTests {
+class RegisterBeanManuallyTests {
 
     @Test
     void useAutoRegisteredBean_whenNoManualRegisteredBean() {
