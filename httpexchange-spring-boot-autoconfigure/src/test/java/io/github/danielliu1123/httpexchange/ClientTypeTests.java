@@ -1,7 +1,7 @@
 package io.github.danielliu1123.httpexchange;
 
-import static io.github.danielliu1123.PortGetter.availablePort;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -20,7 +20,7 @@ class ClientTypeTests {
     @ParameterizedTest
     @ValueSource(strings = {"rest_client", "web_client", "rest_template"})
     void testRestClient(String clientType) {
-        int port = availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.client-type=" + clientType)

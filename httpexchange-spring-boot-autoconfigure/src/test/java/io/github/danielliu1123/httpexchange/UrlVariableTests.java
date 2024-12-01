@@ -2,8 +2,8 @@ package io.github.danielliu1123.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
-import io.github.danielliu1123.PortGetter;
 import io.github.danielliu1123.Post;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 class UrlVariableTests {
     @Test
     void testUrlVariable() {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(UrlVariableController.class)
                 .properties("server.port=" + port)
                 .run("--api.url=http://localhost:" + port)) {

@@ -2,8 +2,8 @@ package io.github.danielliu1123.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
-import io.github.danielliu1123.PortGetter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -26,7 +26,7 @@ class RestClientConfigurationTests {
 
     @Test
     void testRestClientCustomizer(CapturedOutput output) {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(Controller.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)

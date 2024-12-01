@@ -2,8 +2,8 @@ package io.github.danielliu1123.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
-import io.github.danielliu1123.PortGetter;
 import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import java.time.Duration;
 import java.util.Optional;
@@ -29,7 +29,7 @@ class TimeoutTests {
     @ParameterizedTest
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testDefaultTimeout_whenExceed(String clientType) {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties("spring.http.client.read-timeout=100ms")
@@ -47,7 +47,7 @@ class TimeoutTests {
     @ParameterizedTest
     @ValueSource(strings = {"WEB_CLIENT"})
     void testDefaultTimeout_whenExceedUsingWebClient_thenTimeoutException(String clientType) {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties("spring.http.client.read-timeout=100ms")
@@ -64,7 +64,7 @@ class TimeoutTests {
     @ParameterizedTest
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testDefaultTimeout_whenNotExceed(String clientType) {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties("spring.http.client.read-timeout=100ms")
@@ -81,7 +81,7 @@ class TimeoutTests {
     @ParameterizedTest
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testTimeout_whenNotExceed(String clientType) {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties("spring.http.client.read-timeout=100ms")
@@ -100,7 +100,7 @@ class TimeoutTests {
     @ParameterizedTest
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testTimeoutForSingleRequest_whenUsingBlockingClient_thenWorksFine(String clientType) {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties("spring.http.client.read-timeout=100ms")
@@ -121,7 +121,7 @@ class TimeoutTests {
     @ParameterizedTest
     @ValueSource(strings = {"WEB_CLIENT"})
     void testTimeoutForSingleRequest_whenUsingReactiveClient_thenNotWork(String clientType) {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)

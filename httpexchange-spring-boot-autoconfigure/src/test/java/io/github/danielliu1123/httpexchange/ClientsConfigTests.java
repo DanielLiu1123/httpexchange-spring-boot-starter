@@ -1,8 +1,8 @@
 package io.github.danielliu1123.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
-import io.github.danielliu1123.PortGetter;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.WebApplicationType;
@@ -28,7 +28,7 @@ class ClientsConfigTests {
                 "com.**",
             })
     void notThrow_whenClientMatchesCanonicalClassName(String client) {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(Cfg.class)
                 .web(WebApplicationType.NONE)
                 .properties("server.port=" + port)

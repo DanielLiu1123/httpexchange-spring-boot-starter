@@ -1,8 +1,8 @@
 package io.github.danielliu1123.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
-import io.github.danielliu1123.PortGetter;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -25,7 +25,7 @@ class HttpClientCustomizerIT {
     @ParameterizedTest
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE", "WEB_CLIENT"})
     void testRestClient(String clientType, CapturedOutput output) {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(RestClientCfg.class)
                 .web(WebApplicationType.SERVLET)
                 .properties("server.port=" + port)

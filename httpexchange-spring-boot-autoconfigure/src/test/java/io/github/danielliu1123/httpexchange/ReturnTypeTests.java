@@ -1,8 +1,8 @@
 package io.github.danielliu1123.httpexchange;
 
-import static io.github.danielliu1123.PortGetter.availablePort;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +27,7 @@ class ReturnTypeTests {
 
     @Test
     void testReturnType() {
-        int port = availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.base-url=localhost:" + port)

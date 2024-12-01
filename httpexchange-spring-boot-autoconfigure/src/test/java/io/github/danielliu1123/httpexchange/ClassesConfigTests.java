@@ -1,8 +1,8 @@
 package io.github.danielliu1123.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
-import io.github.danielliu1123.PortGetter;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -19,7 +19,7 @@ class ClassesConfigTests {
 
     @Test
     void clientClassConfig() {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(FooController.class)
                 .profiles("ClassesConfigTests")
                 .properties("server.port=" + port)

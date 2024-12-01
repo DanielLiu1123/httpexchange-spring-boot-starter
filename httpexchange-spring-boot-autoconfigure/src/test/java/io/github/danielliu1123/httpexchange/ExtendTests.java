@@ -1,8 +1,8 @@
 package io.github.danielliu1123.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
-import io.github.danielliu1123.PortGetter;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -20,7 +20,7 @@ class ExtendTests {
 
     @Test
     void userApiFirst_whenHaveControllerAndApiBeans() {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(FooController.class)
                 .profiles("ControllerApiTests")
                 .properties("server.port=" + port)

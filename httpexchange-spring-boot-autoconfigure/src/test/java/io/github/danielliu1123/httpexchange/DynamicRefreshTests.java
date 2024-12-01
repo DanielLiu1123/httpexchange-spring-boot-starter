@@ -1,8 +1,8 @@
 package io.github.danielliu1123.httpexchange;
 
-import static io.github.danielliu1123.PortGetter.availablePort;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
 import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import jakarta.validation.ConstraintViolationException;
@@ -36,7 +36,7 @@ class DynamicRefreshTests {
     @ParameterizedTest
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testDynamicRefresh(String clientType) {
-        int port = availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.base-url=http://localhost:" + port)

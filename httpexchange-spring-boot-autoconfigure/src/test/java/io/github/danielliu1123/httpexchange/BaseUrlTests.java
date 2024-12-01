@@ -1,8 +1,8 @@
 package io.github.danielliu1123.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
-import io.github.danielliu1123.PortGetter;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -19,7 +19,7 @@ class BaseUrlTests {
 
     @Test
     void testDefaultBaseUrl() {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(BaseUrlController.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
@@ -32,7 +32,7 @@ class BaseUrlTests {
 
     @Test
     void testNoBaseUrl() {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(BaseUrlController.class)
                 .properties("server.port=" + port)
                 .run()) {
@@ -46,7 +46,7 @@ class BaseUrlTests {
 
     @Test
     void testBaseUrl_whenClientHasBaseUrl_thenOverrideDefaultBaseUrl() {
-        int port = PortGetter.availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(BaseUrlController.class)
                 .properties("server.port=" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)

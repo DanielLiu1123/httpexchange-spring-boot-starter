@@ -1,11 +1,11 @@
 package io.github.danielliu1123.httpexchange;
 
-import static io.github.danielliu1123.PortGetter.availablePort;
 import static io.github.danielliu1123.httpexchange.HttpExchangeClientHttpRequestInterceptor.REQUEST_TIMEOUT_HEADER;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.PREFIX;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
 import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import java.util.List;
@@ -35,7 +35,7 @@ class RequesterTests {
     @ParameterizedTest
     @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
     void testRequester(String clientType) {
-        int port = availablePort();
+        int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(Cfg.class)
                 .properties("server.port=" + port)
                 .properties(PREFIX + ".read-timeout=100")
