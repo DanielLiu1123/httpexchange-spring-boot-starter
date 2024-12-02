@@ -54,7 +54,6 @@ class Issue73Test {
 
     @Test
     void useAutoRegisteredBean_whenNoManualRegisteredBeanAndUsingCorrectBaseUrl_thenGotCorrectResult() {
-        var port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(CfgWithoutHttpClientConfiguration.class)
                 .web(WebApplicationType.SERVLET)
                 .properties("server.port=" + port)
