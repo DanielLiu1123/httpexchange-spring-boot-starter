@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create post on X
-        working-directory: ./tools/post-on-x
+        working-directory: tools/post-on-x
         run: |
           yarn install
           yarn start
