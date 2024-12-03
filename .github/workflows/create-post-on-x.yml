@@ -1,0 +1,21 @@
+name: Create Post on X
+
+on:
+  push:
+    branches:
+      - feat-x
+
+jobs:
+  create-post-on-X:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create post on X
+        uses: snow-actions/tweet@v1.4.0
+        with:
+          status: |
+            New release of my project is out!
+        env:
+          CONSUMER_API_KEY: ${{ secrets.X_CONSUMER_API_KEY }}
+          CONSUMER_API_SECRET_KEY: ${{ secrets.X_CONSUMER_API_SECRET_KEY }}
+          ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
