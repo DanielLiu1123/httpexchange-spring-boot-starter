@@ -15,10 +15,11 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'yarn'
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: ./tools/post-on-x/yarn.lock
       - name: Create post on X
-        working-directory: tools/post-on-x
+        working-directory: ./tools/post-on-x
         env:
           X_CONSUMER_API_KEY: ${{ secrets.X_CONSUMER_API_KEY }}
           X_CONSUMER_API_SECRET_KEY: ${{ secrets.X_CONSUMER_API_SECRET_KEY }}
