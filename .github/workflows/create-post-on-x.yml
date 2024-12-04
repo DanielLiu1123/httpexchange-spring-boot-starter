@@ -9,6 +9,9 @@ jobs:
   create-post-on-X:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - name: Create post on X
         working-directory: tools/post-on-x
         run: |
