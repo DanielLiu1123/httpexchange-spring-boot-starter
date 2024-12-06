@@ -19,7 +19,7 @@ jobs:
           RELEASE_TAG="${{ github.event.release.tag_name }}"
           REPO_NAME="${{ github.repository }}"
           
-          TWEET_TEXT=$(printf "🎉 New Release for **${REPO_NAME}**!\n\n🚀 Version: ${RELEASE_NAME}\n\n🔗 Check it out: https://github.com/${REPO_NAME}/releases/tag/${RELEASE_TAG}")
+          TWEET_TEXT=$(printf "🎉 New Release for ${REPO_NAME}!\n\n🔖 Version: ${RELEASE_NAME}\n\n🔗 Check it out: https://github.com/${REPO_NAME}/releases/tag/${RELEASE_TAG}")
           
           echo "Tweeting content:"
           echo "${TWEET_TEXT}"
