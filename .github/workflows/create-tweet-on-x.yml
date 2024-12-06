@@ -16,13 +16,13 @@ jobs:
           go install github.com/DanielLiu1123/xcli/cmd/xcli@latest
           
           RELEASE_NAME="${{ github.event.release.name }}"
-          RELEASE_BODY="${{ github.event.release.body }}"
           RELEASE_TAG="${{ github.event.release.tag_name }}"
           REPO_NAME="${{ github.repository }}"
           
-          TWEET_TEXT="🎉 New Release for **${REPO_NAME}**!\n\n🚀 Version: ${RELEASE_NAME}\n🔖 Tag: ${RELEASE_TAG}\n\n${RELEASE_BODY}\n\n🔗 Check it out: https://github.com/${REPO_FULL_NAME}/releases/tag/${RELEASE_TAG}"
+          TWEET_TEXT=$(printf "🎉 New Release for **${REPO_NAME}**!\n\n🚀 Version: ${RELEASE_NAME}\n\n🔗 Check it out: https://github.com/${REPO_NAME}/releases/tag/${RELEASE_TAG}")
           
-          echo "Tweet text: \n${TWEET_TEXT}"
+          echo "Tweeting content:"
+          echo "${TWEET_TEXT}"
           
           COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
           xcli tweet create --text="${TWEET_TEXT}" \
