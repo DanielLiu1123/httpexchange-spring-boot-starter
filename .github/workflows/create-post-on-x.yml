@@ -37,7 +37,7 @@ jobs:
           
           COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
           xcli tweet create --text="${COMMIT_MESSAGE}" \
-                            --api-key="${X_CONSUMER_API_KEY}" \
-                            --api-secret="${X_CONSUMER_API_SECRET_KEY}" \
-                            --access-token="${X_ACCESS_TOKEN}" \
-                            --access-secret="${X_ACCESS_TOKEN_SECRET}"
+                            --api-key="${{ secrets.X_CONSUMER_API_KEY }}" \
+                            --api-secret="${{ secrets.X_CONSUMER_API_SECRET_KEY }}" \
+                            --access-token="${{ secrets.X_ACCESS_TOKEN }}" \
+                            --access-secret="${{ secrets.X_ACCESS_TOKEN_SECRET }}"
