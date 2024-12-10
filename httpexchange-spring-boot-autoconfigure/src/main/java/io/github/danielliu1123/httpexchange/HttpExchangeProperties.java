@@ -227,6 +227,7 @@ public class HttpExchangeProperties implements InitializingBean {
                 readTimeout,
                 loadbalancerEnabled,
                 httpClientReuseEnabled,
+                null,
                 List.of(),
                 List.of());
     }
@@ -289,6 +290,12 @@ public class HttpExchangeProperties implements InitializingBean {
          */
         private Boolean httpClientReuseEnabled;
         /**
+         * SSL configuration.
+         *
+         * @since 3.4.0.3
+         */
+        private Ssl ssl;
+        /**
          * Exchange Clients to apply this channel.
          *
          * <p> e.g. client {@code com.example.client.ExampleClient} can be identified by
@@ -325,6 +332,21 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see <a href="https://github.com/spring-cloud/spring-cloud-release/wiki/AOT-transformations-and-native-image-support#refresh-scope">Refresh Scope</a>
          */
         private boolean enabled = false;
+    }
+
+    /**
+     * @see HttpClientProperties.Ssl
+     */
+    @Data
+    public static class Ssl {
+        /**
+         * SSL bundle to use.
+         *
+         * <p> See configuration properties under {@code spring.ssl}.
+         *
+         * @see org.springframework.boot.autoconfigure.ssl.SslProperties
+         */
+        private String bundle;
     }
 
     public enum ClientType {
