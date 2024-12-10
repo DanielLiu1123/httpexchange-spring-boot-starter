@@ -29,6 +29,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
 import org.springframework.boot.ssl.SslBundle;
+import org.springframework.boot.ssl.SslBundles;
 import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -434,6 +435,15 @@ class ExchangeClientCreator {
         }
         if (channelConfig.getReadTimeout() != null) {
             settings = settings.withReadTimeout(Duration.ofMillis(channelConfig.getReadTimeout()));
+        }
+        if (channelConfig.getSsl() != null) {
+            var sslBundles = beanFactory.getBeanProvider(SslBundles.class).getIfUnique();
+            if (sslBundles != null) {
+                var bundle = sslBundles.getBundle(channelConfig.getSsl().getBundle());
+                if (bundle != null) {
+                    settings = settings.withSslBundle(bundle);
+                }
+            }
         }
         return settings;
     }
