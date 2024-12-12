@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: mtls
+  ssl:
+    bundle:
+      pem:
+        bundle-01:
+          keystore:
+            private-key: |
+                -----BEGIN PRIVATE KEY-----
+                ...
+                -----END PRIVATE KEY-----
+            private-key-password: password
+          truststore:
+            private-key: |
+                -----BEGIN CERTIFICATE-----
+                ...
+                -----END CERTIFICATE-----
+            private-key-password: password
+        bundle-02:
+          keystore:
+            private-key: |
+              -----BEGIN PRIVATE KEY-----
+              ...
+              -----END PRIVATE KEY-----
+            private-key-password: password
+          truststore:
+            private-key: |
+              -----BEGIN CERTIFICATE-----
+              ...
+              -----END CERTIFICATE-----
+            private-key-password: password
+  http:
+    client:
+      ssl:
+        bundle: bundle-01
+
+http-exchange:
+    base-packages: [ com.example.*.api ]
+    channels:
+        - name: user
+          base-url: http://user
+          clients:
+            - com.example.user.api.**
+        - name: order
+          base-url: http://order
+          ssl:
+            bundle: bundle-02
+          clients:
+            - com.example.order.api.**

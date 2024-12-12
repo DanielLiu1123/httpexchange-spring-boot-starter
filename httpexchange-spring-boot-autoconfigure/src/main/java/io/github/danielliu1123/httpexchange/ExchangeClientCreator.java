@@ -287,6 +287,9 @@ class ExchangeClientCreator {
                             header.getKey(), header.getValues().toArray(String[]::new)));
         }
 
+        // ClientHttpConnectorFactory is not public, we can't create http client with custom Bundle here,
+        // so http-exchange.channels[].ssl.bundle is not supported for WebClient
+
         var readTimeout = getReadTimeout(channelConfig);
         if (readTimeout != null) {
             builder.filter((request, next) -> next.exchange(request).timeout(readTimeout));
