@@ -1,10 +1,26 @@
+spring:
+  ssl:
+    bundle:
+      pem:
+        bundle01:
+          keystore:
+            type: pkcs12
+            private-key: |
+              -----BEGIN PRIVATE KEY-----
+              MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDQ7z3z3z3z3z3z
+            private-key-password: password
+  http:
+    client:
+      read-timeout: 10s
+      connect-timeout: 1s
+      ssl:
+        bundle: bundle01
+
 http-exchange:
   base-packages: [com.example.api]
   base-url: http://api-gateway
   bean-to-query-enabled: false
   request-mapping-support-enabled: false
-  connect-timeout: 1000
-  read-timeout: 10000
   headers:
     - key: X-App-Name
       values: ${spring.application.name}
@@ -15,6 +31,8 @@ http-exchange:
   loadbalancer-enabled: true
   channels:
     - base-url: http://order
+      ssl:
+        bundle: bundle01
       headers:
         - key: X-Key
           values: [value1, value2]
