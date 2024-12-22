@@ -10,7 +10,6 @@ rootProject.name = 'httpexchange-spring-boot-starter-root'
 
 include(":examples:loadbalancer")
 include(":examples:minimal")
-include(":examples:mtls")
 include(":examples:native-image")
 include(":examples:processor")
 include(":examples:quick-start")

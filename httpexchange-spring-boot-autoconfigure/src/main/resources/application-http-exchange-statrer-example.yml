@@ -1,21 +1,10 @@
 spring:
-  ssl:
-    bundle:
-      pem:
-        bundle01:
-          keystore:
-            type: pkcs12
-            private-key: |
-              -----BEGIN PRIVATE KEY-----
-              MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDQ7z3z3z3z3z3z
-            private-key-password: password
   http:
     client:
       read-timeout: 10s
       connect-timeout: 1s
       ssl:
-        bundle: bundle01
-
+        bundle: bundle1
 http-exchange:
   base-packages: [com.example.api]
   base-url: http://api-gateway
@@ -32,7 +21,7 @@ http-exchange:
   channels:
     - base-url: http://order
       ssl:
-        bundle: bundle01
+        bundle: bundle2
       headers:
         - key: X-Key
           values: [value1, value2]
