@@ -292,7 +292,7 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * SSL configuration.
          *
-         * @since 3.4.0.3
+         * @since 3.4.1
          */
         private Ssl ssl;
         /**
