@@ -13,6 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.autoconfigure.http.client.HttpClientProperties;
+import org.springframework.boot.autoconfigure.ssl.SslProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.context.properties.PropertyMapper;
@@ -227,6 +228,7 @@ public class HttpExchangeProperties implements InitializingBean {
                 readTimeout,
                 loadbalancerEnabled,
                 httpClientReuseEnabled,
+                null,
                 List.of(),
                 List.of());
     }
@@ -289,6 +291,13 @@ public class HttpExchangeProperties implements InitializingBean {
          */
         private Boolean httpClientReuseEnabled;
         /**
+         * SSL configuration, use {@code spring.http.client.ssl} if not set.
+         *
+         * @since 3.4.1
+         * @see HttpClientProperties#getSsl()
+         */
+        private Ssl ssl;
+        /**
          * Exchange Clients to apply this channel.
          *
          * <p> e.g. client {@code com.example.client.ExampleClient} can be identified by
@@ -325,6 +334,23 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see <a href="https://github.com/spring-cloud/spring-cloud-release/wiki/AOT-transformations-and-native-image-support#refresh-scope">Refresh Scope</a>
          */
         private boolean enabled = false;
+    }
+
+    /**
+     * @see HttpClientProperties.Ssl
+     */
+    @Data
+    public static class Ssl {
+        /**
+         * SSL bundle to use, use {@code spring.http.client.ssl.bundle} if not set.
+         *
+         * <p> Bundle name is configured under {@code spring.ssl} properties.
+         *
+         * <p> See configuration properties under {@code spring.ssl}.
+         *
+         * @see SslProperties#getBundle()
+         */
+        private String bundle;
     }
 
     public enum ClientType {
