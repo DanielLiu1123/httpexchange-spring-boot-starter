@@ -340,7 +340,9 @@ public class HttpExchangeProperties implements InitializingBean {
     @Data
     public static class Ssl {
         /**
-         * SSL bundle to use.
+         * SSL bundle to use, use {@link HttpClientProperties#getSsl()#getBundle()} if not set.
+         *
+         * <p> Bundle name is configured under {@code spring.ssl} properties.
          *
          * <p> See configuration properties under {@code spring.ssl}.
          *
