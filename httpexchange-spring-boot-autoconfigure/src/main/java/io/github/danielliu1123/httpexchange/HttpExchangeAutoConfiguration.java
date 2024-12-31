@@ -55,7 +55,7 @@ public class HttpExchangeAutoConfiguration implements DisposableBean, Applicatio
             prefix = HttpExchangeProperties.PREFIX,
             name = "warn-unused-config-enabled",
             matchIfMissing = true)
-    public CommandLineRunner unusedConfigChecker(HttpExchangeProperties properties) {
+    public CommandLineRunner httpExchangeStarterUnusedConfigChecker(HttpExchangeProperties properties) {
         return args -> checkUnusedConfig(properties);
     }
 
