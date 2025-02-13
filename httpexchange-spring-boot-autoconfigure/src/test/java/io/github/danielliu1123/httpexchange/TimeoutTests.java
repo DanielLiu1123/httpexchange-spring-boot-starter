@@ -1,9 +1,9 @@
 package io.github.danielliu1123.httpexchange;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
+import java.net.http.HttpTimeoutException;
 import java.util.concurrent.TimeoutException;
 import lombok.SneakyThrows;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,9 +33,9 @@ class TimeoutTests {
                 .run()) {
             DelayApi api = ctx.getBean(DelayApi.class);
 
-            assertThatExceptionOfType(ResourceAccessException.class)
-                    .isThrownBy(() -> api.delay(200))
-                    .withMessageContaining("timed out");
+            assertThatCode(() -> api.delay(200))
+                    .hasCauseInstanceOf(HttpTimeoutException.class)
+                    .hasMessageContaining("timed out");
         }
     }
 
