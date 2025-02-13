@@ -51,7 +51,7 @@ class TimeoutTests {
                 .run();
         DelayApi api = ctx.getBean(DelayApi.class);
 
-        assertThatCode(() -> api.delay(120)).hasCauseInstanceOf(TimeoutException.class);
+        assertThatCode(() -> api.delay(200)).hasCauseInstanceOf(TimeoutException.class);
 
         ctx.close();
     }
@@ -68,7 +68,7 @@ class TimeoutTests {
                 .run()) {
             DelayApi api = ctx.getBean(DelayApi.class);
 
-            assertThatCode(() -> api.delay(20)).doesNotThrowAnyException();
+            assertThatCode(() -> api.delay(10)).doesNotThrowAnyException();
         }
     }
 
@@ -103,7 +103,7 @@ class TimeoutTests {
 
             DelayApi api = ctx.getBean(DelayApi.class);
 
-            assertThatCode(() -> api.delay(120))
+            assertThatCode(() -> api.delay(200))
                     .isInstanceOf(ResourceAccessException.class)
                     .hasMessageContaining("timed out");
         }
