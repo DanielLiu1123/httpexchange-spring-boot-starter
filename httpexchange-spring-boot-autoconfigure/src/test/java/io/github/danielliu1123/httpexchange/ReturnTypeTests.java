@@ -35,13 +35,14 @@ class ReturnTypeTests {
 
             Api api = ctx.getBean(Api.class);
 
-            assertThatCode(api::get).doesNotThrowAnyException();
-            assertThatCode(api::get)
+            assertThatCode(() -> api.get(false)).doesNotThrowAnyException();
+            assertThatCode(() -> api.get(true))
                     .isInstanceOf(
                             HttpClientErrorException.BadRequest
                                     .class); // return void will throw exception, not like Spring Cloud OpenFeign
             assertThat(api.getBody()).containsEntry("name", "Freeman");
             assertThat(api.getResponseEntity().getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(api.getHeaders()).containsEntry("foo", List.of("bar"));
         }
     }
 
@@ -56,7 +57,7 @@ class ReturnTypeTests {
         HttpHeaders getHeaders();
 
         @GetExchange("/get")
-        void get();
+        void get(@RequestHeader(value = "error", defaultValue = "false") boolean isError);
     }
 
     @Configuration(proxyBeanMethods = false)
