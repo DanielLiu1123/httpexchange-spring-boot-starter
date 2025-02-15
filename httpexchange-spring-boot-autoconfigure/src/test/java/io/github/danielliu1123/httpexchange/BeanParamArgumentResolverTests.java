@@ -9,12 +9,17 @@ import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.MethodParameter;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,6 +28,7 @@ import org.springframework.web.service.annotation.DeleteExchange;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.PostExchange;
 import org.springframework.web.service.annotation.PutExchange;
+import org.springframework.web.service.invoker.HttpRequestValues;
 
 /**
  * {@link BeanParamArgumentResolver} tester.
@@ -143,6 +149,58 @@ class BeanParamArgumentResolverTests {
 
             assertThatCode(() -> ctx.getBean(BeanParamArgumentResolver.class)).doesNotThrowAnyException();
         }
+    }
+
+    /**
+     * {@link BeanParamArgumentResolver#resolve(Object, MethodParameter, HttpRequestValues.Builder)}
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testBeanParamAnnotation() throws Exception {
+        // Arrange
+        @Data
+        class DummyBean {
+            @BindParam("user_name")
+            String userName;
+
+            @BindParam("")
+            String userEmail;
+
+            Integer userAge;
+        }
+
+        interface DummyApi {
+            @GetExchange("/dummy")
+            void dummyMethod(@BeanParam DummyBean bean);
+        }
+
+        var bean = new DummyBean();
+        bean.setUserName("Freeman");
+        bean.setUserEmail("freeman@xx.com");
+        bean.setUserAge(25);
+
+        var method = DummyApi.class.getDeclaredMethod("dummyMethod", DummyBean.class);
+        var methodParameter = new MethodParameter(method, 0);
+
+        var builder = HttpRequestValues.builder();
+
+        // Act
+        var properties = new HttpExchangeProperties();
+        var resolver = new BeanParamArgumentResolver(properties);
+        boolean resolved = resolver.resolve(bean, methodParameter, builder);
+
+        // Assert
+        assertThat(resolved).isTrue();
+
+        var actual = (MultiValueMap<String, String>) ReflectionTestUtils.getField(builder, "requestParams");
+        var expected = new LinkedMultiValueMap<String, String>() {
+            {
+                add("user_name", "Freeman");
+                add("userEmail", "freeman@xx.com");
+                add("userAge", "25");
+            }
+        };
+        assertThat(actual).isEqualTo(expected);
     }
 
     record Foo(String id, String name) {}
