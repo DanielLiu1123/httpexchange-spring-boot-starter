@@ -15,6 +15,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,6 +61,10 @@ class BeanParamArgumentResolverTests {
             // test @RequestParam for Map
             assertThat(fooApi.testRequestParamForMap(Map.of("id", "1", "name", "foo1")))
                     .isEqualTo(Map.of("id", "1", "name", "foo1"));
+
+            // test @BindParam
+            assertThat(fooApi.testBindParam(new BindParamBean("Freeman", 18)))
+                    .isEqualTo(new BindParamBean("Freeman", 18));
 
             assertThatExceptionOfType(IllegalStateException.class)
                     .isThrownBy(() -> fooApi.findAll(Map.of()))
@@ -146,6 +151,8 @@ class BeanParamArgumentResolverTests {
 
     record EmptyBean() {}
 
+    record BindParamBean(String userName, @BindParam("user_age") Integer userAge) {}
+
     interface FooApi {
         @GetExchange("/foo")
         List<Foo> findAll(Foo foo);
@@ -181,6 +188,9 @@ class BeanParamArgumentResolverTests {
 
         @GetExchange("/foo/testRequestParamForMap")
         Map<String, String> testRequestParamForMap(@RequestParam Map<String, String> map);
+
+        @GetExchange("/foo/testBindParam")
+        BindParamBean testBindParam(@BeanParam BindParamBean param);
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -237,6 +247,11 @@ class BeanParamArgumentResolverTests {
         @Override
         public Map<String, String> testRequestParamForMap(Map<String, String> map) {
             return map;
+        }
+
+        @Override
+        public BindParamBean testBindParam(BindParamBean param) {
+            return param;
         }
     }
 }
