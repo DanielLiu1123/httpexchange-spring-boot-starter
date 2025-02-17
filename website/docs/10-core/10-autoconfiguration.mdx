@@ -4,9 +4,19 @@ sidebar_position: 10
 
 # Autoconfiguration
 
-This section shows how to set up autoconfiguration using two methods.
+This section shows how to set up autoconfiguration.
 
-## Using Annotation
+Steps to autoconfigure `@HttpExchange` clients:
+1. Specify clients.
+2. Configure base-url.
+
+Then you can inject the clients using whatever method you prefer.
+
+## Specify Clients
+
+You can specify clients in two ways.
+
+### Using Annotation
 
 To set up autoconfiguration, just use the [`@EnableExchangeClients`](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/blob/main/httpexchange-spring-boot-autoconfigure/src/main/java/io/github/danielliu1123/httpexchange/EnableExchangeClients.java)
 annotation. This works like `@EnableFeignClients` and tells the framework where to find `HttpExchange` clients, then registering them as beans.
@@ -39,13 +49,13 @@ By default, it looks for clients in the same package as the annotated class.
     @EnableExchangeClients(basePackages = "com.example", clients = {PostApi.class, UserApi.class})
     ```
 
-## Using Configuration
+### Using Configuration
 
 If you don't want to use annotations, you can set up using configuration.
 
 ```yaml title="application.yml"
 http-exchange:
-   base-packages: com.example
+   base-packages: [ com.example ]
    clients:
      - com.foo.PostApi
      - com.bar.UserApi
@@ -54,3 +64,26 @@ http-exchange:
 :::info
 If you use both the annotation and config file, the settings from the annotation are used first.
 :::
+
+## Configure base-url
+
+```yaml title="application.yaml"
+http-exchange:
+  base-packages: [ com.example ]
+  channels:
+    - base-url: http://user
+      read-timeout: 3000
+      clients:
+        - com.example.user.api.*Api # Ant-style pattern
+    - base-url: http://order
+      read-timeout: 5000
+      clients:
+        - com.example.order.api.*Api
+```
+
+## Note
+
+**IDEA can’t recognize the automatically registered client as a Spring Bean without extra plugin support,
+so you might see a red squiggly line, but this _doesn’t affect functionality_.**
+
+See [issues#87](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/87).
