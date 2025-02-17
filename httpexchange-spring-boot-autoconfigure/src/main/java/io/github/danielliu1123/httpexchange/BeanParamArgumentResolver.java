@@ -18,8 +18,12 @@ import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.Ordered;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.service.invoker.HttpRequestValues;
@@ -69,7 +73,7 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
         return properties.isBeanToQueryEnabled() && process(argument, requestValues);
     }
 
-    private static boolean process(Object argument, HttpRequestValues.Builder requestValues) {
+    private boolean process(Object argument, HttpRequestValues.Builder requestValues) {
         /*
         NOTE: why not convert map to request parameters?
 
@@ -117,20 +121,31 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
         return false;
     }
 
-    private static Map<String, Object> getPropertyValueMap(Object source) {
+    private Map<String, Object> getPropertyValueMap(Object source) {
+
+        Class<?> clazz = source.getClass();
+
         Map<String, Object> result = new LinkedHashMap<>();
         try {
             BeanWrapper src = new BeanWrapperImpl(source);
             PropertyDescriptor[] pds = src.getPropertyDescriptors();
             for (PropertyDescriptor pd : pds) {
                 String name = pd.getName();
-                Object srcValue = src.getPropertyValue(name);
+                Object value = src.getPropertyValue(name);
                 if (!Objects.equals(name, "class")) {
-                    result.put(name, srcValue);
+                    var field = ReflectionUtils.findField(clazz, name);
+                    if (field != null) {
+                        var anno = AnnotationUtils.findAnnotation(field, BindParam.class);
+                        var mappedName = anno != null && StringUtils.hasText(anno.value()) ? anno.value() : name;
+                        result.put(mappedName, value);
+                    } else {
+                        // should not happen
+                        result.put(name, value);
+                    }
                 }
             }
         } catch (Exception e) {
-            log.warn("Failed to convert object[{}] to request parameters", source.getClass(), e);
+            log.warn("Failed to convert object[{}] to request parameters", clazz, e);
         }
         return result;
     }
