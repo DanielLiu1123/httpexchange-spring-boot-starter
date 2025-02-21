@@ -1,0 +1,78 @@
+---
+sidebar_position: 45
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Best Practices
+
+This section shows some best practices for using `@HttpExchange`.
+
+## Contract-Driven Development
+
+[`@HttpExchange` also provides server endpoints](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-requestmapping.html#mvc-ann-httpexchange-annotation), just like `@RequestMapping`.
+This makes it ideal for defining interface contracts and supporting contract-driven development.
+
+**Project structure:**
+
+```
+.
+├── order-service
+│   ├── order-api
+│   └── order-server
+└── user-service
+    ├── user-api
+    └── user-server
+```
+
+<Tabs>
+    <TabItem value="order-api" label="order-api">
+        ```java
+        @HttpExchange("/orders")
+        public interface OrderApi {
+            @GetExchange("/by_user/{userId}")
+            List<OrderDTO> getOrdersByUserId(@PathVariable("userId") String userId);
+        }
+        ```
+    </TabItem>
+    <TabItem value="order-server" label="order-server">
+        ```java
+        @RestController
+        public class OrderApiImpl implements OrderApi {
+
+            @Autowired
+            private UserApi userApi;
+
+            @Override
+            public List<OrderDTO> getOrdersByUserId(String userId) {
+                UserDTO user = userApi.getUser(userId);
+                if (user.getStatus() == INACTIVE) {
+                    throw new UserInactiveException();
+                }
+                // Ignore the implementation
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="user-api" label="user-api">
+        ```java
+        @HttpExchange("/users")
+        public interface UserApi {
+            @GetExchange("/{id}")
+            UserDTO getUser(@PathVariable("id") String id);
+        }
+        ```
+    </TabItem>
+    <TabItem value="user-server" label="user-server">
+        ```java
+        @RestController
+        public class UserApiImpl implements UserApi {
+            @Override
+            public UserDTO getById(String id) {
+                // Ignore the implementation
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
