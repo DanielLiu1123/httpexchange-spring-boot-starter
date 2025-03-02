@@ -11,14 +11,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
-
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'corretto'
-          cache: 'gradle'
+        uses: actions/checkout@v4
 
       - name: Check version
         run: |
@@ -32,8 +25,17 @@ jobs:
             exit 1
           fi
 
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Build
-        run: ./gradlew clean build --no-daemon --stacktrace
+        run: ./gradlew build
 
       - name: Decrypt secring.gpg
         run: openssl enc -aes-256-cbc -d -pbkdf2 -in secring.gpg.bin -out secring.gpg -pass pass:${{ secrets.privateKeyPassword }}
