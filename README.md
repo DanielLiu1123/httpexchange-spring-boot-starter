@@ -1,14 +1,14 @@
 # HttpExchange Spring Boot Starter [![Build](https://img.shields.io/github/actions/workflow/status/DanielLiu1123/httpexchange-spring-boot-starter/build.yml?branch=main)](https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/actions) [![Maven Central](https://img.shields.io/maven-central/v/io.github.danielliu1123/httpexchange-spring-boot-starter)](https://search.maven.org/artifact/io.github.danielliu1123/httpexchange-spring-boot-starter) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Spring 6 now natively supports creating HTTP clients using the [`@HttpExchange`](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html#rest-http-interface) annotation. 
-This eliminates the need for [Spring Cloud OpenFeign](https://github.com/spring-cloud/spring-cloud-openfeign).
+Spring 6 now supports creating HTTP clients using the [`@HttpExchange`](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html#rest-http-interface) annotation.
+This removes the need for [Spring Cloud OpenFeign](https://github.com/spring-cloud/spring-cloud-openfeign).
 
-The primary goals of this project are:
+The main goals of this project are:
 
-- Advocate for the use of `@HttpExchange` as a standard annotation for defining API interfaces.
-- Deliver a `Spring Cloud OpenFeign`-like experience for Spring 6 declarative HTTP clients.
-- Ensure compatibility with Spring web annotations such as (`@RequestMapping`, `@GetMapping`).
-- Avoid introducing external annotations, making it easy to migrate to other implementations.
+- To promote `@HttpExchange` as the standard for defining API interfaces.
+- To offer an experience similar to `Spring Cloud OpenFeign` for declarative HTTP clients.
+- To ensure compatibility with Spring web annotations like `@RequestMapping` and `@GetMapping`.
+- To avoid external annotations, making it easier to switch to other implementations.
 
 ## Quick Start
 
