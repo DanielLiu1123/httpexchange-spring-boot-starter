@@ -4,7 +4,6 @@ import static org.springframework.aot.hint.MemberCategory.DECLARED_FIELDS;
 import static org.springframework.aot.hint.MemberCategory.INVOKE_DECLARED_CONSTRUCTORS;
 import static org.springframework.aot.hint.MemberCategory.INVOKE_DECLARED_METHODS;
 
-import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
@@ -54,7 +53,6 @@ class HttpExchangeRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
     private void registerForClientHttpRequestFactories(ReflectionHints reflection) {
         Set<Class<?>> factoryClasses = new HashSet<>(listFactory());
-        factoryClasses.add(EnhancedJdkClientHttpRequestFactory.class);
         factoryClasses.forEach(type ->
                 reflection.registerType(type, INVOKE_DECLARED_METHODS, DECLARED_FIELDS, INVOKE_DECLARED_CONSTRUCTORS));
     }
