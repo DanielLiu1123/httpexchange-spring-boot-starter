@@ -61,9 +61,12 @@ class HttpExchangeAutoConfigurationTest {
             // Mock Spring Boot version to be 3.4.9
             mockedStatic.when(SpringBootVersion::getVersion).thenReturn("3.4.9");
 
-            // Should throw exception when version is less than 3.5.0
+            // Create an instance of HttpExchangeAutoConfiguration
+            HttpExchangeAutoConfiguration config = new HttpExchangeAutoConfiguration();
+
+            // Should throw exception when afterPropertiesSet is called
             assertThatExceptionOfType(SpringBootVersionIncompatibleException.class)
-                    .isThrownBy(HttpExchangeAutoConfiguration::new)
+                    .isThrownBy(config::afterPropertiesSet)
                     .withMessage(
                             "Spring Boot version 3.4.9 is incompatible with httpexchange-spring-boot-starter. Minimum required version is 3.5.0")
                     .satisfies(ex -> {
@@ -79,8 +82,9 @@ class HttpExchangeAutoConfigurationTest {
             // Mock Spring Boot version to be 3.5.0
             mockedStatic.when(SpringBootVersion::getVersion).thenReturn("3.5.0");
 
-            // Should not throw exception when version is 3.5.0
-            assertThatCode(HttpExchangeAutoConfiguration::new).doesNotThrowAnyException();
+            // Create an instance and call afterPropertiesSet
+            HttpExchangeAutoConfiguration config = new HttpExchangeAutoConfiguration();
+            assertThatCode(config::afterPropertiesSet).doesNotThrowAnyException();
         }
     }
 
@@ -90,8 +94,9 @@ class HttpExchangeAutoConfigurationTest {
             // Mock Spring Boot version to be 3.6.0
             mockedStatic.when(SpringBootVersion::getVersion).thenReturn("3.6.0");
 
-            // Should not throw exception when version is greater than 3.5.0
-            assertThatCode(HttpExchangeAutoConfiguration::new).doesNotThrowAnyException();
+            // Create an instance and call afterPropertiesSet
+            HttpExchangeAutoConfiguration config = new HttpExchangeAutoConfiguration();
+            assertThatCode(config::afterPropertiesSet).doesNotThrowAnyException();
         }
     }
 }

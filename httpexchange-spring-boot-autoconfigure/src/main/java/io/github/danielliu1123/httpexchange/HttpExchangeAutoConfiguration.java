@@ -3,6 +3,7 @@ package io.github.danielliu1123.httpexchange;
 import static io.github.danielliu1123.httpexchange.Checker.checkUnusedConfig;
 
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringBootVersion;
@@ -22,9 +23,11 @@ import org.springframework.context.annotation.Bean;
 @AutoConfiguration
 @ConditionalOnProperty(prefix = HttpExchangeProperties.PREFIX, name = "enabled", matchIfMissing = true)
 @EnableConfigurationProperties(HttpExchangeProperties.class)
-public class HttpExchangeAutoConfiguration implements DisposableBean, ApplicationListener<ApplicationReadyEvent> {
+public class HttpExchangeAutoConfiguration
+        implements DisposableBean, InitializingBean, ApplicationListener<ApplicationReadyEvent> {
 
-    public HttpExchangeAutoConfiguration() {
+    @Override
+    public void afterPropertiesSet() throws Exception {
         checkVersion();
     }
 
