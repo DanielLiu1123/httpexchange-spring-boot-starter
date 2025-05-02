@@ -31,6 +31,9 @@ allprojects {
     }
 
     java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
         registerFeature("optionalSupport") {
             usingSourceSet(sourceSets.optionalSupport)
         }
