@@ -1,16 +1,13 @@
 package io.github.danielliu1123.httpexchange;
 
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_CLIENT;
-import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_TEMPLATE;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.WEB_CLIENT;
 import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
 import static io.github.danielliu1123.httpexchange.Util.hasAnnotation;
 import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
-import static io.github.danielliu1123.httpexchange.Util.isSpringBootVersionLessThan340;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
-import jakarta.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Duration;
@@ -26,13 +23,12 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.boot.autoconfigure.web.client.RestClientBuilderConfigurer;
-import org.springframework.boot.autoconfigure.web.client.RestTemplateBuilderConfigurer;
-import org.springframework.boot.ssl.SslBundle;
+import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
+import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
+import org.springframework.boot.http.client.reactive.ClientHttpConnectorBuilder;
+import org.springframework.boot.http.client.reactive.ClientHttpConnectorSettings;
 import org.springframework.boot.ssl.SslBundles;
-import org.springframework.boot.web.client.ClientHttpRequestFactories;
-import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
 import org.springframework.cloud.client.loadbalancer.DeferringLoadBalancerInterceptor;
 import org.springframework.cloud.client.loadbalancer.reactive.DeferringLoadBalancerExchangeFilterFunction;
@@ -40,10 +36,7 @@ import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
-import org.springframework.http.client.AbstractClientHttpRequestFactoryWrapper;
-import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -52,9 +45,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.support.RestClientAdapter;
-import org.springframework.web.client.support.RestTemplateAdapter;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
@@ -160,37 +151,11 @@ class ExchangeClientCreator {
 
     private void setExchangeAdapter(
             HttpServiceProxyFactory.Builder builder, HttpExchangeProperties.Channel channelConfig) {
-        if (WEBFLUX_PRESENT && hasReactiveReturnTypeMethod(clientType)) {
-            HttpExchangeProperties.ClientType type = channelConfig.getClientType();
-            if (type != null && type != WEB_CLIENT) {
-                log.warn(
-                        "{} contains methods with reactive return types, should use the client-type '{}' instead of '{}'",
-                        clientType.getSimpleName(),
-                        WEB_CLIENT,
-                        type);
-            }
-            builder.exchangeAdapter(WebClientAdapter.create(
-                    getClient(new Cache.ClientId(channelConfig, WEB_CLIENT), () -> buildWebClient(channelConfig))));
-            return;
-        }
-
         switch (getClientType(channelConfig)) {
             case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(
                     getClient(new Cache.ClientId(channelConfig, REST_CLIENT), () -> buildRestClient(channelConfig))));
-            case REST_TEMPLATE -> builder.exchangeAdapter(RestTemplateAdapter.create(getClient(
-                    new Cache.ClientId(channelConfig, REST_TEMPLATE), () -> buildRestTemplate(channelConfig))));
-            case WEB_CLIENT -> {
-                if (WEBFLUX_PRESENT) {
-                    builder.exchangeAdapter(WebClientAdapter.create(getClient(
-                            new Cache.ClientId(channelConfig, WEB_CLIENT), () -> buildWebClient(channelConfig))));
-                } else {
-                    log.warn(
-                            "Since spring-webflux is not in the classpath, the client-type will fall back to '{}'",
-                            REST_CLIENT);
-                    builder.exchangeAdapter(RestClientAdapter.create(getClient(
-                            new Cache.ClientId(channelConfig, REST_CLIENT), () -> buildRestClient(channelConfig))));
-                }
-            }
+            case WEB_CLIENT -> builder.exchangeAdapter(WebClientAdapter.create(
+                    getClient(new Cache.ClientId(channelConfig, WEB_CLIENT), () -> buildWebClient(channelConfig))));
             default -> throw new IllegalStateException("Unsupported client-type: " + channelConfig.getClientType());
         }
     }
@@ -219,64 +184,11 @@ class ExchangeClientCreator {
         builder.embeddedValueResolver(resolver);
     }
 
-    private RestTemplate buildRestTemplate(HttpExchangeProperties.Channel channelConfig) {
-        RestTemplateBuilder builder = new RestTemplateBuilder();
-
-        builder = configureRestTemplateBuilder(builder, channelConfig);
-
-        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
-            builder = builder.rootUri(getRealBaseUrl(channelConfig));
-        }
-        if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
-            for (HttpExchangeProperties.Header header : channelConfig.getHeaders()) {
-                builder = builder.defaultHeader(
-                        header.getKey(), header.getValues().toArray(String[]::new));
-            }
-        }
-
-        // Set default request factory
-        // No need to do this when Spring Boot version >= 3.4.0
-        if (isSpringBootVersionLessThan340()) {
-            builder = builder.requestFactory(() -> getRequestFactory(channelConfig));
-        }
-
-        if (isLoadBalancerEnabled(channelConfig)) {
-            Set<ClientHttpRequestInterceptor> lbInterceptors = new LinkedHashSet<>();
-            if (DEFERRING_LOADBALANCER_INTERCEPTOR_PRESENT) {
-                beanFactory
-                        .getBeanProvider(DeferringLoadBalancerInterceptor.class)
-                        .forEach(lbInterceptors::add);
-            } else {
-                beanFactory.getBeanProvider(ClientHttpRequestInterceptor.class).forEach(lbInterceptors::add);
-            }
-            builder = builder.additionalInterceptors(lbInterceptors);
-        }
-
-        // Default request factory will be replaced by user's RestTemplateCustomizer bean here
-        RestTemplate restTemplate = builder.build();
-
-        // Remove duplicates and reorder
-        restTemplate.setInterceptors(
-                restTemplate.getInterceptors().stream().distinct().toList());
-
-        if (isSpringBootVersionLessThan340()) {
-            setTimeoutByConfig(restTemplate.getRequestFactory(), channelConfig);
-        }
-
-        beanFactory
-                .getBeanProvider(HttpClientCustomizer.RestTemplateCustomizer.class)
-                .orderedStream()
-                .forEach(customizer -> customizer.customize(restTemplate, channelConfig));
-
-        return restTemplate;
-    }
-
     private WebClient buildWebClient(HttpExchangeProperties.Channel channelConfig) {
         WebClient.Builder builder = WebClient.builder();
-        beanFactory
-                .getBeanProvider(WebClientCustomizer.class)
-                .orderedStream()
-                .forEach(customizer -> customizer.customize(builder));
+
+        configureWebClientBuilder(builder, channelConfig);
+
         if (StringUtils.hasText(channelConfig.getBaseUrl())) {
             builder.baseUrl(getRealBaseUrl(channelConfig));
         }
@@ -285,14 +197,6 @@ class ExchangeClientCreator {
                     .getHeaders()
                     .forEach(header -> builder.defaultHeader(
                             header.getKey(), header.getValues().toArray(String[]::new)));
-        }
-
-        // ClientHttpConnectorFactory is not public, we can't create http client with custom Bundle here,
-        // so http-exchange.channels[].ssl.bundle is not supported for WebClient
-
-        var readTimeout = getReadTimeout(channelConfig);
-        if (readTimeout != null) {
-            builder.filter((request, next) -> next.exchange(request).timeout(readTimeout));
         }
 
         if (isLoadBalancerEnabled(channelConfig)) {
@@ -317,25 +221,26 @@ class ExchangeClientCreator {
         return builder.build();
     }
 
-    @Nullable
-    private Duration getReadTimeout(HttpExchangeProperties.Channel channelConfig) {
-        var duration = Optional.ofNullable(channelConfig.getReadTimeout())
-                .map(Duration::ofMillis)
-                .orElse(null);
-        if (duration != null) { // Channel config has higher priority
-            return duration;
+    private void configureWebClientBuilder(WebClient.Builder builder, HttpExchangeProperties.Channel channelConfig) {
+
+        var customizers = beanFactory
+                .getBeanProvider(WebClientCustomizer.class)
+                .orderedStream()
+                .toList();
+
+        // Invoke customizers will set clientConnector,
+        // but it's OK, we will override it later
+        for (var customizer : customizers) {
+            customizer.customize(builder);
         }
 
-        // less than 3.4.0, there is no org.springframework.boot.http.client.ClientHttpRequestFactorySettings
-        if (isSpringBootVersionLessThan340()) {
-            return null;
-        }
+        var clientConnectorBuilder = beanFactory
+                .getBeanProvider(ClientHttpConnectorBuilder.class)
+                .getIfUnique(ClientHttpConnectorBuilder::detect);
 
-        // Spring Boot 3.4.0+
-        var settings = beanFactory
-                .getBeanProvider(org.springframework.boot.http.client.ClientHttpRequestFactorySettings.class)
-                .getIfUnique(org.springframework.boot.http.client.ClientHttpRequestFactorySettings::defaults);
-        return settings.readTimeout();
+        var settings = buildSettingsForWebClient(channelConfig);
+
+        builder.clientConnector(clientConnectorBuilder.build(settings));
     }
 
     private RestClient buildRestClient(HttpExchangeProperties.Channel channelConfig) {
@@ -352,16 +257,6 @@ class ExchangeClientCreator {
                     .getHeaders()
                     .forEach(header -> builder.defaultHeader(
                             header.getKey(), header.getValues().toArray(String[]::new)));
-        }
-
-        if (isSpringBootVersionLessThan340()) {
-            ClientHttpRequestFactory requestFactory =
-                    unwrapRequestFactoryIfNecessary(getFieldValue(builder, "requestFactory"));
-            if (requestFactory == null) {
-                builder.requestFactory(getRequestFactory(channelConfig));
-            } else {
-                setTimeoutByConfig(requestFactory, channelConfig);
-            }
         }
 
         if (isLoadBalancerEnabled(channelConfig)) {
@@ -392,75 +287,72 @@ class ExchangeClientCreator {
     }
 
     private void configureRestClientBuilder(RestClient.Builder builder, HttpExchangeProperties.Channel channelConfig) {
-        var configurer = beanFactory
-                .getBeanProvider(RestClientBuilderConfigurer.class)
-                .getIfUnique(RestClientBuilderConfigurer::new);
 
-        // requestFactorySettings have been available since Spring Boot 3.4.0
-        var f = ReflectionUtils.findField(RestClientBuilderConfigurer.class, "requestFactorySettings");
-        if (f != null) {
-            var copied = ConfigurerCopier.copyRestClientBuilderConfigurer(configurer);
-            ConfigurerCopier.setRestClientBuilderConfigurerProperty(
-                    copied, "requestFactorySettings", getClientHttpRequestFactorySettings(channelConfig));
+        // see RestClientBuilderConfigurer
+        // see org.springframework.boot.autoconfigure.web.client.RestClientAutoConfiguration.restClientBuilder
 
-            configurer = copied;
+        var requestFactoryBuilder = beanFactory
+                .getBeanProvider(ClientHttpRequestFactoryBuilder.class)
+                .getIfUnique(ClientHttpRequestFactoryBuilder::detect);
+
+        var settings = buildSettingsForRestClient(channelConfig);
+
+        builder.requestFactory(requestFactoryBuilder.build(settings));
+
+        var customizers = beanFactory
+                .getBeanProvider(RestClientCustomizer.class)
+                .orderedStream()
+                .toList();
+
+        for (var customizer : customizers) {
+            customizer.customize(builder);
         }
-
-        configurer.configure(builder);
     }
 
-    private RestTemplateBuilder configureRestTemplateBuilder(
-            RestTemplateBuilder builder, HttpExchangeProperties.Channel channelConfig) {
-        RestTemplateBuilderConfigurer configurer = beanFactory
-                .getBeanProvider(RestTemplateBuilderConfigurer.class)
-                .getIfUnique(RestTemplateBuilderConfigurer::new);
+    private ClientHttpRequestFactorySettings buildSettingsForRestClient(HttpExchangeProperties.Channel channelConfig) {
 
-        // requestFactorySettings have been available since Spring Boot 3.4.0
-        var f = ReflectionUtils.findField(RestTemplateBuilderConfigurer.class, "requestFactorySettings");
-        if (f != null) {
-            var copied = ConfigurerCopier.copyRestTemplateBuilderConfigurer(configurer);
-            ConfigurerCopier.setRestTemplateBuilderConfigurerProperty(
-                    copied, "requestFactorySettings", getClientHttpRequestFactorySettings(channelConfig));
+        var globalConfig = beanFactory
+                .getBeanProvider(ClientHttpRequestFactorySettings.class)
+                .getIfUnique(ClientHttpRequestFactorySettings::defaults);
 
-            configurer = copied;
-        }
+        var redirects = Optional.ofNullable(channelConfig.getRedirects())
+                .map(ClientHttpRequestFactorySettings.Redirects::of)
+                .orElseGet(globalConfig::redirects);
+        var connectTimeout = Optional.ofNullable(channelConfig.getConnectTimeout())
+                .map(Duration::ofMillis)
+                .orElseGet(globalConfig::connectTimeout);
+        var readTimeout = Optional.ofNullable(channelConfig.getReadTimeout())
+                .map(Duration::ofMillis)
+                .orElseGet(globalConfig::readTimeout);
+        var sslBundle = Optional.ofNullable(channelConfig.getSsl())
+                .map(HttpExchangeProperties.Ssl::getBundle)
+                .filter(StringUtils::hasText)
+                .map(bundle -> beanFactory.getBean(SslBundles.class).getBundle(bundle))
+                .orElseGet(globalConfig::sslBundle);
 
-        return configurer.configure(builder);
+        return new ClientHttpRequestFactorySettings(redirects, connectTimeout, readTimeout, sslBundle);
     }
 
-    private org.springframework.boot.http.client.ClientHttpRequestFactorySettings getClientHttpRequestFactorySettings(
-            HttpExchangeProperties.Channel channelConfig) {
-        var settings = beanFactory
-                .getBeanProvider(org.springframework.boot.http.client.ClientHttpRequestFactorySettings.class)
-                .getIfUnique(org.springframework.boot.http.client.ClientHttpRequestFactorySettings::defaults);
-        if (channelConfig.getConnectTimeout() != null) {
-            settings = settings.withConnectTimeout(Duration.ofMillis(channelConfig.getConnectTimeout()));
-        }
-        if (channelConfig.getReadTimeout() != null) {
-            settings = settings.withReadTimeout(Duration.ofMillis(channelConfig.getReadTimeout()));
-        }
-        if (channelConfig.getSsl() != null) {
-            var sslBundles = beanFactory.getBeanProvider(SslBundles.class).getIfUnique();
-            if (sslBundles != null) {
-                var bundle = sslBundles.getBundle(channelConfig.getSsl().getBundle());
-                if (bundle != null) {
-                    settings = settings.withSslBundle(bundle);
-                }
-            }
-        }
-        return settings;
-    }
+    private ClientHttpConnectorSettings buildSettingsForWebClient(HttpExchangeProperties.Channel channelConfig) {
 
-    private ClientHttpRequestFactory getRequestFactory(HttpExchangeProperties.Channel channelConfig) {
-        ClientHttpRequestFactorySettings settings = new ClientHttpRequestFactorySettings(
-                Optional.ofNullable(channelConfig.getConnectTimeout())
-                        .map(Duration::ofMillis)
-                        .orElse(null),
-                Optional.ofNullable(channelConfig.getReadTimeout())
-                        .map(Duration::ofMillis)
-                        .orElse(null),
-                (SslBundle) null);
-        return ClientHttpRequestFactories.get(JdkClientHttpRequestFactory.class, settings);
+        var globalConfig = beanFactory
+                .getBeanProvider(ClientHttpConnectorSettings.class)
+                .getIfUnique(ClientHttpConnectorSettings::defaults);
+
+        var redirects = Optional.ofNullable(channelConfig.getRedirects()).orElseGet(globalConfig::redirects);
+        var connectTimeout = Optional.ofNullable(channelConfig.getConnectTimeout())
+                .map(Duration::ofMillis)
+                .orElseGet(globalConfig::connectTimeout);
+        var readTimeout = Optional.ofNullable(channelConfig.getReadTimeout())
+                .map(Duration::ofMillis)
+                .orElseGet(globalConfig::readTimeout);
+        var sslBundle = Optional.ofNullable(channelConfig.getSsl())
+                .map(HttpExchangeProperties.Ssl::getBundle)
+                .filter(StringUtils::hasText)
+                .map(bundle -> beanFactory.getBean(SslBundles.class).getBundle(bundle))
+                .orElseGet(globalConfig::sslBundle);
+
+        return new ClientHttpConnectorSettings(redirects, connectTimeout, readTimeout, sslBundle);
     }
 
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
@@ -503,56 +395,30 @@ class ExchangeClientCreator {
                         || Flow.Publisher.class.isAssignableFrom(returnType));
     }
 
-    private static HttpExchangeProperties.ClientType getClientType(HttpExchangeProperties.Channel channel) {
-        return channel.getClientType() != null ? channel.getClientType() : REST_CLIENT;
-    }
+    private HttpExchangeProperties.ClientType getClientType(HttpExchangeProperties.Channel channel) {
 
-    /**
-     * @see ClientHttpRequestFactories.Reflective#unwrapRequestFactoryIfNecessary(ClientHttpRequestFactory)
-     */
-    private static ClientHttpRequestFactory unwrapRequestFactoryIfNecessary(ClientHttpRequestFactory requestFactory) {
-        if (requestFactory instanceof AbstractClientHttpRequestFactoryWrapper wrapper) {
-            var delegate = wrapper.getDelegate();
-            while (delegate instanceof AbstractClientHttpRequestFactoryWrapper w) {
-                delegate = w.getDelegate();
+        if (WEBFLUX_PRESENT && hasReactiveReturnTypeMethod(clientType)) {
+            HttpExchangeProperties.ClientType type = channel.getClientType();
+            if (type != null && type != WEB_CLIENT) {
+                log.warn(
+                        "{} contains methods with reactive return types, should use the client-type '{}' instead of '{}'",
+                        clientType.getSimpleName(),
+                        WEB_CLIENT,
+                        type);
             }
-            return delegate;
+            return WEB_CLIENT;
         }
-        return requestFactory;
-    }
 
-    private static void setTimeoutByConfig(
-            ClientHttpRequestFactory requestFactory, HttpExchangeProperties.Channel channelConfig) {
-        ClientHttpRequestFactory realRequestFactory = unwrapRequestFactoryIfNecessary(requestFactory);
-        if (realRequestFactory == null) {
-            return;
-        }
-        Optional.ofNullable(channelConfig.getReadTimeout())
-                .ifPresent(readTimeout -> setTimeout(realRequestFactory, "setReadTimeout", readTimeout));
-        Optional.ofNullable(channelConfig.getConnectTimeout())
-                .ifPresent(connectTimeout -> setTimeout(realRequestFactory, "setConnectTimeout", connectTimeout));
-    }
+        var configured = channel.getClientType() != null ? channel.getClientType() : getDefaultClientType();
 
-    private static void setTimeout(ClientHttpRequestFactory requestFactory, String method, int timeout) {
-        if (!trySetTimeout(requestFactory, method, int.class, timeout)
-                && !trySetTimeout(requestFactory, method, Duration.class, Duration.ofMillis(timeout))
-                && !trySetTimeout(requestFactory, method, long.class, (long) timeout)) {
+        if (configured == WEB_CLIENT && !WEBFLUX_PRESENT) {
             log.warn(
-                    "ClientHttpRequestFactory implementation {} not provide a method '{}' to modify the timeout",
-                    requestFactory.getClass().getName(),
-                    method);
+                    "Since spring-webflux is not in the classpath, the client-type will fall back to '{}'",
+                    getDefaultClientType());
+            return getDefaultClientType();
         }
-    }
 
-    private static boolean trySetTimeout(
-            ClientHttpRequestFactory requestFactory, String method, Class<?> paramType, Object paramValue) {
-        Method m = ReflectionUtils.findMethod(requestFactory.getClass(), method, paramType);
-        if (m != null) {
-            ReflectionUtils.makeAccessible(m);
-            ReflectionUtils.invokeMethod(m, requestFactory, paramValue);
-            return true;
-        }
-        return false;
+        return configured;
     }
 
     @SuppressWarnings("unchecked")
@@ -561,11 +427,7 @@ class ExchangeClientCreator {
         return (T) ReflectionUtils.getField(field, obj);
     }
 
-    private static <T> T getFieldValue(Object obj, String fieldName) {
-        Field field = ReflectionUtils.findField(obj.getClass(), fieldName);
-        if (field == null) {
-            return null;
-        }
-        return getFieldValue(obj, field);
+    private static HttpExchangeProperties.ClientType getDefaultClientType() {
+        return REST_CLIENT;
     }
 }

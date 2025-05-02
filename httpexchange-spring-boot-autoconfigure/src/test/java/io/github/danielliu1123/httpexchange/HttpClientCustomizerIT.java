@@ -23,7 +23,7 @@ class HttpClientCustomizerIT {
     private static final Logger log = LoggerFactory.getLogger(HttpClientCustomizerIT.class);
 
     @ParameterizedTest
-    @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE", "WEB_CLIENT"})
+    @ValueSource(strings = {"REST_CLIENT", "WEB_CLIENT"})
     void testRestClient(String clientType, CapturedOutput output) {
         int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(RestClientCfg.class)
@@ -48,14 +48,6 @@ class HttpClientCustomizerIT {
         HttpClientCustomizer.RestClientCustomizer restClientCustomizer() {
             return (client, channel) -> client.requestInterceptor((request, body, execution) -> {
                 log.info("Customizing the REST_CLIENT...");
-                return execution.execute(request, body);
-            });
-        }
-
-        @Bean
-        HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer() {
-            return (restTemplate, channel) -> restTemplate.getInterceptors().add((request, body, execution) -> {
-                log.info("Customizing the REST_TEMPLATE...");
                 return execution.execute(request, body);
             });
         }

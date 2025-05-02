@@ -10,25 +10,22 @@ You can configure the `base-url`, `read-timeout` for each channel, and each chan
 ## Basic Usage
 
 ```yaml title="application.yaml"
+spring:
+  http:
+    client:
+      settings:
+        read-timeout: 5s
+
 http-exchange:
-  read-timeout: 5000
   channels:
     - base-url: http://user
-      read-timeout: 3000
+      read-timeout: 3000  # Channel-level timeout (in milliseconds)
       clients:
         - com.example.user.api.*Api
     - base-url: http://order
       clients:
         - com.example.order.api.*Api
 ```
-
-:::warning
-Since 3.4.0,
-Spring Boot introduced [`HttpClientProperties`](https://github.com/spring-projects/spring-boot/blob/8b6c80d7305c73fc699ad0f026a99fb2ecd5be3e/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/http/client/HttpClientProperties.java).
-
-`http-exchange.read-timeout` and `http-exchange.connect-timeout` are deprecated,
-using `spring.http.client.read-timeout` and `spring.http.client.connect-timeout` instead.
-:::
 
 Using property `clients` or `classes` to identify the client, use `classes` first if configured.
 

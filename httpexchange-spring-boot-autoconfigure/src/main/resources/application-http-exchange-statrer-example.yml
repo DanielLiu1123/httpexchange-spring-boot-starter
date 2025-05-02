@@ -1,8 +1,9 @@
 spring:
   http:
     client:
-      read-timeout: 10s
-      connect-timeout: 1s
+      settings:
+        read-timeout: 10s
+        connect-timeout: 1s
       ssl:
         bundle: bundle1
 http-exchange:
@@ -35,6 +36,6 @@ http-exchange:
       classes:
         - com.example.api.UserApi
         - com.example.api.UserDetailApi
-      client-type: rest_template
+      client-type: rest_client
       connect-timeout: 1000
       read-timeout: 5000

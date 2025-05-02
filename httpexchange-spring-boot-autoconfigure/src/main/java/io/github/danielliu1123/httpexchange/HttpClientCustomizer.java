@@ -1,8 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -10,7 +8,6 @@ import org.springframework.web.reactive.function.client.WebClient;
  *
  * @author Freeman
  * @see ExchangeClientCreator#buildRestClient(HttpExchangeProperties.Channel)
- * @see ExchangeClientCreator#buildRestTemplate(HttpExchangeProperties.Channel)
  * @see ExchangeClientCreator#buildWebClient(HttpExchangeProperties.Channel)
  * @since 3.2.4
  */
@@ -19,17 +16,12 @@ public sealed interface HttpClientCustomizer<T> {
     /**
      * Customize the client builder with the given config.
      *
-     * @param client the http client to customize
+     * @param client  the http client to customize
      * @param channel the current channel config to use
      */
     void customize(T client, HttpExchangeProperties.Channel channel);
 
     non-sealed interface RestClientCustomizer extends HttpClientCustomizer<RestClient.Builder> {}
-
-    /**
-     * Use {@link RestTemplate} instead of {@link RestTemplateBuilder} because the latter is immutable.
-     */
-    non-sealed interface RestTemplateCustomizer extends HttpClientCustomizer<RestTemplate> {}
 
     non-sealed interface WebClientCustomizer extends HttpClientCustomizer<WebClient.Builder> {}
 }

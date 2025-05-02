@@ -12,14 +12,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.boot.autoconfigure.http.client.AbstractHttpClientProperties;
 import org.springframework.boot.autoconfigure.http.client.HttpClientProperties;
+import org.springframework.boot.autoconfigure.http.client.HttpClientSettingsProperties;
+import org.springframework.boot.autoconfigure.http.client.reactive.HttpReactiveClientSettingsProperties;
 import org.springframework.boot.autoconfigure.ssl.SslProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.boot.http.client.HttpRedirects;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.service.annotation.HttpExchange;
 
@@ -87,8 +89,6 @@ public class HttpExchangeProperties implements InitializingBean {
      *
      * <p> In most cases, you don't need to explicitly specify the client type.
      *
-     * <p color="orange"> NOTE: the {@link #connectTimeout} and {@link #readTimeout} settings are not supported by {@link ClientType#WEB_CLIENT}.
-     *
      * @see ClientType
      * @since 3.2.0
      */
@@ -102,28 +102,6 @@ public class HttpExchangeProperties implements InitializingBean {
      * @since 3.2.0
      */
     private boolean requestMappingSupportEnabled = false;
-    /**
-     * Connect timeout duration, specified in milliseconds.
-     *
-     * @see HttpClientProperties#connectTimeout
-     * @since 3.2.0
-     * @deprecated From Spring Boot 3.4.0, prefer {@code spring.http.client.connect-timeout},
-     * this configuration will override {@code spring.http.client.connect-timeout},
-     * this configuration will be removed in the 3.5.0.
-     */
-    @Deprecated(since = "3.4.0", forRemoval = true)
-    private Integer connectTimeout;
-    /**
-     * Read timeout duration, specified in milliseconds.
-     *
-     * @see HttpClientProperties#readTimeout
-     * @since 3.2.0
-     * @deprecated From Spring Boot 3.4.0, prefer {@code spring.http.client.read-timeout},
-     * this configuration will override {@code spring.http.client.read-timeout},
-     * this configuration will be removed in the 3.5.0.
-     */
-    @Deprecated(since = "3.4.0", forRemoval = true)
-    private Integer readTimeout;
     /**
      * Whether to check unused configuration, default {@code true}.
      *
@@ -150,22 +128,6 @@ public class HttpExchangeProperties implements InitializingBean {
      * @since 3.2.2
      */
     private boolean httpClientReuseEnabled = true;
-
-    @DeprecatedConfigurationProperty(
-            since = "3.4.0",
-            reason = "Use 'spring.http.client.connect-timeout' instead",
-            replacement = "spring.http.client.connect-timeout")
-    public Integer getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    @DeprecatedConfigurationProperty(
-            since = "3.4.0",
-            reason = "Use 'spring.http.client.read-timeout' instead",
-            replacement = "spring.http.client.read-timeout")
-    public Integer getReadTimeout() {
-        return readTimeout;
-    }
 
     @Data
     @NoArgsConstructor
@@ -194,10 +156,6 @@ public class HttpExchangeProperties implements InitializingBean {
         for (Channel chan : channels) {
             mapper.from(baseUrl).when(e -> isNull(chan.getBaseUrl())).to(chan::setBaseUrl);
             mapper.from(clientType).when(e -> isNull(chan.getClientType())).to(chan::setClientType);
-            mapper.from(connectTimeout)
-                    .when(e -> isNull(chan.getConnectTimeout()))
-                    .to(chan::setConnectTimeout);
-            mapper.from(readTimeout).when(e -> isNull(chan.getReadTimeout())).to(chan::setReadTimeout);
             mapper.from(loadbalancerEnabled)
                     .when(e -> isNull(chan.getLoadbalancerEnabled()))
                     .to(chan::setLoadbalancerEnabled);
@@ -224,8 +182,9 @@ public class HttpExchangeProperties implements InitializingBean {
                 baseUrl,
                 headers,
                 clientType,
-                connectTimeout,
-                readTimeout,
+                null,
+                null,
+                null,
                 loadbalancerEnabled,
                 httpClientReuseEnabled,
                 null,
@@ -252,27 +211,29 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Client type, use {@link HttpExchangeProperties#clientType} if not set.
          *
-         * <p color="orange"> NOTE:
-         * the {@link #connectTimeout} and {@link #readTimeout} settings are not supported for {@link ClientType#WEB_CLIENT}.
-         *
          * @see ClientType
          */
         private ClientType clientType;
         /**
+         * Redirects configuration.
+         *
+         * @see HttpRedirects
+         * @since 3.5.0
+         */
+        private HttpRedirects redirects;
+        /**
          * Connection timeout duration, specified in milliseconds.
          *
-         * <p> Use {@link HttpExchangeProperties#connectTimeout} if not set.
-         *
-         * @see HttpExchangeProperties#connectTimeout
+         * @see HttpClientSettingsProperties#getConnectTimeout()
+         * @see HttpReactiveClientSettingsProperties#getConnectTimeout()
          * @since 3.2.0
          */
         private Integer connectTimeout;
         /**
          * Read timeout duration, specified in milliseconds.
          *
-         * <p> Use {@link HttpExchangeProperties#readTimeout} if not set.
-         *
-         * @see HttpExchangeProperties#readTimeout
+         * @see HttpClientSettingsProperties#getReadTimeout()
+         * @see HttpReactiveClientSettingsProperties#getReadTimeout()
          * @since 3.2.0
          */
         private Integer readTimeout;
@@ -291,10 +252,16 @@ public class HttpExchangeProperties implements InitializingBean {
          */
         private Boolean httpClientReuseEnabled;
         /**
-         * SSL configuration, use {@code spring.http.client.ssl} if not set.
+         * SSL configuration.
          *
-         * @since 3.4.1
+         * <p> If not set, default ssl configuration will be used:
+         * <p> If Spring Boot >= 3.4.0 and < 3.5.0, use {@code spring.http.client.ssl}.
+         * <p> If Spring Boot >= 3.5.0, use {@code spring.http.client.settings.ssl},
+         * if you are using reactive client, use {@code spring.http.reactiveclient.settings.ssl}.
+         *
          * @see HttpClientProperties#getSsl()
+         * @see HttpClientSettingsProperties#getSsl()
+         * @since 3.4.1
          */
         private Ssl ssl;
         /**
@@ -337,12 +304,12 @@ public class HttpExchangeProperties implements InitializingBean {
     }
 
     /**
-     * @see HttpClientProperties.Ssl
+     * @see AbstractHttpClientProperties.Ssl
      */
     @Data
     public static class Ssl {
         /**
-         * SSL bundle to use, use {@code spring.http.client.ssl.bundle} if not set.
+         * SSL bundle to use.
          *
          * <p> Bundle name is configured under {@code spring.ssl} properties.
          *
@@ -362,9 +329,5 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see WebClient
          */
         WEB_CLIENT,
-        /**
-         * @see RestTemplate
-         */
-        REST_TEMPLATE
     }
 }

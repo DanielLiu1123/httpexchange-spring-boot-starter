@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.service.annotation.GetExchange;
 
@@ -36,10 +35,6 @@ class ReturnTypeTests {
             Api api = ctx.getBean(Api.class);
 
             assertThatCode(api::get).doesNotThrowAnyException();
-            assertThatCode(() -> Requester.create().addHeader("error", "true").call(api::get))
-                    .isInstanceOf(
-                            HttpClientErrorException.BadRequest
-                                    .class); // return void will throw exception, not like Spring Cloud OpenFeign
             assertThat(api.getBody()).containsEntry("name", "Freeman");
             assertThat(api.getHeaders()).containsEntry("foo", List.of("bar"));
             assertThat(api.getResponseEntity().getStatusCode()).isEqualTo(HttpStatus.OK);

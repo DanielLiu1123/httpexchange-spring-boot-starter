@@ -20,7 +20,7 @@ class LoadBalancerAppTests {
      * When using sync clients, the retry depends on Spring Retry.
      */
     @ParameterizedTest
-    @ValueSource(strings = {"rest_client", "rest_template"})
+    @ValueSource(strings = {"rest_client"})
     void testLoadBalancer_whenRetryDependsOnSpringRetry_thenAllRequestOK(String clientType) {
         int port = getRandomPort();
 
@@ -82,7 +82,7 @@ class LoadBalancerAppTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"rest_client", "rest_template", "web_client"})
+    @ValueSource(strings = {"rest_client", "web_client"})
     void testLoadBalancer_whenDisableRetry_thenHalfOKHalfFailed(String clientType) {
         int port = getRandomPort();
 
@@ -112,7 +112,7 @@ class LoadBalancerAppTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"rest_client", "rest_template", "web_client"})
+    @ValueSource(strings = {"rest_client", "web_client"})
     void testLoadBalancer_whenDisabled(String clientType) {
         int port = getRandomPort();
 

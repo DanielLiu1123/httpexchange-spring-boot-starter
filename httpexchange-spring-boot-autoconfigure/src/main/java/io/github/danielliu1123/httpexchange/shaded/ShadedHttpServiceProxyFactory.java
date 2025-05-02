@@ -67,7 +67,6 @@ import reactor.core.publisher.Mono;
  * @author Rossen Stoyanchev
  * @see org.springframework.web.client.support.RestClientAdapter
  * @see org.springframework.web.reactive.function.client.support.WebClientAdapter
- * @see org.springframework.web.client.support.RestTemplateAdapter
  * @since 6.0
  */
 public final class ShadedHttpServiceProxyFactory {

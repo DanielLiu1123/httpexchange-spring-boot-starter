@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -88,10 +87,6 @@ class Util {
             }
         }
         return false;
-    }
-
-    public static boolean isSpringBootVersionLessThan340() {
-        return SpringBootVersion.getVersion().compareTo("3.4.0") < 0;
     }
 
     /**

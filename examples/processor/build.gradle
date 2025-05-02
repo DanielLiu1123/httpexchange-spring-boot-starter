@@ -4,3 +4,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
+
+compileJava {
+    options.compilerArgs.add("-AhttpExchangeConfig=${projectDir}/httpexchange-processor.properties")
+}

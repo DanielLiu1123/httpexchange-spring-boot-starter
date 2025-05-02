@@ -18,7 +18,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 class ClientTypeTests {
 
     @ParameterizedTest
-    @ValueSource(strings = {"rest_client", "web_client", "rest_template"})
+    @ValueSource(strings = {"rest_client", "web_client"})
     void testRestClient(String clientType) {
         int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(Cfg.class)
