@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
-import io.github.danielliu1123.httpexchange.shaded.requestfactory.EnhancedJdkClientHttpRequestFactory;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.Size;
 import lombok.SneakyThrows;
@@ -14,13 +13,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.endpoint.event.RefreshEvent;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.service.annotation.GetExchange;
 
 /**
@@ -34,7 +31,7 @@ class DynamicRefreshTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"REST_CLIENT", "REST_TEMPLATE"})
+    @ValueSource(strings = {"REST_CLIENT"})
     void testDynamicRefresh(String clientType) {
         int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(Cfg.class)
@@ -60,28 +57,16 @@ class DynamicRefreshTests {
                     .isInstanceOf(ConstraintViolationException.class)
                     .hasMessageContaining("size must be between 0 and 5");
 
-            assertThat(barApi.withTimeout(100).get()).isEqualTo("OK");
-            assertThatCode(() -> barApi.withTimeout(100).withTimeout(1).get())
-                    .isInstanceOf(ResourceAccessException.class)
-                    .hasMessageContaining("timed out");
-
             System.setProperty("http-exchange.base-url", "http://localhost:" + port + "/v2");
             ctx.publishEvent(new RefreshEvent(ctx, null, null));
 
             // base-url changed
             assertThat(fooApi.get()).isEqualTo("OK v2");
             assertThat(barApi.get()).isEqualTo("OK v2");
-            assertThat(barApi.withTimeout(100).get()).isEqualTo("OK v2");
-            assertThatCode(() -> barApi.withTimeout(5).get())
-                    .isInstanceOf(ResourceAccessException.class)
-                    .hasMessageContaining("timed out");
             assertThat(bazApi.get("aaaaa")).isEqualTo("OK v2");
             assertThatCode(() -> bazApi.get("aaaaaa"))
                     .isInstanceOf(ConstraintViolationException.class)
                     .hasMessageContaining("size must be between 0 and 5");
-            assertThatCode(() -> bazApi.withTimeout(5).get("aaaaa"))
-                    .isInstanceOf(ResourceAccessException.class)
-                    .hasMessageContaining("timed out");
         }
     }
 
@@ -90,16 +75,6 @@ class DynamicRefreshTests {
     @EnableExchangeClients(clients = {FooApi.class, BarApi.class, BazApi.class})
     @RestController
     static class Cfg {
-
-        @Bean
-        HttpClientCustomizer.RestClientCustomizer restClientCustomizer() {
-            return (client, channel) -> client.requestFactory(new EnhancedJdkClientHttpRequestFactory());
-        }
-
-        @Bean
-        HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer() {
-            return (client, channel) -> client.setRequestFactory(new EnhancedJdkClientHttpRequestFactory());
-        }
 
         @GetMapping("/get")
         @SneakyThrows
@@ -122,14 +97,14 @@ class DynamicRefreshTests {
         String get();
     }
 
-    interface BarApi extends RequestConfigurator<BarApi> {
+    interface BarApi {
 
         @GetExchange("/get")
         String get();
     }
 
     @Validated
-    interface BazApi extends RequestConfigurator<BazApi> {
+    interface BazApi {
 
         @GetExchange("/get")
         String get(@RequestParam @Size(max = 5) String str);
