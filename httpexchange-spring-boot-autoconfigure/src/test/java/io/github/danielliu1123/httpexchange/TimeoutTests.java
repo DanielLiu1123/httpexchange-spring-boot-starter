@@ -25,7 +25,7 @@ class TimeoutTests {
         int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties("spring.http.client.settings.read-timeout=100ms")
+                .properties("spring.http.client.settings.read-timeout=10ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .run()) {
@@ -43,7 +43,7 @@ class TimeoutTests {
         int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties("spring.http.reactiveclient.settings.read-timeout=100ms")
+                .properties("spring.http.reactiveclient.settings.read-timeout=10ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .run()) {
