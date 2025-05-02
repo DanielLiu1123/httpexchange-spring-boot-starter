@@ -41,7 +41,6 @@ class HttpExchangeRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
         // See ConfigurerCopier
         //        reflection.registerType(RestClientBuilderConfigurer.class, MemberCategory.values());
-        //        reflection.registerType(RestTemplateBuilderConfigurer.class, MemberCategory.values());
 
         // I don't know this is necessary; maybe Spring uses it for reflection?
         //        reflection.registerType(ClientHttpRequestFactorySettings.class, MemberCategory.values());

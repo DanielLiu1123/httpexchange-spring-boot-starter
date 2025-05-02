@@ -19,7 +19,7 @@ Auto-detect all the `HttpServiceArgumentResolver` beans, then apply them to buil
 
 ## Change Client Type
 
-There are many adapters for HttpExchange client: `RestClientAdapter`, `WebClientAdapter` and `RestTemplateAdapter`.
+There are two adapters for HttpExchange client: `RestClientAdapter` and `WebClientAdapter`.
 
 ```yaml title="application.yml"
 http-exchange:
@@ -47,19 +47,6 @@ HttpClientCustomizer.RestClientCustomizer restClientCustomizer() {
         if (Objects.equals(channel.getName(), "whichChannelYouWantToCustomize")) {
             var httpClient = HttpClient.newBuilder().build();
             restClientBuilder.requestFactory(new JdkClientHttpRequestFactory(httpClient));
-        }
-    };
-}
-```
-
-```java
-// For RestTemplate
-@Bean
-HttpClientCustomizer.RestTemplateCustomizer restTemplateCustomizer() {
-    return (restTemplate, channel) -> {
-        if (Objects.equals(channel.getName(), "whichChannelYouWantToCustomize")) {
-            var httpClient = HttpClient.newBuilder().build();
-            restTemplate.setRequestFactory(new JdkClientHttpRequestFactory(httpClient));
         }
     };
 }
