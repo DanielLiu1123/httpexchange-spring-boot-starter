@@ -5,11 +5,9 @@ import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.Client
 import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
 import static io.github.danielliu1123.httpexchange.Util.hasAnnotation;
 import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
-import static io.github.danielliu1123.httpexchange.Util.isSpringBootVersionLessThan340;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
-import jakarta.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Duration;
@@ -245,27 +243,6 @@ class ExchangeClientCreator {
         builder.clientConnector(clientConnectorBuilder.build(settings));
     }
 
-    @Nullable
-    private Duration getReadTimeout(HttpExchangeProperties.Channel channelConfig) {
-        var duration = Optional.ofNullable(channelConfig.getReadTimeout())
-                .map(Duration::ofMillis)
-                .orElse(null);
-        if (duration != null) { // Channel config has higher priority
-            return duration;
-        }
-
-        // less than 3.4.0, there is no org.springframework.boot.http.client.ClientHttpRequestFactorySettings
-        if (isSpringBootVersionLessThan340()) {
-            return null;
-        }
-
-        // Spring Boot 3.4.0+
-        var settings = beanFactory
-                .getBeanProvider(org.springframework.boot.http.client.ClientHttpRequestFactorySettings.class)
-                .getIfUnique(org.springframework.boot.http.client.ClientHttpRequestFactorySettings::defaults);
-        return settings.readTimeout();
-    }
-
     private RestClient buildRestClient(HttpExchangeProperties.Channel channelConfig) {
         // Do not use RestClient.Builder bean here, because we can't know requestFactory is configured by user or not
         RestClient.Builder builder = RestClient.builder();
@@ -338,7 +315,9 @@ class ExchangeClientCreator {
                 .getBeanProvider(ClientHttpRequestFactorySettings.class)
                 .getIfUnique(ClientHttpRequestFactorySettings::defaults);
 
-        var redirects = globalConfig.redirects();
+        var redirects = Optional.ofNullable(channelConfig.getRedirects())
+                .map(ClientHttpRequestFactorySettings.Redirects::of)
+                .orElseGet(globalConfig::redirects);
         var connectTimeout = Optional.ofNullable(channelConfig.getConnectTimeout())
                 .map(Duration::ofMillis)
                 .orElseGet(globalConfig::connectTimeout);
@@ -360,7 +339,7 @@ class ExchangeClientCreator {
                 .getBeanProvider(ClientHttpConnectorSettings.class)
                 .getIfUnique(ClientHttpConnectorSettings::defaults);
 
-        var redirects = globalConfig.redirects();
+        var redirects = Optional.ofNullable(channelConfig.getRedirects()).orElseGet(globalConfig::redirects);
         var connectTimeout = Optional.ofNullable(channelConfig.getConnectTimeout())
                 .map(Duration::ofMillis)
                 .orElseGet(globalConfig::connectTimeout);

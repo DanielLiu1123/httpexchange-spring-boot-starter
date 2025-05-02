@@ -19,6 +19,7 @@ import org.springframework.boot.autoconfigure.http.client.reactive.HttpReactiveC
 import org.springframework.boot.autoconfigure.ssl.SslProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.boot.http.client.HttpRedirects;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -183,6 +184,7 @@ public class HttpExchangeProperties implements InitializingBean {
                 clientType,
                 null,
                 null,
+                null,
                 loadbalancerEnabled,
                 httpClientReuseEnabled,
                 null,
@@ -212,6 +214,13 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see ClientType
          */
         private ClientType clientType;
+        /**
+         * Redirects configuration.
+         *
+         * @see HttpRedirects
+         * @since 3.5.0
+         */
+        private HttpRedirects redirects;
         /**
          * Connection timeout duration, specified in milliseconds.
          *
