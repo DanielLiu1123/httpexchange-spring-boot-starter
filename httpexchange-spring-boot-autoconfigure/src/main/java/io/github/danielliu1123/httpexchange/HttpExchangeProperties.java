@@ -14,8 +14,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.autoconfigure.http.client.AbstractHttpClientProperties;
 import org.springframework.boot.autoconfigure.http.client.HttpClientProperties;
-import org.springframework.boot.autoconfigure.http.client.HttpClientSettingsProperties;
-import org.springframework.boot.autoconfigure.http.client.reactive.HttpReactiveClientSettingsProperties;
+import org.springframework.boot.autoconfigure.http.client.reactive.HttpReactiveClientProperties;
 import org.springframework.boot.autoconfigure.ssl.SslProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
@@ -217,6 +216,11 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Redirects configuration.
          *
+         *
+         * <p> If not set, default redirects will be used:
+         * <p> For {@link ClientType#REST_CLIENT}, use {@code spring.http.client.redirects}.
+         * <p> For {@link ClientType#WEB_CLIENT}, use {@code spring.http.reactiveclient.redirects}.
+         *
          * @see HttpRedirects
          * @since 3.5.0
          */
@@ -224,16 +228,24 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Connection timeout duration, specified in milliseconds.
          *
-         * @see HttpClientSettingsProperties#getConnectTimeout()
-         * @see HttpReactiveClientSettingsProperties#getConnectTimeout()
+         * <p> If not set, default connection timeout will be used:
+         * <p> For {@link ClientType#REST_CLIENT}, use {@code spring.http.client.connect-timeout}.
+         * <p> For {@link ClientType#WEB_CLIENT}, use {@code spring.http.reactiveclient.connect-timeout}.
+         *
+         * @see HttpClientProperties#getConnectTimeout()
+         * @see HttpReactiveClientProperties#getConnectTimeout()
          * @since 3.2.0
          */
         private Integer connectTimeout;
         /**
          * Read timeout duration, specified in milliseconds.
          *
-         * @see HttpClientSettingsProperties#getReadTimeout()
-         * @see HttpReactiveClientSettingsProperties#getReadTimeout()
+         * <p> If not set, default read timeout will be used:
+         * <p> For {@link ClientType#REST_CLIENT}, use {@code spring.http.client.read-timeout}.
+         * <p> For {@link ClientType#WEB_CLIENT}, use {@code spring.http.reactiveclient.read-timeout}.
+         *
+         * @see HttpClientProperties#getReadTimeout()
+         * @see HttpReactiveClientProperties#getReadTimeout()
          * @since 3.2.0
          */
         private Integer readTimeout;
@@ -255,12 +267,11 @@ public class HttpExchangeProperties implements InitializingBean {
          * SSL configuration.
          *
          * <p> If not set, default ssl configuration will be used:
-         * <p> If Spring Boot >= 3.4.0 and < 3.5.0, use {@code spring.http.client.ssl}.
-         * <p> If Spring Boot >= 3.5.0, use {@code spring.http.client.settings.ssl},
-         * if you are using reactive client, use {@code spring.http.reactiveclient.settings.ssl}.
+         * <p> For {@link ClientType#REST_CLIENT}, use {@code spring.http.client.ssl},
+         * <p> For {@link ClientType#WEB_CLIENT}, use {@code spring.http.reactiveclient.ssl}.
          *
          * @see HttpClientProperties#getSsl()
-         * @see HttpClientSettingsProperties#getSsl()
+         * @see HttpReactiveClientProperties#getSsl()
          * @since 3.4.1
          */
         private Ssl ssl;

@@ -1,9 +1,8 @@
 spring:
   http:
     client:
-      settings:
-        read-timeout: 10s
-        connect-timeout: 1s
+      read-timeout: 10s
+      connect-timeout: 1s
       ssl:
         bundle: bundle1
 http-exchange:
