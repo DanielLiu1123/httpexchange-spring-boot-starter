@@ -26,6 +26,7 @@ Auto convert non-null *value type* fields of condition to query parameters. Such
 
 If you don't want to enable this feature globally, you can use `@BeanParam`,
 it is an equivalent replacement for [`@SpringQueryMap`](https://docs.spring.io/spring-cloud-openfeign/reference/spring-cloud-openfeign.html#feign-querymap-support).
+For easier migration from Spring Cloud OpenFeign, `@SpringQueryMap` is also supported, though `@BeanParam` is recommended.
 
 :::tip
 The `@BeanParam` annotation's naming is inspired by [JAX-RS](https://docs.oracle.com/javaee%2F7%2Fapi%2F%2F/javax/ws/rs/BeanParam.html).
