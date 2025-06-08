@@ -1,23 +1,24 @@
 apply plugin: 'maven-publish'
-apply plugin: 'signing'
 
 version = version as String
 version = System.getenv('RELEASE') ? version.substring(0, version.lastIndexOf('-SNAPSHOT')) : version
 
-def isRelease = !version.endsWith('-SNAPSHOT')
-
-tasks.register('sourcesJar', Jar) {
-    from sourceSets.main.allJava
-    archiveClassifier.set('sources')
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 def githubUrl = 'https://github.com/DanielLiu1123/httpexchange-spring-boot-starter'
 
 publishing {
     publications {
-        mavenJava(MavenPublication) {
-            artifact sourcesJar
+        maven(MavenPublication) {
             from components.java
+
+            // Suppress optional-support variants from Maven publication
+            // The optional dependencies are already correctly marked in POM via Feature Variants
+            suppressPomMetadataWarningsFor('optionalSupportApiElements')
+            suppressPomMetadataWarningsFor('optionalSupportRuntimeElements')
 
             // see  https://docs.gradle.org/current/userguide/publishing_maven.html
             versionMapping {
@@ -30,10 +31,12 @@ publishing {
             }
             pom {
                 url = "${githubUrl}"
+                name = project.name
+                description = project.description ?: project.name
                 licenses {
                     license {
                         name = 'MIT License'
-                        url = 'https://www.opensource.org/licenses/mit-license.php'
+                        url = 'https://opensource.org/license/mit'
                         distribution = 'repo'
                     }
                 }
@@ -41,7 +44,7 @@ publishing {
                     developer {
                         id = 'Freeman'
                         name = 'Freeman Liu'
-                        email = 'llw599502537@gmail.com'
+                        email = 'freemanlau1228@gmail.com'
                     }
                 }
                 scm {
@@ -52,25 +55,15 @@ publishing {
             }
         }
     }
+
     repositories {
         maven {
-            credentials {
-                username = System.getenv('OSSRH_USER')
-                password = System.getenv('OSSRH_PASSWORD')
-            }
-            if (isRelease) {
-                url = 'https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/'
-            } else {
-                url = 'https://central.sonatype.com/repository/maven-snapshots/'
-            }
+            url = "${rootDir}/build/staging-deploy"
         }
     }
+}
 
-    tasks.withType(Sign).configureEach {
-        onlyIf { isRelease }
-    }
-
-    signing {
-        sign publishing.publications.mavenJava
-    }
+// Disable the optional-support JAR task to prevent its creation
+optionalSupportJar {
+    enabled = false
 }
