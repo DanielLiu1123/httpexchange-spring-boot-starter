@@ -40,6 +40,11 @@ allprojects {
         }
     }
 
+    javadoc {
+        // Suppress warnings about missing Javadoc comments
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+
     apply plugin: "io.spring.dependency-management"
     dependencyManagement {
         imports {
