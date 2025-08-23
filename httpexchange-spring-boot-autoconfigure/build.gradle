@@ -1,6 +1,4 @@
 dependencies {
-    api("org.springframework.boot:spring-boot-autoconfigure")
-    api("org.springframework:spring-web")
     compileOnly("org.springframework.cloud:spring-cloud-starter-loadbalancer:${springCloudCommonsVersion}")
     compileOnly("org.springframework.boot:spring-boot-starter-webclient")
     compileOnly("org.springframework.boot:spring-boot-starter-restclient")
@@ -18,7 +16,6 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-    testImplementation("org.springframework:spring-webflux")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
     testImplementation("org.springframework.boot:spring-boot-starter-web")
