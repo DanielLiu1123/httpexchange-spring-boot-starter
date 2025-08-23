@@ -16,24 +16,21 @@
 
 package io.github.danielliu1123.httpexchange.shaded;
 
-import jakarta.annotation.Nullable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import kotlin.coroutines.Continuation;
-import kotlinx.coroutines.reactor.MonoKt;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+import org.jspecify.annotations.Nullable;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
 import org.springframework.core.KotlinDetector;
 import org.springframework.core.MethodIntrospector;
-import org.springframework.core.ReactiveAdapterRegistry;
+import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.format.support.DefaultFormattingConversionService;
@@ -41,11 +38,12 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringValueResolver;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
-import org.springframework.web.service.invoker.AbstractReactorHttpExchangeAdapter;
 import org.springframework.web.service.invoker.CookieValueArgumentResolver;
 import org.springframework.web.service.invoker.HttpExchangeAdapter;
 import org.springframework.web.service.invoker.HttpMethodArgumentResolver;
+import org.springframework.web.service.invoker.HttpRequestValues;
 import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
+import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 import org.springframework.web.service.invoker.PathVariableArgumentResolver;
 import org.springframework.web.service.invoker.RequestAttributeArgumentResolver;
 import org.springframework.web.service.invoker.RequestBodyArgumentResolver;
@@ -54,7 +52,6 @@ import org.springframework.web.service.invoker.RequestParamArgumentResolver;
 import org.springframework.web.service.invoker.RequestPartArgumentResolver;
 import org.springframework.web.service.invoker.UriBuilderFactoryArgumentResolver;
 import org.springframework.web.service.invoker.UrlArgumentResolver;
-import reactor.core.publisher.Mono;
 
 /**
  * Factory to create a client proxy from an HTTP service interface with
@@ -74,16 +71,19 @@ public final class ShadedHttpServiceProxyFactory {
 
     private final List<HttpServiceArgumentResolver> argumentResolvers;
 
-    @Nullable
-    private final StringValueResolver embeddedValueResolver;
+    private final HttpRequestValues.Processor requestValuesProcessor;
+
+    private final @Nullable StringValueResolver embeddedValueResolver;
 
     private ShadedHttpServiceProxyFactory(
             HttpExchangeAdapter exchangeAdapter,
             List<HttpServiceArgumentResolver> argumentResolvers,
+            List<HttpRequestValues.Processor> requestValuesProcessor,
             @Nullable StringValueResolver embeddedValueResolver) {
 
         this.exchangeAdapter = exchangeAdapter;
         this.argumentResolvers = argumentResolvers;
+        this.requestValuesProcessor = new CompositeHttpRequestValuesProcessor(requestValuesProcessor);
         this.embeddedValueResolver = embeddedValueResolver;
     }
 
@@ -102,7 +102,14 @@ public final class ShadedHttpServiceProxyFactory {
                         .map(method -> createHttpServiceMethod(serviceType, method))
                         .toList();
 
-        return ProxyFactory.getProxy(serviceType, new HttpServiceMethodInterceptor(httpServiceMethods));
+        return getProxy(serviceType, httpServiceMethods);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <S> S getProxy(Class<S> serviceType, List<ShadedHttpServiceMethod> httpServiceMethods) {
+        MethodInterceptor interceptor = new HttpServiceMethodInterceptor(httpServiceMethods);
+        ProxyFactory factory = new ProxyFactory(serviceType, interceptor);
+        return (S) factory.getProxy(serviceType.getClassLoader());
     }
 
     private boolean isExchangeMethod(Method method) {
@@ -114,7 +121,12 @@ public final class ShadedHttpServiceProxyFactory {
         Assert.notNull(this.argumentResolvers, "No argument resolvers: afterPropertiesSet was not called");
 
         return new ShadedHttpServiceMethod(
-                method, serviceType, this.argumentResolvers, this.exchangeAdapter, this.embeddedValueResolver);
+                method,
+                serviceType,
+                this.argumentResolvers,
+                this.requestValuesProcessor,
+                this.exchangeAdapter,
+                this.embeddedValueResolver);
     }
 
     /**
@@ -141,10 +153,14 @@ public final class ShadedHttpServiceProxyFactory {
         @Nullable
         private HttpExchangeAdapter exchangeAdapter;
 
+        private Function<HttpExchangeAdapter, HttpExchangeAdapter> exchangeAdapterDecorator = Function.identity();
+
         private final List<HttpServiceArgumentResolver> customArgumentResolvers = new ArrayList<>();
 
         @Nullable
         private ConversionService conversionService;
+
+        private final List<HttpRequestValues.Processor> requestValuesProcessors = new ArrayList<>();
 
         @Nullable
         private StringValueResolver embeddedValueResolver;
@@ -160,6 +176,18 @@ public final class ShadedHttpServiceProxyFactory {
          */
         public Builder exchangeAdapter(HttpExchangeAdapter adapter) {
             this.exchangeAdapter = adapter;
+            return this;
+        }
+
+        /**
+         * Provide a function to wrap the configured {@code HttpExchangeAdapter}.
+         * @param decorator a client adapted to {@link HttpExchangeAdapter}
+         * @return this same builder instance
+         * @since 7.0
+         */
+        public ShadedHttpServiceProxyFactory.Builder exchangeAdapterDecorator(
+                Function<HttpExchangeAdapter, HttpExchangeAdapter> decorator) {
+            this.exchangeAdapterDecorator = this.exchangeAdapterDecorator.andThen(decorator);
             return this;
         }
 
@@ -187,6 +215,18 @@ public final class ShadedHttpServiceProxyFactory {
         }
 
         /**
+         * Register an {@link HttpRequestValues} processor that can further
+         * customize request values based on the method and all arguments.
+         * @param processor the processor to add
+         * @return this same builder instance
+         * @since 7.0
+         */
+        public ShadedHttpServiceProxyFactory.Builder httpRequestValuesProcessor(HttpRequestValues.Processor processor) {
+            this.requestValuesProcessors.add(processor);
+            return this;
+        }
+
+        /**
          * Set the {@link StringValueResolver} to use for resolving placeholders
          * and expressions embedded in {@link HttpExchange#url()}.
          *
@@ -199,49 +239,17 @@ public final class ShadedHttpServiceProxyFactory {
         }
 
         /**
-         * Set the {@link ReactiveAdapterRegistry} to use to support different
-         * asynchronous types for HTTP service method return values.
-         * <p>By default this is {@link ReactiveAdapterRegistry#getSharedInstance()}.
-         *
-         * @return this same builder instance
-         * @deprecated in favor of setting the same directly on the {@link HttpExchangeAdapter}
-         */
-        @Deprecated(since = "6.1", forRemoval = true)
-        public Builder reactiveAdapterRegistry(ReactiveAdapterRegistry registry) {
-            if (this.exchangeAdapter instanceof AbstractReactorHttpExchangeAdapter settable) {
-                settable.setReactiveAdapterRegistry(registry);
-            }
-            return this;
-        }
-
-        /**
-         * Configure how long to block for the response of an HTTP service method
-         * with a synchronous (blocking) method signature.
-         * <p>By default this is not set, in which case the behavior depends on
-         * connection and request timeout settings of the underlying HTTP client.
-         * We recommend configuring timeout values directly on the underlying HTTP
-         * client, which provides more control over such settings.
-         *
-         * @param blockTimeout the timeout value
-         * @return this same builder instance
-         * @deprecated in favor of setting the same directly on the {@link HttpExchangeAdapter}
-         */
-        @Deprecated(since = "6.1", forRemoval = true)
-        public Builder blockTimeout(@Nullable Duration blockTimeout) {
-            if (this.exchangeAdapter instanceof AbstractReactorHttpExchangeAdapter settable) {
-                settable.setBlockTimeout(blockTimeout);
-            }
-            return this;
-        }
-
-        /**
          * Build the {@link ShadedHttpServiceProxyFactory} instance.
+         */
+        /**
+         * Build the {@link HttpServiceProxyFactory} instance.
          */
         public ShadedHttpServiceProxyFactory build() {
             Assert.notNull(this.exchangeAdapter, "HttpClientAdapter is required");
+            HttpExchangeAdapter adapterToUse = this.exchangeAdapterDecorator.apply(this.exchangeAdapter);
 
             return new ShadedHttpServiceProxyFactory(
-                    this.exchangeAdapter, initArgumentResolvers(), this.embeddedValueResolver);
+                    adapterToUse, initArgumentResolvers(), this.requestValuesProcessors, this.embeddedValueResolver);
         }
 
         @SuppressWarnings("DataFlowIssue")
@@ -291,10 +299,10 @@ public final class ShadedHttpServiceProxyFactory {
             Method method = invocation.getMethod();
             ShadedHttpServiceMethod httpServiceMethod = this.httpServiceMethods.get(method);
             if (httpServiceMethod != null) {
-                if (KotlinDetector.isSuspendingFunction(method)) {
-                    return KotlinDelegate.invokeSuspendingFunction(invocation, httpServiceMethod);
-                }
-                return httpServiceMethod.invoke(invocation.getArguments());
+                Object[] arguments = KotlinDetector.isSuspendingFunction(method)
+                        ? resolveCoroutinesArguments(invocation.getArguments())
+                        : invocation.getArguments();
+                return httpServiceMethod.invoke(arguments);
             }
             if (method.isDefault()) {
                 if (invocation instanceof ReflectiveMethodInvocation reflectiveMethodInvocation) {
@@ -304,28 +312,33 @@ public final class ShadedHttpServiceProxyFactory {
             }
             throw new IllegalStateException("Unexpected method invocation: " + method);
         }
-    }
 
-    /**
-     * Inner class to avoid a hard dependency on Kotlin at runtime.
-     */
-    @SuppressWarnings("unchecked")
-    private static class KotlinDelegate {
-
-        public static Object invokeSuspendingFunction(
-                MethodInvocation invocation, ShadedHttpServiceMethod httpServiceMethod) {
-            Object[] rawArguments = invocation.getArguments();
-            Object[] arguments = resolveArguments(rawArguments);
-            Continuation<Object> continuation = (Continuation<Object>) rawArguments[rawArguments.length - 1];
-            Mono<Object> wrapped = (Mono<Object>) httpServiceMethod.invoke(arguments);
-            assert wrapped != null;
-            return MonoKt.awaitSingleOrNull(wrapped, continuation);
-        }
-
-        private static Object[] resolveArguments(Object[] args) {
+        private static Object[] resolveCoroutinesArguments(@Nullable Object[] args) {
+            if (args == null) {
+                throw new IllegalStateException("Unexpected null arguments");
+            }
             Object[] functionArgs = new Object[args.length - 1];
             System.arraycopy(args, 0, functionArgs, 0, args.length - 1);
             return functionArgs;
+        }
+    }
+
+    /**
+     * Processor that delegates to a list of other processors.
+     */
+    private record CompositeHttpRequestValuesProcessor(List<HttpRequestValues.Processor> processors)
+            implements HttpRequestValues.Processor {
+
+        @Override
+        public void process(
+                Method method,
+                MethodParameter[] parameters,
+                @Nullable Object[] arguments,
+                HttpRequestValues.Builder builder) {
+
+            for (HttpRequestValues.Processor processor : this.processors) {
+                processor.process(method, parameters, arguments, builder);
+            }
         }
     }
 }

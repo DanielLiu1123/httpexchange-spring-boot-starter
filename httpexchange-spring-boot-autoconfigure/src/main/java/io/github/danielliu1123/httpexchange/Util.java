@@ -1,12 +1,12 @@
 package io.github.danielliu1123.httpexchange;
 
-import jakarta.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.context.properties.bind.Binder;
