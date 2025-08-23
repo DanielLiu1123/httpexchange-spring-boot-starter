@@ -12,13 +12,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.boot.autoconfigure.http.client.AbstractHttpClientProperties;
-import org.springframework.boot.autoconfigure.http.client.HttpClientProperties;
-import org.springframework.boot.autoconfigure.http.client.reactive.HttpReactiveClientProperties;
 import org.springframework.boot.autoconfigure.ssl.SslProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.boot.http.client.HttpRedirects;
+import org.springframework.boot.http.client.autoconfigure.HttpClientProperties;
+import org.springframework.boot.http.client.autoconfigure.reactive.HttpReactiveClientProperties;
+import org.springframework.boot.restclient.autoconfigure.AbstractRestClientProperties;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -315,7 +315,7 @@ public class HttpExchangeProperties implements InitializingBean {
     }
 
     /**
-     * @see AbstractHttpClientProperties.Ssl
+     * @see AbstractRestClientProperties.Ssl
      */
     @Data
     public static class Ssl {

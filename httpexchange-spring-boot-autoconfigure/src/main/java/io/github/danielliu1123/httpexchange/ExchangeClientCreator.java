@@ -27,9 +27,9 @@ import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
 import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.boot.http.client.reactive.ClientHttpConnectorBuilder;
 import org.springframework.boot.http.client.reactive.ClientHttpConnectorSettings;
+import org.springframework.boot.restclient.RestClientCustomizer;
 import org.springframework.boot.ssl.SslBundles;
-import org.springframework.boot.web.client.RestClientCustomizer;
-import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
+import org.springframework.boot.webclient.WebClientCustomizer;
 import org.springframework.cloud.client.loadbalancer.DeferringLoadBalancerInterceptor;
 import org.springframework.cloud.client.loadbalancer.reactive.DeferringLoadBalancerExchangeFilterFunction;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
@@ -315,9 +315,7 @@ class ExchangeClientCreator {
                 .getBeanProvider(ClientHttpRequestFactorySettings.class)
                 .getIfUnique(ClientHttpRequestFactorySettings::defaults);
 
-        var redirects = Optional.ofNullable(channelConfig.getRedirects())
-                .map(ClientHttpRequestFactorySettings.Redirects::of)
-                .orElseGet(globalConfig::redirects);
+        var redirects = Optional.ofNullable(channelConfig.getRedirects()).orElseGet(globalConfig::redirects);
         var connectTimeout = Optional.ofNullable(channelConfig.getConnectTimeout())
                 .map(Duration::ofMillis)
                 .orElseGet(globalConfig::connectTimeout);

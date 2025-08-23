@@ -43,7 +43,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.invoker.AbstractReactorHttpExchangeAdapter;
 import org.springframework.web.service.invoker.CookieValueArgumentResolver;
-import org.springframework.web.service.invoker.HttpClientAdapter;
 import org.springframework.web.service.invoker.HttpExchangeAdapter;
 import org.springframework.web.service.invoker.HttpMethodArgumentResolver;
 import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
@@ -128,18 +127,6 @@ public final class ShadedHttpServiceProxyFactory {
     }
 
     /**
-     * Return a builder that's initialized with the given client.
-     *
-     * @deprecated in favor of {@link #builderFor(HttpExchangeAdapter)};
-     * to be removed in 6.2.
-     */
-    @SuppressWarnings("removal")
-    @Deprecated(since = "6.1", forRemoval = true)
-    public static Builder builder(HttpClientAdapter clientAdapter) {
-        return new Builder().exchangeAdapter(clientAdapter.asReactorExchangeAdapter());
-    }
-
-    /**
      * Return an empty builder, with the client to be provided to builder.
      */
     public static Builder builder() {
@@ -173,21 +160,6 @@ public final class ShadedHttpServiceProxyFactory {
          */
         public Builder exchangeAdapter(HttpExchangeAdapter adapter) {
             this.exchangeAdapter = adapter;
-            return this;
-        }
-
-        /**
-         * Provide the HTTP client to perform requests through.
-         *
-         * @param clientAdapter a client adapted to {@link HttpClientAdapter}
-         * @return this same builder instance
-         * @deprecated in favor of {@link #exchangeAdapter(HttpExchangeAdapter)};
-         * to be removed in 6.2
-         */
-        @SuppressWarnings("removal")
-        @Deprecated(since = "6.1", forRemoval = true)
-        public Builder clientAdapter(HttpClientAdapter clientAdapter) {
-            this.exchangeAdapter = clientAdapter.asReactorExchangeAdapter();
             return this;
         }
 
