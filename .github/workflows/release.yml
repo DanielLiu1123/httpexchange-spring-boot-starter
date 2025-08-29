@@ -7,7 +7,7 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 240
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -45,4 +45,4 @@ jobs:
           GPG_SECRET_KEY: ${{ secrets.GPG_SECRET_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          ./gradlew clean publish jreleaserDeploy --no-daemon --stacktrace
+          ./gradlew publish jreleaserDeploy --no-daemon --stacktrace
