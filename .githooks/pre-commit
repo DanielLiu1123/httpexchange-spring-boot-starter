@@ -2,10 +2,10 @@
 
 set -e
 
-./gradlew spotlessApply > /dev/null
+./gradlew spotlessApply
 
 # generate configuration properties docs
-./gradlew classes generateConfigurationPropertiesDocs > /dev/null
+./gradlew classes generateConfigurationPropertiesDocs
 
 # escape {} in md
 perl -pi -e 's/{/\\{/g' build/configuration-properties.md
