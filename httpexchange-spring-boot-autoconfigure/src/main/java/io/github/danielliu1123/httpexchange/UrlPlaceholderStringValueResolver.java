@@ -1,6 +1,5 @@
 package io.github.danielliu1123.httpexchange;
 
-import jakarta.annotation.Nonnull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,14 +25,18 @@ public class UrlPlaceholderStringValueResolver implements StringValueResolver {
     }
 
     @Override
-    public String resolveStringValue(@Nonnull String strVal) {
+    public @Nullable String resolveStringValue(String strVal) {
         String resolved = strVal;
         try {
             resolved = environment.resolvePlaceholders(strVal);
         } catch (Exception e) {
             log.warn("Placeholders in '{}' could not be resolved", strVal, e);
         }
-        return delegate != null ? delegate.resolveStringValue(resolved) : resolved;
+        if (delegate != null) {
+            String delegateResult = delegate.resolveStringValue(resolved);
+            return delegateResult != null ? delegateResult : resolved;
+        }
+        return resolved;
     }
 
     /**

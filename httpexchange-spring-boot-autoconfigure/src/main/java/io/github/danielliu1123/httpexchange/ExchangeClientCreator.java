@@ -152,12 +152,10 @@ class ExchangeClientCreator {
     private void setExchangeAdapter(
             HttpServiceProxyFactory.Builder builder, HttpExchangeProperties.Channel channelConfig) {
         switch (getClientType(channelConfig)) {
-            case REST_CLIENT ->
-                builder.exchangeAdapter(RestClientAdapter.create(getClient(
-                        new Cache.ClientId(channelConfig, REST_CLIENT), () -> buildRestClient(channelConfig))));
-            case WEB_CLIENT ->
-                builder.exchangeAdapter(WebClientAdapter.create(
-                        getClient(new Cache.ClientId(channelConfig, WEB_CLIENT), () -> buildWebClient(channelConfig))));
+            case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(
+                    getClient(new Cache.ClientId(channelConfig, REST_CLIENT), () -> buildRestClient(channelConfig))));
+            case WEB_CLIENT -> builder.exchangeAdapter(WebClientAdapter.create(
+                    getClient(new Cache.ClientId(channelConfig, WEB_CLIENT), () -> buildWebClient(channelConfig))));
             default -> throw new IllegalStateException("Unsupported client-type: " + channelConfig.getClientType());
         }
     }
@@ -358,11 +356,14 @@ class ExchangeClientCreator {
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
         return LOADBALANCER_PRESENT
                 && environment.getProperty("spring.cloud.loadbalancer.enabled", Boolean.class, true)
-                && channelConfig.getLoadbalancerEnabled();
+                && Boolean.TRUE.equals(channelConfig.getLoadbalancerEnabled());
     }
 
     private static String getRealBaseUrl(HttpExchangeProperties.Channel channelConfig) {
         String baseUrl = channelConfig.getBaseUrl();
+        if (baseUrl == null) {
+            return "http://localhost";
+        }
         return baseUrl.contains("://") ? baseUrl : "http://" + baseUrl;
     }
 
@@ -424,7 +425,11 @@ class ExchangeClientCreator {
     @SuppressWarnings("unchecked")
     private static <T> T getFieldValue(Object obj, Field field) {
         ReflectionUtils.makeAccessible(field);
-        return (T) ReflectionUtils.getField(field, obj);
+        Object value = ReflectionUtils.getField(field, obj);
+        if (value == null) {
+            throw new IllegalStateException("Field " + field.getName() + " is null");
+        }
+        return (T) value;
     }
 
     private static HttpExchangeProperties.ClientType getDefaultClientType() {

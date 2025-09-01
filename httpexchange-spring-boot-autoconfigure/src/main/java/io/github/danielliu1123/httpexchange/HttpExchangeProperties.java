@@ -11,6 +11,7 @@ import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.autoconfigure.ssl.SslProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -61,6 +62,7 @@ public class HttpExchangeProperties implements InitializingBean {
      *     <li> user(service id) </li>
      * </ul>
      */
+    @Nullable
     private String baseUrl;
     /**
      * Default headers will be added to all the requests.
@@ -91,6 +93,7 @@ public class HttpExchangeProperties implements InitializingBean {
      * @see ClientType
      * @since 3.2.0
      */
+    @Nullable
     private ClientType clientType;
     /**
      * whether to process {@link RequestMapping} based annotation,
@@ -129,13 +132,11 @@ public class HttpExchangeProperties implements InitializingBean {
     private boolean httpClientReuseEnabled = true;
 
     @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class Header {
         /**
          * Header key.
          */
-        private String key;
+        private String key = "";
         /**
          * Header values.
          */
@@ -169,7 +170,12 @@ public class HttpExchangeProperties implements InitializingBean {
                 total.put(header.getKey(), header.getValues());
             }
             List<Header> mergedHeaders = total.entrySet().stream()
-                    .map(e -> new Header(e.getKey(), e.getValue()))
+                    .map(e -> {
+                        Header header = new Header();
+                        header.setKey(e.getKey());
+                        header.setValues(e.getValue());
+                        return header;
+                    })
                     .toList();
             chan.setHeaders(mergedHeaders);
         }
@@ -198,10 +204,12 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Optional channel name.
          */
+        @Nullable
         private String name;
         /**
          * Base url, use {@link HttpExchangeProperties#baseUrl} if not set.
          */
+        @Nullable
         private String baseUrl;
         /**
          * Default headers will be merged with {@link HttpExchangeProperties#headers}.
@@ -212,6 +220,7 @@ public class HttpExchangeProperties implements InitializingBean {
          *
          * @see ClientType
          */
+        @Nullable
         private ClientType clientType;
         /**
          * Redirects configuration.
@@ -224,6 +233,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpRedirects
          * @since 3.5.0
          */
+        @Nullable
         private HttpRedirects redirects;
         /**
          * Connection timeout duration, specified in milliseconds.
@@ -236,6 +246,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpReactiveClientProperties#getConnectTimeout()
          * @since 3.2.0
          */
+        @Nullable
         private Integer connectTimeout;
         /**
          * Read timeout duration, specified in milliseconds.
@@ -248,6 +259,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpReactiveClientProperties#getReadTimeout()
          * @since 3.2.0
          */
+        @Nullable
         private Integer readTimeout;
         /**
          * Whether to enable loadbalancer, use {@link HttpExchangeProperties#loadbalancerEnabled} if not set.
@@ -255,6 +267,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpExchangeProperties#loadbalancerEnabled
          * @since 3.2.0
          */
+        @Nullable
         private Boolean loadbalancerEnabled;
         /**
          * Whether to enable http client reuse, use {@link HttpExchangeProperties#httpClientReuseEnabled} if not set.
@@ -262,6 +275,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpExchangeProperties#httpClientReuseEnabled
          * @since 3.2.2
          */
+        @Nullable
         private Boolean httpClientReuseEnabled;
         /**
          * SSL configuration.
@@ -274,6 +288,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpReactiveClientProperties#getSsl()
          * @since 3.4.1
          */
+        @Nullable
         private Ssl ssl;
         /**
          * Exchange Clients to apply this channel.
@@ -328,7 +343,7 @@ public class HttpExchangeProperties implements InitializingBean {
          *
          * @see SslProperties#getBundle()
          */
-        private String bundle;
+        private String bundle = "";
     }
 
     public enum ClientType {

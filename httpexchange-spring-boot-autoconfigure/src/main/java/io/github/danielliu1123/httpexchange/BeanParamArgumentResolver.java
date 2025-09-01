@@ -1,6 +1,5 @@
 package io.github.danielliu1123.httpexchange;
 
-import jakarta.annotation.Nonnull;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.net.URI;
@@ -10,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -60,8 +60,8 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
 
     @Override
     public boolean resolve(
-            Object argument, @Nonnull MethodParameter parameter, @Nonnull HttpRequestValues.Builder requestValues) {
-        if (isNonResolvableArgument(argument, parameter)) {
+            @Nullable Object argument, MethodParameter parameter, HttpRequestValues.Builder requestValues) {
+        if (argument == null || isNonResolvableArgument(argument, parameter)) {
             return false;
         }
 
@@ -103,8 +103,7 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
         // If there is @RequestParam, @PathVariable, @RequestHeader, @CookieValue, etc.,
         // we cannot convert Java bean to request parameters,
         // it will be resolved by other ArgumentResolver.
-        return argument == null
-                || argument instanceof URI // UrlArgumentResolver
+        return argument instanceof URI // UrlArgumentResolver
                 || argument instanceof HttpMethod // HttpMethodArgumentResolver
                 || argument instanceof UriBuilderFactory // UriBuilderFactoryArgumentResolver
                 || argument instanceof MultipartFile // RequestPartArgumentResolver

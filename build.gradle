@@ -14,6 +14,7 @@ plugins {
     id "org.springframework.boot" version "${springBootVersion}" apply false
     id "org.graalvm.buildtools.native" version "${graalvmBuildToolsVersion}" apply false
     id "org.jreleaser" version "${jReleaserVersion}" apply false
+    id "io.spring.nullability" version "${nullabilityVersion}" apply false
 }
 
 allprojects {
@@ -110,6 +111,8 @@ allprojects {
         spotbugsTest.enabled = false
         omitVisitors.addAll("FindReturnRef", "DontReusePublicIdentifiers")
     }
+
+    apply plugin: "io.spring.nullability"
 }
 
 apply from: "${rootDir}/gradle/generate-configuration-properties-docs.gradle"
