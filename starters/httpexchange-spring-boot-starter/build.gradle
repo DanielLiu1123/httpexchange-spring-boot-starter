@@ -1,13 +1,6 @@
 dependencies {
-    api(project(":httpexchange-spring-boot-autoconfigure"))
-    api("org.springframework.boot:spring-boot-starter")
-    api("org.springframework.boot:spring-boot-starter-json")
-
-    optionalSupportApi("org.springframework:spring-webflux")
-    optionalSupportApi("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-    optionalSupportApi("org.springframework.cloud:spring-cloud-context:${springCloudCommonsVersion}")
-
-    optionalSupportApi("org.springframework.cloud:spring-cloud-starter-loadbalancer:${springCloudCommonsVersion}")
+    api(project(":starters:httpexchange-restclient-spring-boot-starter"))
+    api(project(":starters:httpexchange-webclient-spring-boot-starter"))
 }
 
 apply from: "${rootDir}/gradle/deploy.gradle"

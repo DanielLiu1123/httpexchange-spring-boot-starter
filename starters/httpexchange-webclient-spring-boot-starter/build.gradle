@@ -1,0 +1,12 @@
+dependencies {
+    api(project(":httpexchange-spring-boot-autoconfigure"))
+    api("org.springframework.boot:spring-boot-starter")
+    api("org.springframework.boot:spring-boot-starter-webclient")
+
+    optionalSupportApi("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    optionalSupportApi("org.springframework.cloud:spring-cloud-context:${springCloudCommonsVersion}")
+
+    optionalSupportApi("org.springframework.cloud:spring-cloud-starter-loadbalancer:${springCloudCommonsVersion}")
+}
+
+apply from: "${rootDir}/gradle/deploy.gradle"

@@ -5,12 +5,12 @@ import static org.springframework.util.ClassUtils.getAllInterfacesForClass;
 import static org.springframework.util.ObjectUtils.addObjectToArray;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import javax.lang.model.element.Modifier;
+import org.jspecify.annotations.Nullable;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.aot.generate.GenerationContext;
 import org.springframework.aot.generate.MethodReference;

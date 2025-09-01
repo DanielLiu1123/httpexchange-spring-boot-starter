@@ -259,7 +259,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
 
         // Incremental compilation (Isolating) must have exactly one originating element.
         // See https://docs.gradle.org/current/userguide/java_plugin.html#isolating_annotation_processors
-        result.originatingElements.add(element);
+        result.addOriginatingElement(element);
 
         return result;
     }
@@ -302,7 +302,7 @@ public class ApiBaseProcessor extends AbstractProcessor {
 
         // Incremental compilation (Isolating) must have exactly one originating element.
         // See https://docs.gradle.org/current/userguide/java_plugin.html#isolating_annotation_processors
-        result.originatingElements.add(element);
+        result.addOriginatingElement(element);
 
         return result;
     }
@@ -428,9 +428,9 @@ public class ApiBaseProcessor extends AbstractProcessor {
                 .build();
         javaFile.writeTo(processingEnv.getFiler());
         generatedClasses.add(
-                StringUtils.hasText(javaFile.packageName)
-                        ? javaFile.packageName + "." + javaFile.typeSpec.name
-                        : javaFile.typeSpec.name);
+                StringUtils.hasText(javaFile.packageName())
+                        ? javaFile.packageName() + "." + javaFile.typeSpec().name()
+                        : javaFile.typeSpec().name());
     }
 
     private String getOutputPackage(Element element) {

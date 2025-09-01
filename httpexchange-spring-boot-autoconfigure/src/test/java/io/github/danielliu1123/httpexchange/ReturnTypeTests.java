@@ -36,7 +36,7 @@ class ReturnTypeTests {
 
             assertThatCode(api::get).doesNotThrowAnyException();
             assertThat(api.getBody()).containsEntry("name", "Freeman");
-            assertThat(api.getHeaders()).containsEntry("foo", List.of("bar"));
+            assertThat(api.getHeaders().hasHeaderValues("foo", List.of("bar"))).isTrue();
             assertThat(api.getResponseEntity().getStatusCode()).isEqualTo(HttpStatus.OK);
         }
     }

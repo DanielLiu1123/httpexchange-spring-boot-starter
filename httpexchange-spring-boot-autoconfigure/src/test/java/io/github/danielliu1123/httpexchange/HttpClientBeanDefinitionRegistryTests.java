@@ -65,8 +65,6 @@ class HttpClientBeanDefinitionRegistryTests {
             Map<String, Object> properties) {
         var env = new StandardEnvironment();
         env.getPropertySources().addLast(new MapPropertySource("test", properties));
-        var registry = new HttpClientBeanDefinitionRegistry();
-        registry.setEnvironment(env);
-        return registry;
+        return new HttpClientBeanDefinitionRegistry(env);
     }
 }

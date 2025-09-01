@@ -11,14 +11,14 @@ import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.boot.autoconfigure.http.client.AbstractHttpClientProperties;
-import org.springframework.boot.autoconfigure.http.client.HttpClientProperties;
-import org.springframework.boot.autoconfigure.http.client.reactive.HttpReactiveClientProperties;
-import org.springframework.boot.autoconfigure.ssl.SslProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.boot.http.client.HttpRedirects;
+import org.springframework.boot.http.client.autoconfigure.HttpClientProperties;
+import org.springframework.boot.http.client.autoconfigure.reactive.HttpReactiveClientProperties;
+import org.springframework.boot.restclient.autoconfigure.AbstractRestClientProperties;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -61,6 +61,7 @@ public class HttpExchangeProperties implements InitializingBean {
      *     <li> user(service id) </li>
      * </ul>
      */
+    @Nullable
     private String baseUrl;
     /**
      * Default headers will be added to all the requests.
@@ -91,6 +92,7 @@ public class HttpExchangeProperties implements InitializingBean {
      * @see ClientType
      * @since 3.2.0
      */
+    @Nullable
     private ClientType clientType;
     /**
      * whether to process {@link RequestMapping} based annotation,
@@ -128,18 +130,14 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     private boolean httpClientReuseEnabled = true;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Header {
-        /**
-         * Header key.
-         */
-        private String key;
-        /**
-         * Header values.
-         */
-        private List<String> values = new ArrayList<>();
+    /**
+     * @param key    Header key.
+     * @param values Header values.
+     */
+    public record Header(String key, List<String> values) {
+        public Header {
+            values = List.copyOf(values);
+        }
     }
 
     @Override
@@ -164,9 +162,9 @@ public class HttpExchangeProperties implements InitializingBean {
 
             // defaultHeaders + chan.headers
             LinkedHashMap<String, List<String>> total = headers.stream()
-                    .collect(toMap(Header::getKey, Header::getValues, (oldV, newV) -> oldV, LinkedHashMap::new));
+                    .collect(toMap(Header::key, Header::values, (oldV, newV) -> oldV, LinkedHashMap::new));
             for (Header header : chan.getHeaders()) {
-                total.put(header.getKey(), header.getValues());
+                total.put(header.key(), header.values());
             }
             List<Header> mergedHeaders = total.entrySet().stream()
                     .map(e -> new Header(e.getKey(), e.getValue()))
@@ -198,10 +196,12 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Optional channel name.
          */
+        @Nullable
         private String name;
         /**
          * Base url, use {@link HttpExchangeProperties#baseUrl} if not set.
          */
+        @Nullable
         private String baseUrl;
         /**
          * Default headers will be merged with {@link HttpExchangeProperties#headers}.
@@ -212,6 +212,7 @@ public class HttpExchangeProperties implements InitializingBean {
          *
          * @see ClientType
          */
+        @Nullable
         private ClientType clientType;
         /**
          * Redirects configuration.
@@ -224,6 +225,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpRedirects
          * @since 3.5.0
          */
+        @Nullable
         private HttpRedirects redirects;
         /**
          * Connection timeout duration, specified in milliseconds.
@@ -236,6 +238,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpReactiveClientProperties#getConnectTimeout()
          * @since 3.2.0
          */
+        @Nullable
         private Integer connectTimeout;
         /**
          * Read timeout duration, specified in milliseconds.
@@ -248,6 +251,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpReactiveClientProperties#getReadTimeout()
          * @since 3.2.0
          */
+        @Nullable
         private Integer readTimeout;
         /**
          * Whether to enable loadbalancer, use {@link HttpExchangeProperties#loadbalancerEnabled} if not set.
@@ -255,6 +259,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpExchangeProperties#loadbalancerEnabled
          * @since 3.2.0
          */
+        @Nullable
         private Boolean loadbalancerEnabled;
         /**
          * Whether to enable http client reuse, use {@link HttpExchangeProperties#httpClientReuseEnabled} if not set.
@@ -262,6 +267,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpExchangeProperties#httpClientReuseEnabled
          * @since 3.2.2
          */
+        @Nullable
         private Boolean httpClientReuseEnabled;
         /**
          * SSL configuration.
@@ -274,6 +280,7 @@ public class HttpExchangeProperties implements InitializingBean {
          * @see HttpReactiveClientProperties#getSsl()
          * @since 3.4.1
          */
+        @Nullable
         private Ssl ssl;
         /**
          * Exchange Clients to apply this channel.
@@ -315,21 +322,14 @@ public class HttpExchangeProperties implements InitializingBean {
     }
 
     /**
-     * @see AbstractHttpClientProperties.Ssl
+     * @param bundle SSL bundle to use.
+     *
+     *               <p> Bundle name is configured under {@code spring.ssl} properties.
+     *
+     *               <p> See configuration properties under {@code spring.ssl}.
+     * @see AbstractRestClientProperties.Ssl
      */
-    @Data
-    public static class Ssl {
-        /**
-         * SSL bundle to use.
-         *
-         * <p> Bundle name is configured under {@code spring.ssl} properties.
-         *
-         * <p> See configuration properties under {@code spring.ssl}.
-         *
-         * @see SslProperties#getBundle()
-         */
-        private String bundle;
-    }
+    public record Ssl(String bundle) {}
 
     public enum ClientType {
         /**

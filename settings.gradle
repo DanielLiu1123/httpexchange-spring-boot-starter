@@ -18,7 +18,9 @@ include(":examples:reactive")
 include(":httpexchange-processor")
 include(":httpexchange-spring-boot-autoconfigure")
 
+include(":starters:httpexchange-restclient-spring-boot-starter")
 include(":starters:httpexchange-spring-boot-starter")
+include(":starters:httpexchange-webclient-spring-boot-starter")
 
 new File("${rootDir}/.githooks").eachFile(groovy.io.FileType.FILES) {
     def f = new File("${rootDir}/.git/hooks")
