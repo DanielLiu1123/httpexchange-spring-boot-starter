@@ -25,29 +25,14 @@ public class UrlPlaceholderStringValueResolver implements StringValueResolver {
     }
 
     @Override
-    public @Nullable String resolveStringValue(String strVal) {
+    @Nullable
+    public String resolveStringValue(String strVal) {
         String resolved = strVal;
         try {
             resolved = environment.resolvePlaceholders(strVal);
         } catch (Exception e) {
             log.warn("Placeholders in '{}' could not be resolved", strVal, e);
         }
-        if (delegate != null) {
-            String delegateResult = delegate.resolveStringValue(resolved);
-            return delegateResult != null ? delegateResult : resolved;
-        }
-        return resolved;
-    }
-
-    /**
-     * Create a new {@link UrlPlaceholderStringValueResolver} instance.
-     *
-     * @param environment the environment
-     * @param delegate    {@link StringValueResolver}
-     * @return {@link UrlPlaceholderStringValueResolver}
-     */
-    public static UrlPlaceholderStringValueResolver create(
-            Environment environment, @Nullable StringValueResolver delegate) {
-        return new UrlPlaceholderStringValueResolver(environment, delegate);
+        return delegate != null ? delegate.resolveStringValue(resolved) : resolved;
     }
 }

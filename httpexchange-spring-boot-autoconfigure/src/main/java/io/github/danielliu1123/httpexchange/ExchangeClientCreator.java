@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Flow;
 import java.util.function.Supplier;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -167,7 +168,9 @@ class ExchangeClientCreator {
     }
 
     private void addCustomArgumentResolver(HttpServiceProxyFactory.Builder builder) {
-        List<HttpServiceArgumentResolver> existingResolvers = getFieldValue(builder, customArgumentResolversField);
+        List<HttpServiceArgumentResolver> existingResolvers = Optional.<List<HttpServiceArgumentResolver>>ofNullable(
+                        getFieldValue(builder, customArgumentResolversField))
+                .orElseGet(List::of);
         beanFactory
                 .getBeanProvider(HttpServiceArgumentResolver.class)
                 .orderedStream()
@@ -179,8 +182,8 @@ class ExchangeClientCreator {
         // String value resolver, need to support ${} placeholder
         StringValueResolver resolver = Optional.ofNullable(getFieldValue(builder, embeddedValueResolverField))
                 .map(StringValueResolver.class::cast)
-                .map(r -> UrlPlaceholderStringValueResolver.create(environment, r))
-                .orElseGet(() -> UrlPlaceholderStringValueResolver.create(environment, null));
+                .map(r -> new UrlPlaceholderStringValueResolver(environment, r))
+                .orElseGet(() -> new UrlPlaceholderStringValueResolver(environment, null));
         builder.embeddedValueResolver(resolver);
     }
 
@@ -189,14 +192,15 @@ class ExchangeClientCreator {
 
         configureWebClientBuilder(builder, channelConfig);
 
-        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
-            builder.baseUrl(getRealBaseUrl(channelConfig));
+        var baseUrl = channelConfig.getBaseUrl();
+        if (StringUtils.hasText(baseUrl)) {
+            builder.baseUrl(getRealBaseUrl(baseUrl));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
             channelConfig
                     .getHeaders()
-                    .forEach(header -> builder.defaultHeader(
-                            header.getKey(), header.getValues().toArray(String[]::new)));
+                    .forEach(header ->
+                            builder.defaultHeader(header.key(), header.values().toArray(String[]::new)));
         }
 
         if (isLoadBalancerEnabled(channelConfig)) {
@@ -249,14 +253,15 @@ class ExchangeClientCreator {
 
         configureRestClientBuilder(builder, channelConfig);
 
-        if (StringUtils.hasText(channelConfig.getBaseUrl())) {
-            builder.baseUrl(getRealBaseUrl(channelConfig));
+        var baseUrl = channelConfig.getBaseUrl();
+        if (StringUtils.hasText(baseUrl)) {
+            builder.baseUrl(getRealBaseUrl(baseUrl));
         }
         if (!CollectionUtils.isEmpty(channelConfig.getHeaders())) {
             channelConfig
                     .getHeaders()
-                    .forEach(header -> builder.defaultHeader(
-                            header.getKey(), header.getValues().toArray(String[]::new)));
+                    .forEach(header ->
+                            builder.defaultHeader(header.key(), header.values().toArray(String[]::new)));
         }
 
         if (isLoadBalancerEnabled(channelConfig)) {
@@ -323,7 +328,7 @@ class ExchangeClientCreator {
                 .map(Duration::ofMillis)
                 .orElseGet(globalConfig::readTimeout);
         var sslBundle = Optional.ofNullable(channelConfig.getSsl())
-                .map(HttpExchangeProperties.Ssl::getBundle)
+                .map(HttpExchangeProperties.Ssl::bundle)
                 .filter(StringUtils::hasText)
                 .map(bundle -> beanFactory.getBean(SslBundles.class).getBundle(bundle))
                 .orElseGet(globalConfig::sslBundle);
@@ -345,7 +350,7 @@ class ExchangeClientCreator {
                 .map(Duration::ofMillis)
                 .orElseGet(globalConfig::readTimeout);
         var sslBundle = Optional.ofNullable(channelConfig.getSsl())
-                .map(HttpExchangeProperties.Ssl::getBundle)
+                .map(HttpExchangeProperties.Ssl::bundle)
                 .filter(StringUtils::hasText)
                 .map(bundle -> beanFactory.getBean(SslBundles.class).getBundle(bundle))
                 .orElseGet(globalConfig::sslBundle);
@@ -359,11 +364,7 @@ class ExchangeClientCreator {
                 && Boolean.TRUE.equals(channelConfig.getLoadbalancerEnabled());
     }
 
-    private static String getRealBaseUrl(HttpExchangeProperties.Channel channelConfig) {
-        String baseUrl = channelConfig.getBaseUrl();
-        if (baseUrl == null) {
-            return "http://localhost";
-        }
+    private static String getRealBaseUrl(String baseUrl) {
         return baseUrl.contains("://") ? baseUrl : "http://" + baseUrl;
     }
 
@@ -423,13 +424,10 @@ class ExchangeClientCreator {
     }
 
     @SuppressWarnings("unchecked")
+    @Nullable
     private static <T> T getFieldValue(Object obj, Field field) {
         ReflectionUtils.makeAccessible(field);
-        Object value = ReflectionUtils.getField(field, obj);
-        if (value == null) {
-            throw new IllegalStateException("Field " + field.getName() + " is null");
-        }
-        return (T) value;
+        return (T) ReflectionUtils.getField(field, obj);
     }
 
     private static HttpExchangeProperties.ClientType getDefaultClientType() {

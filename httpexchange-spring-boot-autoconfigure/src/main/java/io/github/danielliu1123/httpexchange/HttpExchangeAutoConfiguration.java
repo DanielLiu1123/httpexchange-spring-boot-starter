@@ -14,6 +14,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 
 /**
  * Http Exchange Auto Configuration.
@@ -40,8 +41,8 @@ public class HttpExchangeAutoConfiguration
     }
 
     @Bean
-    static HttpClientBeanDefinitionRegistry httpClientBeanDefinitionRegistry() {
-        return new HttpClientBeanDefinitionRegistry();
+    static HttpClientBeanDefinitionRegistry httpClientBeanDefinitionRegistry(Environment environment) {
+        return new HttpClientBeanDefinitionRegistry(environment);
     }
 
     @Bean

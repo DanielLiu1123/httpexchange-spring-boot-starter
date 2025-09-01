@@ -13,7 +13,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.boot.autoconfigure.ssl.SslProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.boot.http.client.HttpRedirects;
@@ -131,16 +130,14 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     private boolean httpClientReuseEnabled = true;
 
-    @Data
-    public static class Header {
-        /**
-         * Header key.
-         */
-        private String key = "";
-        /**
-         * Header values.
-         */
-        private List<String> values = new ArrayList<>();
+    /**
+     * @param key    Header key.
+     * @param values Header values.
+     */
+    public record Header(String key, List<String> values) {
+        public Header {
+            values = List.copyOf(values);
+        }
     }
 
     @Override
@@ -165,17 +162,12 @@ public class HttpExchangeProperties implements InitializingBean {
 
             // defaultHeaders + chan.headers
             LinkedHashMap<String, List<String>> total = headers.stream()
-                    .collect(toMap(Header::getKey, Header::getValues, (oldV, newV) -> oldV, LinkedHashMap::new));
+                    .collect(toMap(Header::key, Header::values, (oldV, newV) -> oldV, LinkedHashMap::new));
             for (Header header : chan.getHeaders()) {
-                total.put(header.getKey(), header.getValues());
+                total.put(header.key(), header.values());
             }
             List<Header> mergedHeaders = total.entrySet().stream()
-                    .map(e -> {
-                        Header header = new Header();
-                        header.setKey(e.getKey());
-                        header.setValues(e.getValue());
-                        return header;
-                    })
+                    .map(e -> new Header(e.getKey(), e.getValue()))
                     .toList();
             chan.setHeaders(mergedHeaders);
         }
@@ -330,21 +322,14 @@ public class HttpExchangeProperties implements InitializingBean {
     }
 
     /**
+     * @param bundle SSL bundle to use.
+     *
+     *               <p> Bundle name is configured under {@code spring.ssl} properties.
+     *
+     *               <p> See configuration properties under {@code spring.ssl}.
      * @see AbstractRestClientProperties.Ssl
      */
-    @Data
-    public static class Ssl {
-        /**
-         * SSL bundle to use.
-         *
-         * <p> Bundle name is configured under {@code spring.ssl} properties.
-         *
-         * <p> See configuration properties under {@code spring.ssl}.
-         *
-         * @see SslProperties#getBundle()
-         */
-        private String bundle = "";
-    }
+    public record Ssl(String bundle) {}
 
     public enum ClientType {
         /**
