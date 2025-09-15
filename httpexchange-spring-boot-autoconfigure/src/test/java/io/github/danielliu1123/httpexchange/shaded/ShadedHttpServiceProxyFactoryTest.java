@@ -23,9 +23,13 @@ class ShadedHttpServiceProxyFactoryTest {
         Class<HttpServiceProxyFactory.Builder> clz = HttpServiceProxyFactory.Builder.class;
         Field[] fields = clz.getDeclaredFields();
 
-        assertThat(fields).hasSize(4);
         assertThat(Arrays.stream(fields).map(Field::getName))
                 .containsExactlyInAnyOrder(
-                        "exchangeAdapter", "customArgumentResolvers", "conversionService", "embeddedValueResolver");
+                        "exchangeAdapter",
+                        "customArgumentResolvers",
+                        "conversionService",
+                        "embeddedValueResolver",
+                        "exchangeAdapterDecorator",
+                        "requestValuesProcessors");
     }
 }

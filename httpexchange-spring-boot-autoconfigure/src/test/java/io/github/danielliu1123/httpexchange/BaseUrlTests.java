@@ -39,8 +39,8 @@ class BaseUrlTests {
             BaseUrlApi api = ctx.getBean(BaseUrlApi.class);
 
             assertThatCode(() -> api.delay(10))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessage("URI with undefined scheme");
+                    .isInstanceOf(ResourceAccessException.class)
+                    .hasMessageContaining("I/O error on GET request for \"/delay/10\"");
         }
     }
 

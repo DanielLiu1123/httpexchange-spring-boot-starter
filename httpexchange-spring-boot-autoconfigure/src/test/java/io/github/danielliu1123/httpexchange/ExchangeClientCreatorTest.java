@@ -23,7 +23,12 @@ class ExchangeClientCreatorTest {
         // used reflection, need to check whether fields are changed
         assertThat(HttpServiceProxyFactory.Builder.class)
                 .hasOnlyDeclaredFields(
-                        "exchangeAdapter", "customArgumentResolvers", "conversionService", "embeddedValueResolver");
+                        "exchangeAdapter",
+                        "customArgumentResolvers",
+                        "conversionService",
+                        "embeddedValueResolver",
+                        "exchangeAdapterDecorator",
+                        "requestValuesProcessors");
     }
 
     /**
