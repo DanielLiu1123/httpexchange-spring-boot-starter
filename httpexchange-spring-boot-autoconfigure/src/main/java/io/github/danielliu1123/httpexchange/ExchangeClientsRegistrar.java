@@ -1,6 +1,5 @@
 package io.github.danielliu1123.httpexchange;
 
-import jakarta.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,17 +14,17 @@ import org.springframework.util.ClassUtils;
 class ExchangeClientsRegistrar implements ImportBeanDefinitionRegistrar {
 
     @Override
-    public void registerBeanDefinitions(
-            @Nonnull AnnotationMetadata metadata, @Nonnull BeanDefinitionRegistry registry) {
-        Map<String, Object> attrs = Optional.ofNullable(
-                        metadata.getAnnotationAttributes(EnableExchangeClients.class.getName()))
+    public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
+        var attrs = Optional.ofNullable(metadata.getAnnotationAttributes(EnableExchangeClients.class.getName()))
                 .orElse(Map.of());
 
         // Shouldn't scan basePackages when using 'clients' property
         // see https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/1
 
-        String[] basePackages = (String[]) attrs.getOrDefault("value", new String[0]);
-        Class<?>[] clientClasses = (Class<?>[]) attrs.getOrDefault("clients", new Class<?>[0]);
+        String[] basePackages =
+                Optional.ofNullable((String[]) attrs.get("value")).orElseGet(() -> new String[0]);
+        Class<?>[] clientClasses =
+                Optional.ofNullable((Class<?>[]) attrs.get("clients")).orElseGet(() -> new Class[0]);
 
         HttpClientBeanDefinitionRegistry.scanInfo.clients.addAll(List.of(clientClasses));
         HttpClientBeanDefinitionRegistry.scanInfo.basePackages.addAll(List.of(basePackages));

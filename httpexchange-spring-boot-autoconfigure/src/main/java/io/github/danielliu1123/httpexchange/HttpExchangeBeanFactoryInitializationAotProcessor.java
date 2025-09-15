@@ -4,7 +4,6 @@ import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 import static org.springframework.util.ClassUtils.getAllInterfacesForClass;
 import static org.springframework.util.ObjectUtils.addObjectToArray;
 
-import jakarta.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,8 +44,7 @@ class HttpExchangeBeanFactoryInitializationAotProcessor
 
     @Nullable
     @Override
-    public BeanFactoryInitializationAotContribution processAheadOfTime(
-            @Nonnull ConfigurableListableBeanFactory beanFactory) {
+    public BeanFactoryInitializationAotContribution processAheadOfTime(ConfigurableListableBeanFactory beanFactory) {
         return (generationContext, beanFactoryInitializationCode) -> {
             Map<String, BeanDefinition> definitions = listDefinition(beanFactory);
             if (definitions.isEmpty()) {
