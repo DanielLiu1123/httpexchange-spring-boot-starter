@@ -16,6 +16,7 @@
 
 package io.github.danielliu1123.httpexchange.shaded;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.time.Duration;
@@ -389,6 +390,7 @@ final class ShadedHttpServiceMethod {
             private final RequestMapping httpExchange;
             private final MergedAnnotation<?> root;
 
+            @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
             AnnotationDescriptor(MergedAnnotation<RequestMapping> mergedAnnotation) {
                 this.httpExchange = mergedAnnotation.synthesize();
                 this.root = mergedAnnotation.getRoot();
