@@ -16,14 +16,17 @@
 
 package io.github.danielliu1123.httpexchange.shaded;
 
-import jakarta.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.KotlinDetector;
@@ -31,6 +34,10 @@ import org.springframework.core.MethodParameter;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.ReactiveAdapter;
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.annotation.MergedAnnotation;
+import org.springframework.core.annotation.MergedAnnotationPredicates;
+import org.springframework.core.annotation.MergedAnnotations;
+import org.springframework.core.annotation.RepeatableContainers;
 import org.springframework.core.annotation.SynthesizingMethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -38,6 +45,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
@@ -72,6 +81,8 @@ final class ShadedHttpServiceMethod {
 
     private final List<HttpServiceArgumentResolver> argumentResolvers;
 
+    private final HttpRequestValues.Processor requestValuesProcessor;
+
     private final HttpRequestValuesInitializer requestValuesInitializer;
 
     private final ResponseFunction responseFunction;
@@ -80,12 +91,14 @@ final class ShadedHttpServiceMethod {
             Method method,
             Class<?> containingClass,
             List<HttpServiceArgumentResolver> argumentResolvers,
+            HttpRequestValues.Processor valuesProcessor,
             HttpExchangeAdapter adapter,
             @Nullable StringValueResolver embeddedValueResolver) {
 
         this.method = method;
         this.parameters = initMethodParameters(method);
         this.argumentResolvers = argumentResolvers;
+        this.requestValuesProcessor = valuesProcessor;
 
         boolean isReactorAdapter = (REACTOR_PRESENT && adapter instanceof ReactorHttpExchangeAdapter);
 
@@ -122,14 +135,14 @@ final class ShadedHttpServiceMethod {
         return this.method;
     }
 
-    @Nullable
-    public Object invoke(Object[] arguments) {
+    public @Nullable Object invoke(@Nullable Object[] arguments) {
         HttpRequestValues.Builder requestValues = this.requestValuesInitializer.initializeRequestValuesBuilder();
         applyArguments(requestValues, arguments);
+        this.requestValuesProcessor.process(this.method, this.parameters, arguments, requestValues);
         return this.responseFunction.execute(requestValues.build());
     }
 
-    private void applyArguments(HttpRequestValues.Builder requestValues, Object[] arguments) {
+    private void applyArguments(HttpRequestValues.Builder requestValues, @Nullable Object[] arguments) {
         Assert.isTrue(arguments.length == this.parameters.length, "Method argument mismatch");
         for (int i = 0; i < arguments.length; i++) {
             Object value = arguments[i];
@@ -144,8 +157,7 @@ final class ShadedHttpServiceMethod {
             Assert.state(
                     resolved,
                     () -> "Could not resolve parameter [" + this.parameters[index].getParameterIndex() + "] in "
-                            + this.parameters[index].getExecutable().toGenericString()
-                            + (StringUtils.hasText("No suitable resolver") ? ": " + "No suitable resolver" : ""));
+                            + this.parameters[index].getExecutable().toGenericString() + ": No suitable resolver");
         }
     }
 
@@ -158,6 +170,8 @@ final class ShadedHttpServiceMethod {
             @Nullable String url,
             @Nullable MediaType contentType,
             @Nullable List<MediaType> acceptMediaTypes,
+            MultiValueMap<String, String> headers,
+            @Nullable String version,
             Supplier<HttpRequestValues.Builder> requestValuesSupplier) {
 
         public HttpRequestValues.Builder initializeRequestValuesBuilder() {
@@ -174,6 +188,10 @@ final class ShadedHttpServiceMethod {
             if (this.acceptMediaTypes != null) {
                 requestValues.setAccept(this.acceptMediaTypes);
             }
+            this.headers.forEach((name, values) -> values.forEach(value -> requestValues.addHeader(name, value)));
+            if (this.version != null) {
+                requestValues.setApiVersion(this.version);
+            }
             return requestValues;
         }
 
@@ -186,18 +204,35 @@ final class ShadedHttpServiceMethod {
                 @Nullable StringValueResolver embeddedValueResolver,
                 Supplier<HttpRequestValues.Builder> requestValuesSupplier) {
 
-            RequestMapping annot1 = AnnotatedElementUtils.findMergedAnnotation(containingClass, RequestMapping.class);
-            RequestMapping annot2 = AnnotatedElementUtils.findMergedAnnotation(method, RequestMapping.class);
+            List<HttpRequestValuesInitializer.AnnotationDescriptor> methodHttpExchanges =
+                    getAnnotationDescriptors(method);
+            Assert.state(!methodHttpExchanges.isEmpty(), () -> "Expected @HttpExchange annotation on method " + method);
+            Assert.state(
+                    methodHttpExchanges.size() == 1,
+                    () -> "Multiple @HttpExchange annotations found on method %s, but only one is allowed: %s"
+                            .formatted(method, methodHttpExchanges));
 
-            Assert.notNull(annot2, "Expected HttpRequest annotation");
+            List<HttpRequestValuesInitializer.AnnotationDescriptor> typeHttpExchanges =
+                    getAnnotationDescriptors(containingClass);
+            Assert.state(
+                    typeHttpExchanges.size() <= 1,
+                    () -> "Multiple @HttpExchange annotations found on %s, but only one is allowed: %s"
+                            .formatted(containingClass, typeHttpExchanges));
 
-            HttpMethod httpMethod = initHttpMethod(annot1, annot2);
-            String url = initUrl(annot1, annot2, embeddedValueResolver);
-            MediaType contentType = initContentType(annot1, annot2);
-            List<MediaType> acceptableMediaTypes = initAccept(annot1, annot2);
+            RequestMapping methodAnnotation =
+                    AnnotatedElementUtils.findMergedAnnotation(containingClass, RequestMapping.class);
+            RequestMapping typeAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, RequestMapping.class);
+
+            HttpMethod httpMethod = initHttpMethod(typeAnnotation, methodAnnotation);
+            String url = initUrl(typeAnnotation, methodAnnotation, embeddedValueResolver);
+            MediaType contentType = initContentType(typeAnnotation, methodAnnotation);
+            List<MediaType> acceptableMediaTypes = initAccept(typeAnnotation, methodAnnotation);
+            MultiValueMap<String, String> headers =
+                    initHeaders(typeAnnotation, methodAnnotation, embeddedValueResolver);
+            String version = initVersion(typeAnnotation, methodAnnotation);
 
             return new HttpRequestValuesInitializer(
-                    httpMethod, url, contentType, acceptableMediaTypes, requestValuesSupplier);
+                    httpMethod, url, contentType, acceptableMediaTypes, headers, version, requestValuesSupplier);
         }
 
         @Nullable
@@ -286,6 +321,97 @@ final class ShadedHttpServiceMethod {
 
             return null;
         }
+
+        private static MultiValueMap<String, String> initHeaders(
+                @Nullable RequestMapping typeAnnotation,
+                RequestMapping methodAnnotation,
+                @Nullable StringValueResolver embeddedValueResolver) {
+
+            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+            if (typeAnnotation != null) {
+                addHeaders(typeAnnotation.headers(), embeddedValueResolver, headers);
+            }
+            addHeaders(methodAnnotation.headers(), embeddedValueResolver, headers);
+            return headers;
+        }
+
+        private static @Nullable String initVersion(
+                @Nullable RequestMapping typeAnnotation, RequestMapping methodAnnotation) {
+
+            if (StringUtils.hasText(methodAnnotation.version())) {
+                return methodAnnotation.version();
+            }
+            if (typeAnnotation != null && StringUtils.hasText(typeAnnotation.version())) {
+                return typeAnnotation.version();
+            }
+            return null;
+        }
+
+        private static void addHeaders(
+                String[] rawValues,
+                @Nullable StringValueResolver embeddedValueResolver,
+                MultiValueMap<String, String> outputHeaders) {
+
+            for (String rawValue : rawValues) {
+                String[] pair = StringUtils.split(rawValue, "=");
+                if (pair == null) {
+                    continue;
+                }
+                String name = pair[0].trim();
+                List<String> values = new ArrayList<>();
+                for (String value : StringUtils.commaDelimitedListToSet(pair[1])) {
+                    if (embeddedValueResolver != null) {
+                        value = embeddedValueResolver.resolveStringValue(value);
+                    }
+                    if (value != null) {
+                        value = value.trim();
+                        values.add(value);
+                    }
+                }
+                if (!values.isEmpty()) {
+                    outputHeaders.addAll(name, values);
+                }
+            }
+        }
+
+        private static List<HttpRequestValuesInitializer.AnnotationDescriptor> getAnnotationDescriptors(
+                AnnotatedElement element) {
+            return MergedAnnotations.from(
+                            element, MergedAnnotations.SearchStrategy.TYPE_HIERARCHY, RepeatableContainers.none())
+                    .stream(RequestMapping.class)
+                    .filter(MergedAnnotationPredicates.firstRunOf(MergedAnnotation::getAggregateIndex))
+                    .map(HttpRequestValuesInitializer.AnnotationDescriptor::new)
+                    .distinct()
+                    .toList();
+        }
+
+        private static class AnnotationDescriptor {
+
+            private final RequestMapping httpExchange;
+            private final MergedAnnotation<?> root;
+
+            @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
+            AnnotationDescriptor(MergedAnnotation<RequestMapping> mergedAnnotation) {
+                this.httpExchange = mergedAnnotation.synthesize();
+                this.root = mergedAnnotation.getRoot();
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                return (obj instanceof HttpRequestValuesInitializer.AnnotationDescriptor that
+                        && this.httpExchange.equals(that.httpExchange));
+            }
+
+            @Override
+            public int hashCode() {
+                return this.httpExchange.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return this.root.synthesize().toString();
+            }
+        }
     }
 
     /**
@@ -297,11 +423,11 @@ final class ShadedHttpServiceMethod {
         Object execute(HttpRequestValues requestValues);
     }
 
-    private record ExchangeResponseFunction(Function<HttpRequestValues, Object> responseFunction)
+    private record ExchangeResponseFunction(Function<HttpRequestValues, @Nullable Object> responseFunction)
             implements ResponseFunction {
 
         @Override
-        public Object execute(HttpRequestValues requestValues) {
+        public @Nullable Object execute(HttpRequestValues requestValues) {
             return this.responseFunction.apply(requestValues);
         }
 
@@ -316,8 +442,8 @@ final class ShadedHttpServiceMethod {
             MethodParameter param = new MethodParameter(method, -1).nestedIfOptional();
             Class<?> paramType = param.getNestedParameterType();
 
-            Function<HttpRequestValues, Object> responseFunction;
-            if (paramType.equals(void.class) || paramType.equals(Void.class)) {
+            Function<HttpRequestValues, @Nullable Object> responseFunction;
+            if (ClassUtils.isVoidType(paramType)) {
                 responseFunction = requestValues -> {
                     client.exchange(requestValues);
                     return null;
@@ -399,7 +525,7 @@ final class ShadedHttpServiceMethod {
             Class<?> actualType = isSuspending ? actualParam.getParameterType() : actualParam.getNestedParameterType();
 
             Function<HttpRequestValues, Publisher<?>> responseFunction;
-            if (actualType.equals(void.class) || actualType.equals(Void.class)) {
+            if (ClassUtils.isVoidType(actualType)) {
                 responseFunction = client::exchangeForMono;
             } else if (reactiveAdapter != null && reactiveAdapter.isNoValue()) {
                 responseFunction = client::exchangeForMono;
@@ -450,7 +576,9 @@ final class ShadedHttpServiceMethod {
             }
 
             return request -> client.exchangeForEntityFlux(request, bodyType).map(entity -> {
-                Object body = reactiveAdapter.fromPublisher(entity.getBody());
+                Flux<?> entityBody = entity.getBody();
+                Assert.state(entityBody != null, "Entity body must not be null");
+                Object body = reactiveAdapter.fromPublisher(entityBody);
                 return new ResponseEntity<>(body, entity.getHeaders(), entity.getStatusCode());
             });
         }

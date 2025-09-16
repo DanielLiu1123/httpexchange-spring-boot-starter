@@ -1,7 +1,6 @@
 package io.github.danielliu1123.httpexchange;
 
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -26,7 +25,8 @@ public class UrlPlaceholderStringValueResolver implements StringValueResolver {
     }
 
     @Override
-    public String resolveStringValue(@Nonnull String strVal) {
+    @Nullable
+    public String resolveStringValue(String strVal) {
         String resolved = strVal;
         try {
             resolved = environment.resolvePlaceholders(strVal);
@@ -34,17 +34,5 @@ public class UrlPlaceholderStringValueResolver implements StringValueResolver {
             log.warn("Placeholders in '{}' could not be resolved", strVal, e);
         }
         return delegate != null ? delegate.resolveStringValue(resolved) : resolved;
-    }
-
-    /**
-     * Create a new {@link UrlPlaceholderStringValueResolver} instance.
-     *
-     * @param environment the environment
-     * @param delegate    {@link StringValueResolver}
-     * @return {@link UrlPlaceholderStringValueResolver}
-     */
-    public static UrlPlaceholderStringValueResolver create(
-            Environment environment, @Nullable StringValueResolver delegate) {
-        return new UrlPlaceholderStringValueResolver(environment, delegate);
     }
 }
