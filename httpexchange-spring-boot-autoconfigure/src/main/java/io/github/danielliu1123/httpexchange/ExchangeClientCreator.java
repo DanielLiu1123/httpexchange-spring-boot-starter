@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Flow;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
@@ -52,6 +53,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.invoker.HttpExchangeAdapter;
+import org.springframework.web.service.invoker.HttpRequestValues;
 import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
@@ -72,6 +74,8 @@ class ExchangeClientCreator {
     private static final Field customArgumentResolversField;
     private static final Field conversionServiceField;
     private static final Field embeddedValueResolverField;
+    private static final Field requestValuesProcessorsField;
+    private static final Field exchangeAdapterDecoratorField;
 
     static {
         try {
@@ -80,6 +84,8 @@ class ExchangeClientCreator {
             customArgumentResolversField = clz.getDeclaredField("customArgumentResolvers");
             conversionServiceField = clz.getDeclaredField("conversionService");
             embeddedValueResolverField = clz.getDeclaredField("embeddedValueResolver");
+            requestValuesProcessorsField = clz.getDeclaredField("requestValuesProcessors"); // From Spring 7.x
+            exchangeAdapterDecoratorField = clz.getDeclaredField("exchangeAdapterDecorator"); // From Spring 7.x
         } catch (NoSuchFieldException e) {
             throw new IllegalStateException(e);
         }
@@ -374,6 +380,10 @@ class ExchangeClientCreator {
                 getFieldValue(proxyFactory, customArgumentResolversField);
         ConversionService conversionService = getFieldValue(proxyFactory, conversionServiceField);
         StringValueResolver embeddedValueResolver = getFieldValue(proxyFactory, embeddedValueResolverField);
+        List<HttpRequestValues.Processor> requestValuesProcessors =
+                getFieldValue(proxyFactory, requestValuesProcessorsField);
+        Function<HttpExchangeAdapter, HttpExchangeAdapter> exchangeAdapterDecorator =
+                getFieldValue(proxyFactory, exchangeAdapterDecoratorField);
 
         ShadedHttpServiceProxyFactory.Builder builder = ShadedHttpServiceProxyFactory.builder();
         Optional.ofNullable(exchangeAdapter).ifPresent(builder::exchangeAdapter);
@@ -382,6 +392,10 @@ class ExchangeClientCreator {
                 .forEach(builder::customArgumentResolver);
         Optional.ofNullable(conversionService).ifPresent(builder::conversionService);
         Optional.ofNullable(embeddedValueResolver).ifPresent(builder::embeddedValueResolver);
+        Optional.ofNullable(requestValuesProcessors).stream()
+                .flatMap(Collection::stream)
+                .forEach(builder::httpRequestValuesProcessor);
+        Optional.ofNullable(exchangeAdapterDecorator).ifPresent(builder::exchangeAdapterDecorator);
         return builder;
     }
 
