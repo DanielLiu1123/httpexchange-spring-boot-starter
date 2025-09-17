@@ -131,7 +131,7 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
             for (PropertyDescriptor pd : pds) {
                 String name = pd.getName();
                 Object value = src.getPropertyValue(name);
-                if (!Objects.equals(name, "class")) {
+                if (!Objects.equals(name, "class") && value != null) {
                     var field = ReflectionUtils.findField(clazz, name);
                     if (field != null) {
                         var anno = AnnotationUtils.findAnnotation(field, BindParam.class);
@@ -152,9 +152,6 @@ public class BeanParamArgumentResolver implements HttpServiceArgumentResolver, O
     private static void populateRequestValuesFromMap(
             HttpRequestValues.Builder requestValues, Map<String, Object> nameToValue) {
         nameToValue.forEach((k, v) -> {
-            if (v == null) {
-                return;
-            }
             Class<?> clz = v.getClass();
             if (BeanUtils.isSimpleValueType(clz)) {
                 requestValues.addRequestParameter(k, v.toString());
