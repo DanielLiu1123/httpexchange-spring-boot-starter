@@ -1,6 +1,5 @@
 package io.github.danielliu1123.httpexchange;
 
-import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.boot.http.client.HttpRedirects;
 import org.springframework.boot.http.client.autoconfigure.HttpClientProperties;
 import org.springframework.boot.http.client.autoconfigure.reactive.HttpReactiveClientProperties;
@@ -149,16 +147,22 @@ public class HttpExchangeProperties implements InitializingBean {
      * Merge default configuration to channels configuration.
      */
     void merge() {
-        PropertyMapper mapper = PropertyMapper.get().alwaysApplyingWhenNonNull();
         for (Channel chan : channels) {
-            mapper.from(baseUrl).when(e -> isNull(chan.getBaseUrl())).to(chan::setBaseUrl);
-            mapper.from(clientType).when(e -> isNull(chan.getClientType())).to(chan::setClientType);
-            mapper.from(loadbalancerEnabled)
-                    .when(e -> isNull(chan.getLoadbalancerEnabled()))
-                    .to(chan::setLoadbalancerEnabled);
-            mapper.from(httpClientReuseEnabled)
-                    .when(e -> isNull(chan.getHttpClientReuseEnabled()))
-                    .to(chan::setHttpClientReuseEnabled);
+            if (baseUrl != null && chan.getBaseUrl() == null) {
+                chan.setBaseUrl(baseUrl);
+            }
+
+            if (clientType != null && chan.getClientType() == null) {
+                chan.setClientType(clientType);
+            }
+
+            if (chan.getLoadbalancerEnabled() == null) {
+                chan.setLoadbalancerEnabled(loadbalancerEnabled);
+            }
+
+            if (chan.getHttpClientReuseEnabled() == null) {
+                chan.setHttpClientReuseEnabled(httpClientReuseEnabled);
+            }
 
             // defaultHeaders + chan.headers
             LinkedHashMap<String, List<String>> total = headers.stream()

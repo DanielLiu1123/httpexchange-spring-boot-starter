@@ -1,9 +1,8 @@
 package com.example;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.util.TestSocketUtils.findAvailableTcpPort;
 
-import java.net.ServerSocket;
-import lombok.SneakyThrows;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -22,30 +21,29 @@ class LoadBalancerAppTests {
     @ParameterizedTest
     @ValueSource(strings = {"rest_client"})
     void testLoadBalancer_whenRetryDependsOnSpringRetry_thenAllRequestOK(String clientType) {
-        int port = getRandomPort();
+        int port = findAvailableTcpPort();
 
-        var ctx = new SpringApplicationBuilder(LoadBalancerApp.class)
+        try (var ctx = new SpringApplicationBuilder(LoadBalancerApp.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.client-type=" + clientType)
-                .run();
+                .run()) {
 
-        UserApi userApi = ctx.getBean(UserApi.class);
+            UserApi userApi = ctx.getBean(UserApi.class);
 
-        int success = 0;
-        int failure = 0;
-        for (int i = 0; i < 4; i++) {
-            try {
-                userApi.getById("1");
-                success++;
-            } catch (Exception e) {
-                failure++;
+            int success = 0;
+            int failure = 0;
+            for (int i = 0; i < 4; i++) {
+                try {
+                    userApi.getById("1");
+                    success++;
+                } catch (Exception e) {
+                    failure++;
+                }
             }
+
+            assertThat(success).isEqualTo(4);
+            assertThat(failure).isZero();
         }
-
-        assertThat(success).isEqualTo(4);
-        assertThat(failure).isZero();
-
-        ctx.close();
     }
 
     /**
@@ -54,97 +52,87 @@ class LoadBalancerAppTests {
     @ParameterizedTest
     @ValueSource(strings = {"web_client"})
     void testLoadBalancer_whenRetryDependsOnReactor_thenAllRequestOK(String clientType) {
-        int port = getRandomPort();
+        int port = findAvailableTcpPort();
 
-        var ctx = new SpringApplicationBuilder(LoadBalancerApp.class)
+        try (var ctx = new SpringApplicationBuilder(LoadBalancerApp.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.client-type=" + clientType)
                 .properties("spring.cloud.loadbalancer.retry.enabled=true")
-                .run();
+                .run()) {
 
-        UserApi userApi = ctx.getBean(UserApi.class);
+            UserApi userApi = ctx.getBean(UserApi.class);
 
-        int success = 0;
-        int failure = 0;
-        for (int i = 0; i < 4; i++) {
-            try {
-                userApi.getById("1");
-                success++;
-            } catch (Exception e) {
-                failure++;
+            int success = 0;
+            int failure = 0;
+            for (int i = 0; i < 4; i++) {
+                try {
+                    userApi.getById("1");
+                    success++;
+                } catch (Exception e) {
+                    failure++;
+                }
             }
+
+            assertThat(success).isEqualTo(4);
+            assertThat(failure).isZero();
         }
-
-        assertThat(success).isEqualTo(4);
-        assertThat(failure).isZero();
-
-        ctx.close();
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"rest_client", "web_client"})
     void testLoadBalancer_whenDisableRetry_thenHalfOKHalfFailed(String clientType) {
-        int port = getRandomPort();
+        int port = findAvailableTcpPort();
 
-        var ctx = new SpringApplicationBuilder(LoadBalancerApp.class)
+        try (var ctx = new SpringApplicationBuilder(LoadBalancerApp.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.client-type=" + clientType)
                 .properties("spring.cloud.loadbalancer.retry.enabled=false")
-                .run();
+                .run()) {
 
-        UserApi userApi = ctx.getBean(UserApi.class);
+            UserApi userApi = ctx.getBean(UserApi.class);
 
-        int success = 0;
-        int failure = 0;
-        for (int i = 0; i < 4; i++) {
-            try {
-                userApi.getById("1");
-                success++;
-            } catch (Exception e) {
-                failure++;
+            int success = 0;
+            int failure = 0;
+            for (int i = 0; i < 4; i++) {
+                try {
+                    userApi.getById("1");
+                    success++;
+                } catch (Exception e) {
+                    failure++;
+                }
             }
+
+            assertThat(success).isEqualTo(2);
+            assertThat(failure).isEqualTo(2);
         }
-
-        assertThat(success).isEqualTo(2);
-        assertThat(failure).isEqualTo(2);
-
-        ctx.close();
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"rest_client", "web_client"})
     void testLoadBalancer_whenDisabled(String clientType) {
-        int port = getRandomPort();
+        int port = findAvailableTcpPort();
 
-        var ctx = new SpringApplicationBuilder(LoadBalancerApp.class)
+        try (var ctx = new SpringApplicationBuilder(LoadBalancerApp.class)
                 .properties("server.port=" + port)
                 .properties("http-exchange.client-type=" + clientType)
                 .properties("spring.cloud.loadbalancer.enabled=false")
-                .run();
+                .run()) {
 
-        UserApi userApi = ctx.getBean(UserApi.class);
+            UserApi userApi = ctx.getBean(UserApi.class);
 
-        int success = 0;
-        int failure = 0;
-        for (int i = 0; i < 4; i++) {
-            try {
-                userApi.getById("1");
-                success++;
-            } catch (Exception e) {
-                failure++;
+            int success = 0;
+            int failure = 0;
+            for (int i = 0; i < 4; i++) {
+                try {
+                    userApi.getById("1");
+                    success++;
+                } catch (Exception e) {
+                    failure++;
+                }
             }
-        }
 
-        assertThat(success).isZero();
-        assertThat(failure).isEqualTo(4);
-
-        ctx.close();
-    }
-
-    @SneakyThrows
-    private static int getRandomPort() {
-        try (ServerSocket ss = new ServerSocket(0)) {
-            return ss.getLocalPort();
+            assertThat(success).isZero();
+            assertThat(failure).isEqualTo(4);
         }
     }
 }
