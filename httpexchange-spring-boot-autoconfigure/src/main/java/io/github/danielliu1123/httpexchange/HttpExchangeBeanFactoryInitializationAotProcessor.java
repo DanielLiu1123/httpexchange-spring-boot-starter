@@ -2,12 +2,12 @@ package io.github.danielliu1123.httpexchange;
 
 import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 import static org.springframework.util.ClassUtils.getAllInterfacesForClass;
-import static org.springframework.util.ObjectUtils.addObjectToArray;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.stream.Stream;
 import javax.lang.model.element.Modifier;
 import org.jspecify.annotations.Nullable;
 import org.springframework.aop.framework.AopProxyUtils;
@@ -65,9 +65,15 @@ class HttpExchangeBeanFactoryInitializationAotProcessor
         ProxyHints proxies = generationContext.getRuntimeHints().proxies();
         definitions.values().stream()
                 .map(beanDefinition -> beanDefinition.getResolvableType().resolve())
-                .filter(Objects::nonNull)
-                .map(e -> addObjectToArray(getAllInterfacesForClass(e), e))
-                .flatMap(Arrays::stream)
+                .flatMap(e -> {
+                    if (e == null) {
+                        return Stream.empty();
+                    }
+                    var arr = new ArrayList<Class<?>>();
+                    Collections.addAll(arr, e);
+                    Collections.addAll(arr, getAllInterfacesForClass(e));
+                    return arr.stream();
+                })
                 .distinct()
                 .filter(Util::isHttpExchangeInterface)
                 .map(AopProxyUtils::completeJdkProxyInterfaces)
