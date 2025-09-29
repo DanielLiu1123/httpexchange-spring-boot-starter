@@ -12,6 +12,16 @@ The main goals of this project are:
 
 ## Quick Start
 
+Spring Boot >= 4.0.0:
+
+```groovy
+implementation("org.springframework.boot:spring-boot-starter-restclient") // use RestClient as underlying http client
+// implementation("org.springframework.boot:spring-boot-starter-webclient") // use WebClient as underlying http client
+implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:<latest>")
+```
+
+Spring Boot < 4.0.0:
+
 ```groovy
 implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:<latest>")
 ```

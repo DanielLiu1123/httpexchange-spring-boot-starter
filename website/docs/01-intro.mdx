@@ -65,20 +65,49 @@ public class App {
 
 ## Quick Start
 
-<Tabs>
+<Tabs groupId="build-tool">
     <TabItem value="gradle" label="Gradle">
-        ```groovy
-        implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:<latest>")
-        ```
+        <Tabs groupId="boot-version">
+            <TabItem value="sb4" label="Spring Boot ≥ 4.0.0">
+                ```groovy
+                // swap to spring-boot-starter-webclient if you use WebClient
+                implementation("org.springframework.boot:spring-boot-starter-restclient")
+                implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:<latest>")
+                ```
+            </TabItem>
+            <TabItem value="sb3" label="Spring Boot < 4.0.0">
+                ```groovy
+                implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:<latest>")
+                ```
+            </TabItem>
+        </Tabs>
     </TabItem>
     <TabItem value="maven" label="Maven">
-        ```xml
-        <dependency>
-            <groupId>io.github.danielliu1123</groupId>
-            <artifactId>httpexchange-spring-boot-starter</artifactId>
-            <version>latest</version>
-        </dependency>
-        ```
+        <Tabs groupId="boot-version">
+            <TabItem value="sb4" label="Spring Boot ≥ 4.0.0">
+                ```xml
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <!-- Swap to spring-boot-starter-webclient if you use WebClient -->
+                    <artifactId>spring-boot-starter-restclient</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>io.github.danielliu1123</groupId>
+                    <artifactId>httpexchange-spring-boot-starter</artifactId>
+                    <version>latest</version>
+                </dependency>
+                ```
+            </TabItem>
+            <TabItem value="sb3" label="Spring Boot < 4.0.0">
+                ```xml
+                <dependency>
+                    <groupId>io.github.danielliu1123</groupId>
+                    <artifactId>httpexchange-spring-boot-starter</artifactId>
+                    <version>latest</version>
+                </dependency>
+                ```
+            </TabItem>
+        </Tabs>
     </TabItem>
 </Tabs>
 
