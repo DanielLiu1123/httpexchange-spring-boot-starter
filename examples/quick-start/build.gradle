@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-restclient")
     implementation(project(":starters:httpexchange-spring-boot-starter"))
 
     annotationProcessor(project(":httpexchange-processor"))

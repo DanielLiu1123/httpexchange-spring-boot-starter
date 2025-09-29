@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-webclient")
     implementation(project(":starters:httpexchange-spring-boot-starter"))
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")

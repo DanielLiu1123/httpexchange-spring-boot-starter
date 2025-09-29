@@ -1,6 +1,9 @@
 dependencies {
-    api(project(":starters:httpexchange-restclient-spring-boot-starter"))
-    api(project(":starters:httpexchange-webclient-spring-boot-starter"))
+    api(project(":httpexchange-spring-boot-autoconfigure"))
+    api("org.springframework.boot:spring-boot-starter")
+
+    optionalSupportApi("org.springframework.boot:spring-boot-starter-restclient")
+    optionalSupportApi("org.springframework.boot:spring-boot-starter-webclient")
 }
 
 apply from: "${rootDir}/gradle/deploy.gradle"
