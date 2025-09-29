@@ -63,12 +63,14 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 class ExchangeClientCreator {
     private static final Logger log = LoggerFactory.getLogger(ExchangeClientCreator.class);
 
-    private static final boolean WEBFLUX_PRESENT =
-            ClassUtils.isPresent("org.springframework.web.reactive.function.client.WebClient", null);
     private static final boolean LOADBALANCER_PRESENT =
             ClassUtils.isPresent("org.springframework.cloud.client.loadbalancer.LoadBalancerClient", null);
     private static final boolean DEFERRING_LOADBALANCER_INTERCEPTOR_PRESENT = ClassUtils.isPresent(
             "org.springframework.cloud.client.loadbalancer.DeferringLoadBalancerInterceptor", null);
+    private static final boolean springBootStarterRestClientPresent =
+            ClassUtils.isPresent("org.springframework.boot.restclient.RestClientCustomizer", null);
+    private static final boolean springBootStarterWebClientPresent =
+            ClassUtils.isPresent("org.springframework.boot.webclient.WebClientCustomizer", null);
 
     private static final Field exchangeAdapterField;
     private static final Field customArgumentResolversField;
@@ -412,29 +414,31 @@ class ExchangeClientCreator {
     }
 
     private HttpExchangeProperties.ClientType getClientType(HttpExchangeProperties.Channel channel) {
-
-        if (WEBFLUX_PRESENT && hasReactiveReturnTypeMethod(clientType)) {
-            HttpExchangeProperties.ClientType type = channel.getClientType();
-            if (type != null && type != WEB_CLIENT) {
-                log.warn(
-                        "{} contains methods with reactive return types, should use the client-type '{}' instead of '{}'",
-                        clientType.getSimpleName(),
-                        WEB_CLIENT,
-                        type);
+        var type = channel.getClientType() != null ? channel.getClientType() : getDefaultClientType();
+        return switch (type) {
+            case REST_CLIENT -> {
+                if (!springBootStarterRestClientPresent) {
+                    throw new IllegalStateException(
+                            "You need to add 'spring-boot-starter-restclient' to the classpath to use REST_CLIENT");
+                }
+                if (springBootStarterWebClientPresent && hasReactiveReturnTypeMethod(clientType)) {
+                    log.warn(
+                            "{} contains methods with reactive return types, should use the client-type '{}' instead of '{}'",
+                            clientType.getSimpleName(),
+                            WEB_CLIENT,
+                            REST_CLIENT);
+                    yield WEB_CLIENT;
+                }
+                yield REST_CLIENT;
             }
-            return WEB_CLIENT;
-        }
-
-        var configured = channel.getClientType() != null ? channel.getClientType() : getDefaultClientType();
-
-        if (configured == WEB_CLIENT && !WEBFLUX_PRESENT) {
-            log.warn(
-                    "Since spring-webflux is not in the classpath, the client-type will fall back to '{}'",
-                    getDefaultClientType());
-            return getDefaultClientType();
-        }
-
-        return configured;
+            case WEB_CLIENT -> {
+                if (!springBootStarterWebClientPresent) {
+                    throw new IllegalStateException(
+                            "You need to add 'spring-boot-starter-webclient' to the classpath to use WEB_CLIENT");
+                }
+                yield WEB_CLIENT;
+            }
+        };
     }
 
     @SuppressWarnings("unchecked")
@@ -445,6 +449,13 @@ class ExchangeClientCreator {
     }
 
     private static HttpExchangeProperties.ClientType getDefaultClientType() {
-        return REST_CLIENT;
+        if (springBootStarterRestClientPresent) {
+            return REST_CLIENT;
+        }
+        if (springBootStarterWebClientPresent) {
+            return WEB_CLIENT;
+        }
+        throw new IllegalStateException(
+                "You need to add 'spring-boot-starter-restclient' or 'spring-boot-starter-webclient' to the classpath");
     }
 }
