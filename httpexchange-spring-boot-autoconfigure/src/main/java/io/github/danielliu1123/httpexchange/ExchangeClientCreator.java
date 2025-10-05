@@ -122,7 +122,7 @@ class ExchangeClientCreator {
                 .getBeanProvider(HttpExchangeProperties.class)
                 .getIfUnique(() -> Util.getProperties(environment));
         HttpExchangeProperties.Channel chan =
-                findMatchedConfig(clientType, httpExchangeProperties).orElseGet(httpExchangeProperties::defaultClient);
+                findMatchedConfig(clientType, httpExchangeProperties).orElseGet(httpExchangeProperties::defaultChannel);
         if (isUseHttpExchangeAnnotation) {
             HttpServiceProxyFactory factory = factoryBuilder(chan).build();
             T result = (T) factory.createClient(clientType);

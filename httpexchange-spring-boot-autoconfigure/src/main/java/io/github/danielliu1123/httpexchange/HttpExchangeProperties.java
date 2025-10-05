@@ -177,7 +177,7 @@ public class HttpExchangeProperties implements InitializingBean {
         }
     }
 
-    HttpExchangeProperties.Channel defaultClient() {
+    HttpExchangeProperties.Channel defaultChannel() {
         return new Channel(
                 null,
                 baseUrl,
