@@ -10,6 +10,10 @@ The main goals of this project are:
 - To ensure compatibility with Spring web annotations like `@RequestMapping` and `@GetMapping`.
 - To avoid external annotations, making it easier to switch to other implementations.
 
+> [!NOTE]\
+> Spring Boot 4.x has supported automatic registration of `@HttpExchange` interfaces. However, the current official implementation still suffers from unnecessary repetition and verbosity. 
+> Therefore, this project will continue to be maintained, offering a cleaner, more elegant, and more ergonomic alternative until the Spring Boot team gets it right.
+
 ## Quick Start
 
 Spring Boot >= 4.0.0:
