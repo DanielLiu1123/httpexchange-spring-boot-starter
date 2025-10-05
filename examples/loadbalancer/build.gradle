@@ -10,7 +10,6 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer:${springCloudCommonsVersion}")
 
     implementation("org.springframework:spring-webflux")
-    implementation("org.springframework.retry:spring-retry")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
