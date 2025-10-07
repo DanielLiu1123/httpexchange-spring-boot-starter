@@ -29,14 +29,10 @@ allprojects {
         maven { url = "https://repo.spring.io/milestone" }
     }
 
-    sourceSets {
-        optionalSupport
-    }
-
-    java {
-        registerFeature("optionalSupport") {
-            usingSourceSet(sourceSets.optionalSupport)
-        }
+    configurations {
+        optional
+        compileOnly.extendsFrom optional
+        testImplementation.extendsFrom optional
     }
 
     javadoc {
