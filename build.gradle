@@ -32,7 +32,6 @@ allprojects {
     configurations {
         optional
         compileOnly.extendsFrom optional
-        testImplementation.extendsFrom optional
     }
 
     javadoc {

@@ -5,8 +5,6 @@ dependencies {
 
     compileOnly("com.github.spotbugs:spotbugs-annotations:${spotbugsAnnotationsVersion}")
 
-    compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-
     // dynamic refresh configuration for exchange clients
     optional("org.springframework.cloud:spring-cloud-context:${springCloudCommonsVersion}")
     // support @SpringQueryMap
@@ -17,14 +15,12 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-
     testImplementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-validation")
+    testImplementation("org.springframework.boot:spring-boot-starter-restclient")
+    testImplementation("org.springframework.boot:spring-boot-starter-webclient")
+    testImplementation("org.springframework.cloud:spring-cloud-context:${springCloudCommonsVersion}")
     testImplementation("org.springframework.cloud:spring-cloud-starter-openfeign:${springCloudOpenFeignVersion}")
-}
-
-test {
-    systemProperties("spring.cloud.loadbalancer.enabled": "false")
 }
 
 apply from: "${rootDir}/gradle/deploy.gradle"
