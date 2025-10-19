@@ -27,7 +27,7 @@ implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:<latest
 Spring Boot < 4.0.0:
 
 ```groovy
-implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:<latest>")
+implementation("io.github.danielliu1123:httpexchange-spring-boot-starter:3.5.5")
 ```
 
 ```java
