@@ -26,9 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
-import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
+import org.springframework.boot.http.client.HttpClientSettings;
 import org.springframework.boot.http.client.reactive.ClientHttpConnectorBuilder;
-import org.springframework.boot.http.client.reactive.ClientHttpConnectorSettings;
 import org.springframework.boot.restclient.RestClientCustomizer;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.boot.webclient.WebClientCustomizer;
@@ -250,7 +249,7 @@ class ExchangeClientCreator {
                 .getBeanProvider(ClientHttpConnectorBuilder.class)
                 .getIfUnique(ClientHttpConnectorBuilder::detect);
 
-        var settings = buildSettingsForWebClient(channelConfig);
+        var settings = buildHttpClientSettings(channelConfig);
 
         builder.clientConnector(clientConnectorBuilder.build(settings));
     }
@@ -308,7 +307,7 @@ class ExchangeClientCreator {
                 .getBeanProvider(ClientHttpRequestFactoryBuilder.class)
                 .getIfUnique(ClientHttpRequestFactoryBuilder::detect);
 
-        var settings = buildSettingsForRestClient(channelConfig);
+        var settings = buildHttpClientSettings(channelConfig);
 
         builder.requestFactory(requestFactoryBuilder.build(settings));
 
@@ -322,33 +321,10 @@ class ExchangeClientCreator {
         }
     }
 
-    private ClientHttpRequestFactorySettings buildSettingsForRestClient(HttpExchangeProperties.Channel channelConfig) {
+    private HttpClientSettings buildHttpClientSettings(HttpExchangeProperties.Channel channelConfig) {
 
-        var globalConfig = beanFactory
-                .getBeanProvider(ClientHttpRequestFactorySettings.class)
-                .getIfUnique(ClientHttpRequestFactorySettings::defaults);
-
-        var redirects = Optional.ofNullable(channelConfig.getRedirects()).orElseGet(globalConfig::redirects);
-        var connectTimeout = Optional.ofNullable(channelConfig.getConnectTimeout())
-                .map(Duration::ofMillis)
-                .orElseGet(globalConfig::connectTimeout);
-        var readTimeout = Optional.ofNullable(channelConfig.getReadTimeout())
-                .map(Duration::ofMillis)
-                .orElseGet(globalConfig::readTimeout);
-        var sslBundle = Optional.ofNullable(channelConfig.getSsl())
-                .map(HttpExchangeProperties.Ssl::bundle)
-                .filter(StringUtils::hasText)
-                .map(bundle -> beanFactory.getBean(SslBundles.class).getBundle(bundle))
-                .orElseGet(globalConfig::sslBundle);
-
-        return new ClientHttpRequestFactorySettings(redirects, connectTimeout, readTimeout, sslBundle);
-    }
-
-    private ClientHttpConnectorSettings buildSettingsForWebClient(HttpExchangeProperties.Channel channelConfig) {
-
-        var globalConfig = beanFactory
-                .getBeanProvider(ClientHttpConnectorSettings.class)
-                .getIfUnique(ClientHttpConnectorSettings::defaults);
+        var globalConfig =
+                beanFactory.getBeanProvider(HttpClientSettings.class).getIfUnique(HttpClientSettings::defaults);
 
         var redirects = Optional.ofNullable(channelConfig.getRedirects()).orElseGet(globalConfig::redirects);
         var connectTimeout = Optional.ofNullable(channelConfig.getConnectTimeout())
@@ -363,7 +339,7 @@ class ExchangeClientCreator {
                 .map(bundle -> beanFactory.getBean(SslBundles.class).getBundle(bundle))
                 .orElseGet(globalConfig::sslBundle);
 
-        return new ClientHttpConnectorSettings(redirects, connectTimeout, readTimeout, sslBundle);
+        return new HttpClientSettings(redirects, connectTimeout, readTimeout, sslBundle);
     }
 
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {

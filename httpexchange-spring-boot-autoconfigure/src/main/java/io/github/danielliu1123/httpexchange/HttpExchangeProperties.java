@@ -15,8 +15,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.http.client.HttpRedirects;
 import org.springframework.boot.http.client.autoconfigure.HttpClientProperties;
-import org.springframework.boot.http.client.autoconfigure.reactive.HttpReactiveClientProperties;
-import org.springframework.boot.restclient.autoconfigure.AbstractRestClientProperties;
+import org.springframework.boot.http.client.autoconfigure.HttpClientSettingsProperties;
+import org.springframework.boot.http.client.autoconfigure.HttpClientsProperties;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -221,12 +221,9 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Redirects configuration.
          *
+         * <p> If not set, {@code spring.http.clients.redirects} will be used.
          *
-         * <p> If not set, default redirects will be used:
-         * <p> For {@link ClientType#REST_CLIENT}, use {@code spring.http.client.redirects}.
-         * <p> For {@link ClientType#WEB_CLIENT}, use {@code spring.http.reactiveclient.redirects}.
-         *
-         * @see HttpRedirects
+         * @see HttpClientsProperties#getRedirects()
          * @since 3.5.0
          */
         @Nullable
@@ -234,12 +231,9 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Connection timeout duration, specified in milliseconds.
          *
-         * <p> If not set, default connection timeout will be used:
-         * <p> For {@link ClientType#REST_CLIENT}, use {@code spring.http.client.connect-timeout}.
-         * <p> For {@link ClientType#WEB_CLIENT}, use {@code spring.http.reactiveclient.connect-timeout}.
+         * <p> If not set, {@code spring.http.clients.connect-timeout} will be used.
          *
-         * @see HttpClientProperties#getConnectTimeout()
-         * @see HttpReactiveClientProperties#getConnectTimeout()
+         * @see HttpClientsProperties#getConnectTimeout()
          * @since 3.2.0
          */
         @Nullable
@@ -247,12 +241,9 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * Read timeout duration, specified in milliseconds.
          *
-         * <p> If not set, default read timeout will be used:
-         * <p> For {@link ClientType#REST_CLIENT}, use {@code spring.http.client.read-timeout}.
-         * <p> For {@link ClientType#WEB_CLIENT}, use {@code spring.http.reactiveclient.read-timeout}.
+         * <p> If not set, {@code spring.http.clients.read-timeout} will be used.
          *
-         * @see HttpClientProperties#getReadTimeout()
-         * @see HttpReactiveClientProperties#getReadTimeout()
+         * @see HttpClientsProperties#getReadTimeout()
          * @since 3.2.0
          */
         @Nullable
@@ -276,13 +267,9 @@ public class HttpExchangeProperties implements InitializingBean {
         /**
          * SSL configuration.
          *
-         * <p> If not set, default ssl configuration will be used:
-         * <p> For {@link ClientType#REST_CLIENT}, use {@code spring.http.client.ssl},
-         * <p> For {@link ClientType#WEB_CLIENT}, use {@code spring.http.reactiveclient.ssl}.
-         *
-         * @see HttpClientProperties#getSsl()
-         * @see HttpReactiveClientProperties#getSsl()
+         * <p> If not set, {@code spring.http.clients.ssl} will be used.
          * @since 3.4.1
+         * @see HttpClientProperties#getSsl()
          */
         @Nullable
         private Ssl ssl;
@@ -328,10 +315,10 @@ public class HttpExchangeProperties implements InitializingBean {
     /**
      * @param bundle SSL bundle to use.
      *
-     *               <p> Bundle name is configured under {@code spring.ssl} properties.
+     * <p> Bundle name is configured under {@code spring.ssl} properties.
+     * <p> See configuration properties under {@code spring.ssl}.
      *
-     *               <p> See configuration properties under {@code spring.ssl}.
-     * @see AbstractRestClientProperties.Ssl
+     * @see HttpClientSettingsProperties.Ssl
      */
     public record Ssl(String bundle) {}
 

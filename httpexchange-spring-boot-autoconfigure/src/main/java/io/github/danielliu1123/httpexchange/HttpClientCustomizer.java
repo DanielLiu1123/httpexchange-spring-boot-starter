@@ -7,8 +7,6 @@ import org.springframework.web.reactive.function.client.WebClient;
  * {@link HttpClientCustomizer} customizes the configuration of the http client based on the given {@link HttpExchangeProperties.Channel}.
  *
  * @author Freeman
- * @see ExchangeClientCreator#buildRestClient(HttpExchangeProperties.Channel)
- * @see ExchangeClientCreator#buildWebClient(HttpExchangeProperties.Channel)
  * @since 3.2.4
  */
 public sealed interface HttpClientCustomizer<T> {
