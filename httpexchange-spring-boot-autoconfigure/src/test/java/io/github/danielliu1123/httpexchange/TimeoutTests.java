@@ -24,7 +24,7 @@ class TimeoutTests {
         int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties("spring.http.client.read-timeout=10ms")
+                .properties("spring.http.clients.read-timeout=10ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .run()) {
@@ -41,7 +41,7 @@ class TimeoutTests {
         int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties("spring.http.reactiveclient.read-timeout=10ms")
+                .properties("spring.http.clients.read-timeout=10ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .run()) {
@@ -57,7 +57,7 @@ class TimeoutTests {
         int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties("spring.http.client.read-timeout=100ms")
+                .properties("spring.http.clients.read-timeout=100ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".base-url=localhost:" + port)
                 .run()) {
@@ -73,7 +73,7 @@ class TimeoutTests {
         int port = findAvailableTcpPort();
         try (var ctx = new SpringApplicationBuilder(TimeoutConfig.class)
                 .properties("server.port=" + port)
-                .properties("spring.http.client.read-timeout=100ms")
+                .properties("spring.http.clients.read-timeout=100ms")
                 .properties(HttpExchangeProperties.PREFIX + ".client-type=" + clientType)
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].base-url=http://localhost:" + port)
                 .properties(HttpExchangeProperties.PREFIX + ".channels[0].clients[0]=DelayApi")
