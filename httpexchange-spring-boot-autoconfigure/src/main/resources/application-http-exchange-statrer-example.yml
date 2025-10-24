@@ -1,6 +1,6 @@
 spring:
   http:
-    client:
+    clients:
       read-timeout: 10s
       connect-timeout: 1s
       ssl:
