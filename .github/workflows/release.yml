@@ -3,7 +3,6 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -43,6 +42,5 @@ jobs:
           GPG_SECRET_KEY: ${{ secrets.GPG_SECRET_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          tmpfile=$(mktemp)
-          sed 's/^\(version=.*\)-SNAPSHOT/\1/' gradle.properties > "$tmpfile" && mv "$tmpfile" gradle.properties
-          ./gradlew publish jreleaserDeploy --no-daemon --stacktrace
+          tag=${{ github.ref_name }}
+          ./gradlew publish jreleaserDeploy --no-daemon --stacktrace -Pversion=${tag#v}
