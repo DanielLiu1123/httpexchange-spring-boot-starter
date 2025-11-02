@@ -56,10 +56,9 @@ class HttpExchangeAutoConfigurationTest {
     }
 
     @Test
-    void shouldThrowException_whenSpringBootVersionIsLessThan350() {
+    void shouldThrowException_whenSpringBootVersionIsLessThan400() {
         try (MockedStatic<SpringBootVersion> mockedStatic = mockStatic(SpringBootVersion.class)) {
-            // Mock Spring Boot version to be 3.4.9
-            mockedStatic.when(SpringBootVersion::getVersion).thenReturn("3.4.9");
+            mockedStatic.when(SpringBootVersion::getVersion).thenReturn("3.5.4");
 
             // Create an instance of HttpExchangeAutoConfiguration
             HttpExchangeAutoConfiguration config = new HttpExchangeAutoConfiguration();
@@ -68,19 +67,14 @@ class HttpExchangeAutoConfigurationTest {
             assertThatExceptionOfType(SpringBootVersionIncompatibleException.class)
                     .isThrownBy(config::afterPropertiesSet)
                     .withMessage(
-                            "Spring Boot version 3.4.9 is incompatible with httpexchange-spring-boot-starter. Minimum required version is 3.5.0")
-                    .satisfies(ex -> {
-                        assertThat(ex.getCurrentVersion()).isEqualTo("3.4.9");
-                        assertThat(ex.getRequiredVersion()).isEqualTo("3.5.0");
-                    });
+                            "Spring Boot version 3.5.4 is incompatible with httpexchange-spring-boot-starter. Minimum required version is 4.0.0");
         }
     }
 
     @Test
-    void shouldNotThrowException_whenSpringBootVersionIsEqualTo350() {
+    void shouldNotThrowException_whenSpringBootVersionIsEqualTo400() {
         try (MockedStatic<SpringBootVersion> mockedStatic = mockStatic(SpringBootVersion.class)) {
-            // Mock Spring Boot version to be 3.5.0
-            mockedStatic.when(SpringBootVersion::getVersion).thenReturn("3.5.0");
+            mockedStatic.when(SpringBootVersion::getVersion).thenReturn("4.0.0");
 
             // Create an instance and call afterPropertiesSet
             HttpExchangeAutoConfiguration config = new HttpExchangeAutoConfiguration();
@@ -89,10 +83,9 @@ class HttpExchangeAutoConfigurationTest {
     }
 
     @Test
-    void shouldNotThrowException_whenSpringBootVersionIsGreaterThan350() {
+    void shouldNotThrowException_whenSpringBootVersionIsGreaterThan400() {
         try (MockedStatic<SpringBootVersion> mockedStatic = mockStatic(SpringBootVersion.class)) {
-            // Mock Spring Boot version to be 3.6.0
-            mockedStatic.when(SpringBootVersion::getVersion).thenReturn("3.6.0");
+            mockedStatic.when(SpringBootVersion::getVersion).thenReturn("4.1.2");
 
             // Create an instance and call afterPropertiesSet
             HttpExchangeAutoConfiguration config = new HttpExchangeAutoConfiguration();

@@ -14,7 +14,7 @@ class SpringBootVersionIncompatibleFailureAnalyzerTest {
     void testAnalyze() {
         // Given
         SpringBootVersionIncompatibleFailureAnalyzer analyzer = new SpringBootVersionIncompatibleFailureAnalyzer();
-        SpringBootVersionIncompatibleException exception = new SpringBootVersionIncompatibleException("3.4.9", "3.5.0");
+        SpringBootVersionIncompatibleException exception = new SpringBootVersionIncompatibleException("3.5.4", "4.0.0");
 
         // When
         FailureAnalysis analysis = analyzer.analyze(exception);
@@ -22,13 +22,9 @@ class SpringBootVersionIncompatibleFailureAnalyzerTest {
         // Then
         assertThat(analysis).isNotNull();
         assertThat(analysis.getDescription())
-                .contains("requires Spring Boot 3.5.0 or higher")
-                .contains("but found 3.4.9");
-        assertThat(analysis.getAction())
-                .contains(
-                        "If you're using a Spring Boot version < 3.5.0, please stick with httpexchange-spring-boot-starter version 3.4.x")
-                .contains("Spring Boot 3.5.0 introduced extensive internal refactoring")
-                .contains("https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/releases/tag/v3.5.0");
+                .contains("requires Spring Boot 4.0.0 or higher")
+                .contains("but found 3.5.4");
+        assertThat(analysis.getAction()).contains("Please upgrade your Spring Boot version to at least 4.0.0");
         assertThat(analysis.getCause()).isSameAs(exception);
     }
 }
