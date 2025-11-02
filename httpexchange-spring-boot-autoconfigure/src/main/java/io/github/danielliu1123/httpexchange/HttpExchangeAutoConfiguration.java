@@ -8,6 +8,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -15,6 +16,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
+import org.springframework.web.service.annotation.HttpExchange;
 
 /**
  * Http Exchange Auto Configuration.
@@ -22,13 +24,14 @@ import org.springframework.core.env.Environment;
  * @author Freeman
  */
 @AutoConfiguration
+@ConditionalOnClass(HttpExchange.class)
 @ConditionalOnProperty(prefix = HttpExchangeProperties.PREFIX, name = "enabled", matchIfMissing = true)
 @EnableConfigurationProperties(HttpExchangeProperties.class)
 public class HttpExchangeAutoConfiguration
         implements DisposableBean, InitializingBean, ApplicationListener<ApplicationReadyEvent> {
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         checkVersion();
     }
 
@@ -75,11 +78,8 @@ public class HttpExchangeAutoConfiguration
     }
 
     private static void checkVersion() {
-        // Spring Boot 3.5.0 introduced extensive internal refactoring. To reduce maintenance costs, backward
-        // compatibility has been dropped.
-        // If you're using a Spring Boot version < 3.5.0, please stick with version 3.4.x.
         var version = SpringBootVersion.getVersion();
-        String requiredVersion = "3.5.0";
+        String requiredVersion = "4.0.0";
         if (version.compareTo(requiredVersion) < 0) {
             throw new SpringBootVersionIncompatibleException(version, requiredVersion);
         }
