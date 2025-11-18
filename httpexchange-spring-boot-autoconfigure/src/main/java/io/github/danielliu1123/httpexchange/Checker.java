@@ -4,15 +4,16 @@ import static io.github.danielliu1123.httpexchange.Util.nameMatch;
 
 import java.util.List;
 import java.util.Set;
-import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Freeman
  */
-@Slf4j
-@UtilityClass
-class Checker {
+final class Checker {
+    private static final Logger log = LoggerFactory.getLogger(Checker.class);
+
+    private Checker() {}
 
     public static void checkUnusedConfig(HttpExchangeProperties properties) {
         // Identify the configuration items that are not taking effect and print warning messages.

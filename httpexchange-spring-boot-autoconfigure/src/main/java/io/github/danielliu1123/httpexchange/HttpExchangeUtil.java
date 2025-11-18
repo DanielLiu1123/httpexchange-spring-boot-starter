@@ -3,8 +3,8 @@ package io.github.danielliu1123.httpexchange;
 import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 import static org.springframework.core.NativeDetector.inNativeImage;
 
-import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.aop.scope.ScopedProxyUtils;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
@@ -23,9 +23,10 @@ import org.springframework.web.service.annotation.HttpExchange;
 /**
  * @author Freeman
  */
-@Slf4j
-@UtilityClass
-public class HttpExchangeUtil {
+public final class HttpExchangeUtil {
+    private static final Logger log = LoggerFactory.getLogger(HttpExchangeUtil.class);
+
+    private HttpExchangeUtil() {}
 
     private static final boolean SPRING_CLOUD_CONTEXT_PRESENT =
             ClassUtils.isPresent("org.springframework.cloud.context.scope.refresh.RefreshScope", null);

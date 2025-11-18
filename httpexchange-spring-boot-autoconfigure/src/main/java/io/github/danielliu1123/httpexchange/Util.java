@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import lombok.experimental.UtilityClass;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -21,8 +20,9 @@ import org.springframework.web.service.annotation.HttpExchange;
 /**
  * @author Freeman
  */
-@UtilityClass
-class Util {
+final class Util {
+
+    private Util() {}
 
     private static final AntPathMatcher matcher = new AntPathMatcher(".");
 

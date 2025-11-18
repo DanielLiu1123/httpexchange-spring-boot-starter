@@ -3,13 +3,13 @@ package io.github.danielliu1123.httpexchange.processor;
 import java.io.File;
 import java.util.Objects;
 import java.util.Optional;
-import lombok.experimental.UtilityClass;
 
 /**
  * @author Freeman
  */
-@UtilityClass
-class Finder {
+final class Finder {
+
+    private Finder() {}
 
     /**
      * Find the target file by searching the parent dir recursively.

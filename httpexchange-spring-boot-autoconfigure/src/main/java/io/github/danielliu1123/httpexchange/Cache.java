@@ -6,14 +6,15 @@ import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.Client
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import lombok.experimental.UtilityClass;
 import org.springframework.aop.framework.AopProxyUtils;
 
 /**
  * @author Freeman
  */
-@UtilityClass
-class Cache {
+final class Cache {
+
+    private Cache() {}
+
     /**
      * Cache all clients.
      */
