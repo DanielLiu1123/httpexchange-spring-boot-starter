@@ -77,7 +77,7 @@ def getOptionalDependencies() {
     def resolvedDeps = project.configurations.optional.resolvedConfiguration.resolvedArtifacts
             .stream()
             .map(e -> e.moduleVersion.id)
-            .collect(java.util.stream.Collectors.toMap(dep -> dep.group + ":" + dep.name, dep -> dep.version))
+            .collect(java.util.stream.Collectors.toMap(dep -> dep.group + ":" + dep.name, dep -> dep.version, (o, n) -> o))
 
     for (dep in project.configurations.optional.allDependencies) {
         def version = resolvedDeps[dep.group + ":" + dep.name]
