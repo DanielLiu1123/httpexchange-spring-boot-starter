@@ -23,7 +23,7 @@ jobs:
         with:
           java-version: 17
           distribution: 'corretto'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Compile
         run: ./gradlew compileJava --no-daemon
   lint:
@@ -35,7 +35,7 @@ jobs:
         with:
           java-version: 17
           distribution: 'corretto'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Lint
         run: ./gradlew spotlessCheck spotbugsMain --no-daemon
   test:
@@ -51,7 +51,7 @@ jobs:
         with:
           java-version: ${{ matrix.java-version }}
           distribution: 'corretto'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Test
         run: ./gradlew test --no-daemon
 
@@ -70,7 +70,7 @@ jobs:
           native-image-job-reports: 'true'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Build native image
         run: |

@@ -18,7 +18,7 @@ jobs:
           distribution: 'corretto'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Build
         run: ./gradlew build --no-daemon
@@ -28,4 +28,5 @@ jobs:
           MAVENCENTRAL_USERNAME: ${{ secrets.MAVENCENTRAL_USERNAME }}
           MAVENCENTRAL_PASSWORD: ${{ secrets.MAVENCENTRAL_PASSWORD }}
         run: |
-          ./gradlew publish jreleaserDeploy --no-daemon
+          ./gradlew clean publish --no-daemon
+          ./gradlew jreleaserDeploy --no-daemon

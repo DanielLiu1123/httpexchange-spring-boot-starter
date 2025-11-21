@@ -30,7 +30,7 @@ jobs:
           distribution: 'corretto'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Build
         run: ./gradlew build --no-daemon
@@ -44,4 +44,5 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
           tag=${{ github.ref_name }}
-          ./gradlew publish jreleaserDeploy --no-daemon --stacktrace -Pversion=${tag#v}
+          ./gradlew clean publish --no-daemon --stacktrace -Pversion=${tag#v}
+          ./gradlew jreleaserDeploy --no-daemon --stacktrace
