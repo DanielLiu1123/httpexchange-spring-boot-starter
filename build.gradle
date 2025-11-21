@@ -21,7 +21,8 @@ plugins {
     id "io.spring.nullability" version "+" apply false
 }
 
-allprojects {
+//allprojects { // uncomment this if you want to get IDE support, only for debugging purpose!
+subprojects {
 
     apply plugin: "java"
     apply plugin: "java-library"
