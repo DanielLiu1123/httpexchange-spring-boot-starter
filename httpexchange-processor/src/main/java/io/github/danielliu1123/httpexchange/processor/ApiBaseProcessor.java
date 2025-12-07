@@ -13,9 +13,6 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Generated;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedOptions;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -40,28 +37,24 @@ import org.springframework.javapoet.TypeSpec;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.service.annotation.DeleteExchange;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PatchExchange;
+import org.springframework.web.service.annotation.PostExchange;
+import org.springframework.web.service.annotation.PutExchange;
 
 /**
  * @author Freeman
  */
-@SupportedSourceVersion(SourceVersion.RELEASE_17)
-@SupportedAnnotationTypes({
-    "org.springframework.web.service.annotation.HttpExchange",
-    "org.springframework.web.service.annotation.GetExchange",
-    "org.springframework.web.service.annotation.PostExchange",
-    "org.springframework.web.service.annotation.PutExchange",
-    "org.springframework.web.service.annotation.DeleteExchange",
-    "org.springframework.web.service.annotation.PatchExchange",
-    "org.springframework.web.bind.annotation.RequestMapping",
-    "org.springframework.web.bind.annotation.GetMapping",
-    "org.springframework.web.bind.annotation.PostMapping",
-    "org.springframework.web.bind.annotation.PutMapping",
-    "org.springframework.web.bind.annotation.DeleteMapping",
-    "org.springframework.web.bind.annotation.PatchMapping"
-})
-@SupportedOptions({ApiBaseProcessor.configOptionName})
-public class ApiBaseProcessor extends AbstractProcessor {
+public final class ApiBaseProcessor extends AbstractProcessor {
 
     private static final String DEFAULT_CLASS_SUFFIX = "Base";
 
@@ -76,6 +69,33 @@ public class ApiBaseProcessor extends AbstractProcessor {
 
     private ProcessorProperties properties;
     private final Set<String> generatedClasses = ConcurrentHashMap.newKeySet();
+
+    @Override
+    public Set<String> getSupportedOptions() {
+        return Set.of(configOptionName);
+    }
+
+    @Override
+    public Set<String> getSupportedAnnotationTypes() {
+        return Set.of(
+                HttpExchange.class.getCanonicalName(),
+                GetExchange.class.getCanonicalName(),
+                PostExchange.class.getCanonicalName(),
+                PutExchange.class.getCanonicalName(),
+                DeleteExchange.class.getCanonicalName(),
+                PatchExchange.class.getCanonicalName(),
+                RequestMapping.class.getCanonicalName(),
+                GetMapping.class.getCanonicalName(),
+                PostMapping.class.getCanonicalName(),
+                PutMapping.class.getCanonicalName(),
+                DeleteMapping.class.getCanonicalName(),
+                PatchMapping.class.getCanonicalName());
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latestSupported();
+    }
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
