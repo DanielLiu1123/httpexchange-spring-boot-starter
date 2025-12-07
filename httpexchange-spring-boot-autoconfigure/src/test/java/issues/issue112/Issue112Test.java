@@ -24,7 +24,7 @@ import org.springframework.web.service.annotation.GetExchange;
  * @author Freeman
  * @see <a href="https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/112">Issue 112</a>
  */
-@SpringBootTest
+@SpringBootTest(classes = Issue112Test.Cfg.class)
 @Disabled("Just a showcase")
 class Issue112Test {
 
