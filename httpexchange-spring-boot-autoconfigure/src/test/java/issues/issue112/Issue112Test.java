@@ -19,7 +19,10 @@ import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.web.service.annotation.GetExchange;
 
 /**
+ * Dynamically change the url at runtime.
+ *
  * @author Freeman
+ * @see <a href="https://github.com/danielliu1123/spring-boot-rest-client/issues/112">Issue 112</a>
  */
 @SpringBootTest
 @Disabled("Just a showcase")
