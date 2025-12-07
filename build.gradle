@@ -3,22 +3,18 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // https://github.com/rodnansol/spring-configuration-property-documenter
-        classpath "org.rodnansol:spring-configuration-property-documenter-gradle-plugin:+"
+        classpath "org.rodnansol:spring-configuration-property-documenter-gradle-plugin:${springConfigurationPropertyDocumenterVersion}"
     }
 }
 
 plugins {
     id "com.diffplug.spotless" version "${spotlessVersion}" apply false
     id "com.github.spotbugs" version "${spotbugsVersion}" apply false
-    // https://github.com/spring-gradle-plugins/dependency-management-plugin
-    id "io.spring.dependency-management" version "+" apply false
+    id "io.spring.dependency-management" version "${springDependencyManagementPluginVersion}" apply false
     id "org.springframework.boot" version "${springBootVersion}" apply false
-    // https://github.com/graalvm/native-build-tools
-    id "org.graalvm.buildtools.native" version "+" apply false
+    id "org.graalvm.buildtools.native" version "${graalVmNativePluginVersion}" apply false
     id "org.jreleaser" version "${jReleaserVersion}" apply false
-    // https://github.com/spring-gradle-plugins/nullability-plugin
-    id "io.spring.nullability" version "+" apply false
+    id "io.spring.nullability" version "${springNullabilityPluginVersion}" apply false
 }
 
 //allprojects { // uncomment this if you want to get IDE support, only for debugging purpose!
