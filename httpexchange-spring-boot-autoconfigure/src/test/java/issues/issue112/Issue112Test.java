@@ -22,7 +22,7 @@ import org.springframework.web.service.annotation.GetExchange;
  * Dynamically change the url at runtime.
  *
  * @author Freeman
- * @see <a href="https://github.com/danielliu1123/spring-boot-rest-client/issues/112">Issue 112</a>
+ * @see <a href="https://github.com/DanielLiu1123/httpexchange-spring-boot-starter/issues/112">Issue 112</a>
  */
 @SpringBootTest
 @Disabled("Just a showcase")
