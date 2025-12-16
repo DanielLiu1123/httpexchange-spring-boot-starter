@@ -160,10 +160,12 @@ class ExchangeClientCreator {
     private void setExchangeAdapter(
             HttpServiceProxyFactory.Builder builder, HttpExchangeProperties.Channel channelConfig) {
         switch (getClientType(channelConfig)) {
-            case REST_CLIENT -> builder.exchangeAdapter(RestClientAdapter.create(
-                    getClient(new Cache.ClientId(channelConfig, REST_CLIENT), () -> buildRestClient(channelConfig))));
-            case WEB_CLIENT -> builder.exchangeAdapter(WebClientAdapter.create(
-                    getClient(new Cache.ClientId(channelConfig, WEB_CLIENT), () -> buildWebClient(channelConfig))));
+            case REST_CLIENT ->
+                builder.exchangeAdapter(RestClientAdapter.create(getClient(
+                        new Cache.ClientId(channelConfig, REST_CLIENT), () -> buildRestClient(channelConfig))));
+            case WEB_CLIENT ->
+                builder.exchangeAdapter(WebClientAdapter.create(
+                        getClient(new Cache.ClientId(channelConfig, WEB_CLIENT), () -> buildWebClient(channelConfig))));
             default -> throw new IllegalStateException("Unsupported client-type: " + channelConfig.getClientType());
         }
     }

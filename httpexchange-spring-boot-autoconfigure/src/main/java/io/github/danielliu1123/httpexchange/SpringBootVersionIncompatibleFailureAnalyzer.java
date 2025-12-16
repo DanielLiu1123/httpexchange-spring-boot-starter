@@ -21,8 +21,7 @@ class SpringBootVersionIncompatibleFailureAnalyzer
                         .formatted(cause.getRequiredVersion(), cause.getCurrentVersion()),
                 """
                                 Please upgrade your Spring Boot version to at least %s.
-                                """
-                        .formatted(cause.getRequiredVersion()),
+                                """.formatted(cause.getRequiredVersion()),
                 cause);
     }
 }

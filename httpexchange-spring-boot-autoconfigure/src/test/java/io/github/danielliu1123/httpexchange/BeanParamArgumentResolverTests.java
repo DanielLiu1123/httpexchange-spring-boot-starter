@@ -209,7 +209,8 @@ class BeanParamArgumentResolverTests {
 
     record EmptyBean() {}
 
-    record BindParamBean(String userName, @BindParam("user_age") Integer userAge) {}
+    record BindParamBean(
+            String userName, @BindParam("user_age") Integer userAge) {}
 
     interface FooApi {
         @GetExchange("/foo")

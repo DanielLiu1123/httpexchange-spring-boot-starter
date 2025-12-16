@@ -13,8 +13,18 @@ plugins {
     id "io.spring.dependency-management" version "${springDependencyManagementPluginVersion}" apply false
     id "org.springframework.boot" version "${springBootVersion}" apply false
     id "org.graalvm.buildtools.native" version "${graalVmNativePluginVersion}" apply false
-    id "org.jreleaser" version "${jReleaserVersion}" apply false
     id "io.spring.nullability" version "${springNullabilityPluginVersion}" apply false
+    id "io.github.danielliu1123.deployer" version "${deployerVersion}"
+}
+
+deploy {
+    dirs = subprojects.stream()
+            .map(e -> e.layout.buildDirectory.dir("repo").get().getAsFile())
+            .filter(e -> e.exists())
+            .toList()
+    username = System.getenv("MAVENCENTRAL_USERNAME")
+    password = System.getenv("MAVENCENTRAL_PASSWORD")
+    publishingType = io.github.danielliu1123.deployer.PublishingType.AUTOMATIC
 }
 
 //allprojects { // uncomment this if you want to get IDE support, only for debugging purpose!
@@ -31,8 +41,6 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url = "https://repo.spring.io/snapshot" }
-        maven { url = "https://repo.spring.io/milestone" }
     }
 
     configurations {
@@ -52,10 +60,10 @@ subprojects {
         }
     }
     dependencies {
-        compileOnly("org.projectlombok:lombok:+")
-        annotationProcessor("org.projectlombok:lombok:+")
-        testCompileOnly("org.projectlombok:lombok:+")
-        testAnnotationProcessor("org.projectlombok:lombok:+")
+        compileOnly("org.projectlombok:lombok")
+        annotationProcessor("org.projectlombok:lombok")
+        testCompileOnly("org.projectlombok:lombok")
+        testAnnotationProcessor("org.projectlombok:lombok")
         // https://docs.gradle.org/current/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
@@ -110,4 +118,3 @@ subprojects {
 }
 
 apply from: "${rootDir}/gradle/generate-configuration-properties-docs.gradle"
-apply from: "${rootDir}/gradle/jreleaser.gradle"

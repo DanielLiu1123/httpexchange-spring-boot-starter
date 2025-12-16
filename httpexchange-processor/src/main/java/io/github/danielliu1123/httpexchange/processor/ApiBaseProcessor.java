@@ -254,8 +254,7 @@ public final class ApiBaseProcessor extends AbstractProcessor {
                 .addAnnotation(AnnotationSpec.builder(Generated.class)
                         .addMember("value", "$S", ApiBaseProcessor.class.getName())
                         .build())
-                .addJavadoc(
-                        """
+                .addJavadoc("""
                                 Generated default implementation for the server-side.
 
                                 <p>
@@ -266,9 +265,7 @@ public final class ApiBaseProcessor extends AbstractProcessor {
                                     // ...
                                 }
                                 }</pre>
-                                """,
-                        element.getSimpleName().toString() + "Impl",
-                        generatedClassName);
+                                """, element.getSimpleName().toString() + "Impl", generatedClassName);
         if (element.getModifiers().contains(Modifier.PUBLIC)) {
             result.addModifiers(Modifier.PUBLIC);
         }
@@ -301,8 +298,7 @@ public final class ApiBaseProcessor extends AbstractProcessor {
                 .addAnnotation(AnnotationSpec.builder(Generated.class)
                         .addMember("value", "$S", ApiBaseProcessor.class.getName())
                         .build())
-                .addJavadoc(
-                        """
+                .addJavadoc("""
                                 Generated default implementation for the server-side.
 
                                 <p>
@@ -313,9 +309,7 @@ public final class ApiBaseProcessor extends AbstractProcessor {
                                     // ...
                                 }
                                 }</pre>
-                                """,
-                        element.getSimpleName().toString() + "Impl",
-                        generatedClassName);
+                                """, element.getSimpleName().toString() + "Impl", generatedClassName);
         if (element.getModifiers().contains(Modifier.PUBLIC)) {
             result.addModifiers(Modifier.PUBLIC);
         }
