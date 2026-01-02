@@ -2,7 +2,6 @@ package io.github.danielliu1123.httpexchange;
 
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_CLIENT;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.WEB_CLIENT;
-import static io.github.danielliu1123.httpexchange.Util.findMatchedConfig;
 import static io.github.danielliu1123.httpexchange.Util.hasAnnotation;
 import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 
@@ -20,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.Flow;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -117,18 +117,17 @@ class ExchangeClientCreator {
      */
     @SuppressWarnings("unchecked")
     public <T> T create() {
-        HttpExchangeProperties httpExchangeProperties = beanFactory
+        HttpExchangeProperties properties = beanFactory
                 .getBeanProvider(HttpExchangeProperties.class)
                 .getIfUnique(() -> Util.getProperties(environment));
-        HttpExchangeProperties.Channel chan =
-                findMatchedConfig(clientType, httpExchangeProperties).orElseGet(httpExchangeProperties::defaultChannel);
+        HttpExchangeProperties.Channel chan = getMatchedConfig(clientType, properties);
         if (isUseHttpExchangeAnnotation) {
             HttpServiceProxyFactory factory = factoryBuilder(chan).build();
             T result = (T) factory.createClient(clientType);
             Cache.addClient(result);
             return result;
         }
-        if (!httpExchangeProperties.isRequestMappingSupportEnabled()) {
+        if (!properties.isRequestMappingSupportEnabled()) {
             throw new IllegalStateException(
                     clientType
                             + " is using the @RequestMapping based annotation, please migrate to @HttpExchange, or set 'http-exchange.request-mapping-support-enabled=true' to enable support for processing @RequestMapping");
@@ -138,6 +137,26 @@ class ExchangeClientCreator {
         T result = (T) shadedFactory.createClient(clientType);
         Cache.addClient(result);
         return result;
+    }
+
+    private HttpExchangeProperties.Channel getMatchedConfig(Class<?> clientType, HttpExchangeProperties properties) {
+        List<HttpExchangeProperties.Channel> matchedConfigs = Util.findMatchedConfigs(clientType, properties);
+        if (matchedConfigs.isEmpty()) {
+            return properties.defaultChannel();
+        }
+        if (matchedConfigs.size() > 1) {
+            String matchedNames = matchedConfigs.stream()
+                    .map(it -> it.getName() != null ? it.getName() : "unnamed")
+                    .collect(Collectors.joining(", "));
+            var chosen = matchedConfigs.get(0);
+            log.warn(
+                    "Exchange client [{}] matched multiple channels: [{}], using '{}' with base-url '{}'",
+                    clientType.getName(),
+                    matchedNames,
+                    chosen.getName() != null ? chosen.getName() : "unnamed",
+                    chosen.getBaseUrl() != null ? chosen.getBaseUrl() : properties.getBaseUrl());
+        }
+        return matchedConfigs.get(0);
     }
 
     private HttpServiceProxyFactory.Builder factoryBuilder(HttpExchangeProperties.Channel channelConfig) {
