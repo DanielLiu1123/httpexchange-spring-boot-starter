@@ -32,20 +32,12 @@ final class Util {
         List<HttpExchangeProperties.Channel> matchedChannels = new ArrayList<>();
         for (var channel : properties.getChannels()) {
             boolean matched = false;
-            for (Class<?> e : channel.getClasses()) {
-                if (e == clz) {
-                    matchedChannels.add(channel);
-                    matched = true;
-                    break;
-                }
+            if (matchAnyClassesConfig(clz, channel)) {
+                matchedChannels.add(channel);
+                matched = true;
             }
-            if (!matched) {
-                for (String name : channel.getClients()) {
-                    if (match(name, clz)) {
-                        matchedChannels.add(channel);
-                        break;
-                    }
-                }
+            if (!matched && matchAnyClientsConfig(clz, channel)) {
+                matchedChannels.add(channel);
             }
         }
         return matchedChannels;
@@ -55,11 +47,12 @@ final class Util {
         return classes.stream().anyMatch(clz -> match(name, clz));
     }
 
-    private static boolean match(Class<?> clz, HttpExchangeProperties.Channel client) {
-        if (client.getClasses().stream().anyMatch(ch -> ch == clz)) {
-            return true;
-        }
+    private static boolean matchAnyClientsConfig(Class<?> clz, HttpExchangeProperties.Channel client) {
         return client.getClients().stream().anyMatch(name -> match(name, clz));
+    }
+
+    private static boolean matchAnyClassesConfig(Class<?> clz, HttpExchangeProperties.Channel client) {
+        return client.getClasses().stream().anyMatch(ch -> ch == clz);
     }
 
     private static boolean match(String name, Class<?> clz) {
