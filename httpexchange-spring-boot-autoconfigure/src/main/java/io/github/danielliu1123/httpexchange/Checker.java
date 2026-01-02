@@ -37,7 +37,7 @@ final class Checker {
             Class<?> clazz = channel.getClasses().get(j);
             if (classes.stream().noneMatch(clazz::isAssignableFrom)) {
                 log.warn(
-                        "The configuration '{}.channels[{}].clients[{}]={}' is ineffective and should be removed",
+                        "The configuration '{}.channels[{}].classes[{}]={}' is ineffective and should be removed",
                         HttpExchangeProperties.PREFIX,
                         i,
                         j,

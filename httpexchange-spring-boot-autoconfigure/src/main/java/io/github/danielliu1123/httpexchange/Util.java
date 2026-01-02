@@ -2,7 +2,8 @@ package io.github.danielliu1123.httpexchange;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
@@ -26,17 +27,22 @@ final class Util {
 
     private static final AntPathMatcher matcher = new AntPathMatcher(".");
 
-    public static Optional<HttpExchangeProperties.Channel> findMatchedConfig(
+    public static List<HttpExchangeProperties.Channel> findMatchedConfigs(
             Class<?> clz, HttpExchangeProperties properties) {
+        List<HttpExchangeProperties.Channel> matchedChannels = new ArrayList<>();
         // find from classes first
-        Optional<HttpExchangeProperties.Channel> found = properties.getChannels().stream()
-                .filter(it -> it.getClasses().stream().anyMatch(ch -> ch == clz))
-                .findFirst();
-        if (found.isPresent()) {
-            return found;
+        for (var channel : properties.getChannels()) {
+            if (channel.getClasses().stream().anyMatch(ch -> ch == clz)) {
+                matchedChannels.add(channel);
+            }
         }
-        // not class match, try to find from the 'clients' configuration
-        return properties.getChannels().stream().filter(it -> match(clz, it)).findFirst();
+        // then, find from the 'clients' configuration
+        for (var channel : properties.getChannels()) {
+            if (channel.getClasses().stream().noneMatch(ch -> ch == clz) && match(clz, channel)) {
+                matchedChannels.add(channel);
+            }
+        }
+        return matchedChannels;
     }
 
     public static boolean nameMatch(String name, Set<Class<?>> classes) {
