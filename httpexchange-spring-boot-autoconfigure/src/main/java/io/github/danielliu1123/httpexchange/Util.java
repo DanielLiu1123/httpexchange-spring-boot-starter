@@ -30,16 +30,22 @@ final class Util {
     public static List<HttpExchangeProperties.Channel> findMatchedConfigs(
             Class<?> clz, HttpExchangeProperties properties) {
         List<HttpExchangeProperties.Channel> matchedChannels = new ArrayList<>();
-        // find from classes first
         for (var channel : properties.getChannels()) {
-            if (channel.getClasses().stream().anyMatch(ch -> ch == clz)) {
-                matchedChannels.add(channel);
+            boolean matched = false;
+            for (Class<?> e : channel.getClasses()) {
+                if (e == clz) {
+                    matchedChannels.add(channel);
+                    matched = true;
+                    break;
+                }
             }
-        }
-        // then, find from the 'clients' configuration
-        for (var channel : properties.getChannels()) {
-            if (channel.getClasses().stream().noneMatch(ch -> ch == clz) && match(clz, channel)) {
-                matchedChannels.add(channel);
+            if (!matched) {
+                for (String name : channel.getClients()) {
+                    if (match(name, clz)) {
+                        matchedChannels.add(channel);
+                        break;
+                    }
+                }
             }
         }
         return matchedChannels;
