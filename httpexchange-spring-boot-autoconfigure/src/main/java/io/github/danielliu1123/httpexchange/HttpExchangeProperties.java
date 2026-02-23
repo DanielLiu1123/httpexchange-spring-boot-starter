@@ -17,10 +17,8 @@ import org.springframework.boot.http.client.HttpRedirects;
 import org.springframework.boot.http.client.autoconfigure.HttpClientProperties;
 import org.springframework.boot.http.client.autoconfigure.HttpClientSettingsProperties;
 import org.springframework.boot.http.client.autoconfigure.HttpClientsProperties;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.service.annotation.HttpExchange;
 
 /**
  * Http Clients Configuration Properties.
@@ -92,15 +90,6 @@ public class HttpExchangeProperties implements InitializingBean {
      */
     @Nullable
     private ClientType clientType;
-    /**
-     * whether to process {@link RequestMapping} based annotation,
-     * default {@code false}.
-     *
-     * <p color="red"> Recommending to use {@link HttpExchange} instead of {@link RequestMapping}.
-     *
-     * @since 3.2.0
-     */
-    private boolean requestMappingSupportEnabled = false;
     /**
      * Whether to check unused configuration, default {@code true}.
      *

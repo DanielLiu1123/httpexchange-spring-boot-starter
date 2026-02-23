@@ -21,7 +21,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
 
 /**
@@ -130,8 +129,7 @@ class HttpClientBeanRegistrar {
         return cm.isInterface()
                 && cm.isIndependent()
                 && !cm.isAnnotation()
-                && (am.hasAnnotatedMethods(HttpExchange.class.getName())
-                        || am.hasAnnotatedMethods(RequestMapping.class.getName()));
+                && am.hasAnnotatedMethods(HttpExchange.class.getName());
     }
 
     private void registerBeans4BasePackages(Collection<String> basePackages) {

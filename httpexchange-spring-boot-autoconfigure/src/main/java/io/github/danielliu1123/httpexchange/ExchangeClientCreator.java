@@ -2,22 +2,18 @@ package io.github.danielliu1123.httpexchange;
 
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.REST_CLIENT;
 import static io.github.danielliu1123.httpexchange.HttpExchangeProperties.ClientType.WEB_CLIENT;
-import static io.github.danielliu1123.httpexchange.Util.hasAnnotation;
 import static io.github.danielliu1123.httpexchange.Util.isHttpExchangeInterface;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.github.danielliu1123.httpexchange.shaded.ShadedHttpServiceProxyFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Flow;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
@@ -35,7 +31,6 @@ import org.springframework.cloud.client.loadbalancer.DeferringLoadBalancerInterc
 import org.springframework.cloud.client.loadbalancer.reactive.DeferringLoadBalancerExchangeFilterFunction;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.util.Assert;
@@ -44,15 +39,12 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.annotation.HttpExchange;
-import org.springframework.web.service.invoker.HttpExchangeAdapter;
-import org.springframework.web.service.invoker.HttpRequestValues;
 import org.springframework.web.service.invoker.HttpServiceArgumentResolver;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
@@ -71,22 +63,14 @@ class ExchangeClientCreator {
     private static final boolean springBootStarterWebClientPresent =
             ClassUtils.isPresent("org.springframework.boot.webclient.WebClientCustomizer", null);
 
-    private static final Field exchangeAdapterField;
     private static final Field customArgumentResolversField;
-    private static final Field conversionServiceField;
     private static final Field embeddedValueResolverField;
-    private static final Field requestValuesProcessorsField;
-    private static final Field exchangeAdapterDecoratorField;
 
     static {
         try {
             Class<HttpServiceProxyFactory.Builder> clz = HttpServiceProxyFactory.Builder.class;
-            exchangeAdapterField = clz.getDeclaredField("exchangeAdapter");
             customArgumentResolversField = clz.getDeclaredField("customArgumentResolvers");
-            conversionServiceField = clz.getDeclaredField("conversionService");
             embeddedValueResolverField = clz.getDeclaredField("embeddedValueResolver");
-            requestValuesProcessorsField = clz.getDeclaredField("requestValuesProcessors"); // From Spring 7.x
-            exchangeAdapterDecoratorField = clz.getDeclaredField("exchangeAdapterDecorator"); // From Spring 7.x
         } catch (NoSuchFieldException e) {
             throw new IllegalStateException(e);
         }
@@ -95,7 +79,6 @@ class ExchangeClientCreator {
     private final BeanFactory beanFactory;
     private final Environment environment;
     private final Class<?> clientType;
-    private final boolean isUseHttpExchangeAnnotation;
 
     @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
     public ExchangeClientCreator(BeanFactory beanFactory, Class<?> clientType) {
@@ -106,13 +89,12 @@ class ExchangeClientCreator {
         this.clientType = clientType;
 
         Assert.isTrue(isHttpExchangeInterface(clientType), () -> clientType + " is not a HttpExchange client");
-        this.isUseHttpExchangeAnnotation = hasAnnotation(clientType, HttpExchange.class);
     }
 
     /**
-     * Create a proxy {@link HttpExchange}/{@link RequestMapping} interface instance.
+     * Create a proxy {@link HttpExchange} interface instance.
      *
-     * @param <T> type of the {@link HttpExchange}/{@link RequestMapping} interface
+     * @param <T> type of the {@link HttpExchange} interface
      * @return the proxy instance
      */
     @SuppressWarnings("unchecked")
@@ -121,20 +103,8 @@ class ExchangeClientCreator {
                 .getBeanProvider(HttpExchangeProperties.class)
                 .getIfUnique(() -> Util.getProperties(environment));
         HttpExchangeProperties.Channel chan = getMatchedConfig(clientType, properties);
-        if (isUseHttpExchangeAnnotation) {
-            HttpServiceProxyFactory factory = factoryBuilder(chan).build();
-            T result = (T) factory.createClient(clientType);
-            Cache.addClient(result);
-            return result;
-        }
-        if (!properties.isRequestMappingSupportEnabled()) {
-            throw new IllegalStateException(
-                    clientType
-                            + " is using the @RequestMapping based annotation, please migrate to @HttpExchange, or set 'http-exchange.request-mapping-support-enabled=true' to enable support for processing @RequestMapping");
-        }
-        ShadedHttpServiceProxyFactory shadedFactory =
-                shadedProxyFactory(factoryBuilder(chan)).build();
-        T result = (T) shadedFactory.createClient(clientType);
+        HttpServiceProxyFactory factory = factoryBuilder(chan).build();
+        T result = (T) factory.createClient(clientType);
         Cache.addClient(result);
         return result;
     }
@@ -373,38 +343,12 @@ class ExchangeClientCreator {
         return baseUrl.contains("://") ? baseUrl : "http://" + baseUrl;
     }
 
-    static ShadedHttpServiceProxyFactory.Builder shadedProxyFactory(HttpServiceProxyFactory.Builder proxyFactory) {
-        HttpExchangeAdapter exchangeAdapter = getFieldValue(proxyFactory, exchangeAdapterField);
-        List<HttpServiceArgumentResolver> customArgumentResolvers =
-                getFieldValue(proxyFactory, customArgumentResolversField);
-        ConversionService conversionService = getFieldValue(proxyFactory, conversionServiceField);
-        StringValueResolver embeddedValueResolver = getFieldValue(proxyFactory, embeddedValueResolverField);
-        List<HttpRequestValues.Processor> requestValuesProcessors =
-                getFieldValue(proxyFactory, requestValuesProcessorsField);
-        Function<HttpExchangeAdapter, HttpExchangeAdapter> exchangeAdapterDecorator =
-                getFieldValue(proxyFactory, exchangeAdapterDecoratorField);
-
-        ShadedHttpServiceProxyFactory.Builder builder = ShadedHttpServiceProxyFactory.builder();
-        Optional.ofNullable(exchangeAdapter).ifPresent(builder::exchangeAdapter);
-        Optional.ofNullable(customArgumentResolvers).stream()
-                .flatMap(Collection::stream)
-                .forEach(builder::customArgumentResolver);
-        Optional.ofNullable(conversionService).ifPresent(builder::conversionService);
-        Optional.ofNullable(embeddedValueResolver).ifPresent(builder::embeddedValueResolver);
-        Optional.ofNullable(requestValuesProcessors).stream()
-                .flatMap(Collection::stream)
-                .forEach(builder::httpRequestValuesProcessor);
-        Optional.ofNullable(exchangeAdapterDecorator).ifPresent(builder::exchangeAdapterDecorator);
-        return builder;
-    }
-
     /**
      * visible for testing
      */
     static boolean hasReactiveReturnTypeMethod(Class<?> clz) {
         return Arrays.stream(ReflectionUtils.getAllDeclaredMethods(clz))
-                .filter(method -> AnnotationUtils.findAnnotation(method, HttpExchange.class) != null
-                        || AnnotationUtils.findAnnotation(method, RequestMapping.class) != null)
+                .filter(method -> AnnotationUtils.findAnnotation(method, HttpExchange.class) != null)
                 .map(Method::getReturnType)
                 .anyMatch(returnType -> Publisher.class.isAssignableFrom(returnType)
                         || Flow.Publisher.class.isAssignableFrom(returnType));

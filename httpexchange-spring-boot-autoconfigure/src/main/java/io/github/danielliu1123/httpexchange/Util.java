@@ -15,7 +15,6 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.ReflectionUtils;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.service.annotation.HttpExchange;
 
 /**
@@ -77,8 +76,7 @@ final class Util {
     }
 
     public static boolean isHttpExchangeInterface(Class<?> clz) {
-        return clz.isInterface()
-                && (hasAnnotation(clz, HttpExchange.class) || hasAnnotation(clz, RequestMapping.class));
+        return clz.isInterface() && hasAnnotation(clz, HttpExchange.class);
     }
 
     public static boolean hasAnnotation(Class<?> clz, Class<? extends Annotation> annotationType) {
