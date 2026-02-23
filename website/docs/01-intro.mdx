@@ -55,14 +55,6 @@ public class App {
     the `@EnableFeignClients` annotation is highly beneficial,
     significantly reducing repetitive code.
 
-- Absence of Support for Spring Web Annotations
-
-    Although native support for declarative HTTP clients is a valuable addition, it introduces a new set of
-    annotations like `@GetExchange`, `@PostExchange`, etc. Unfortunately, `HttpServiceProxyFactory` does not support Spring web
-    annotations, such as `@GetMapping` and `@PostMapping`. This lack of support can be a significant
-    obstacle for users accustomed to `Spring Cloud OpenFeign` who are considering migrating to Spring 6.x, making the
-    transition process more challenging.
-
 ## Quick Start
 
 <Tabs groupId="build-tool">

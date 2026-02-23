@@ -7,7 +7,6 @@ The main goals of this project are:
 
 - To promote `@HttpExchange` as the standard for defining API interfaces.
 - To offer an experience similar to `Spring Cloud OpenFeign` for declarative HTTP clients.
-- To ensure compatibility with Spring web annotations like `@RequestMapping` and `@GetMapping`.
 - To avoid external annotations, making it easier to switch to other implementations.
 
 > [!NOTE]\
