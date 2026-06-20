@@ -330,7 +330,11 @@ class ExchangeClientCreator {
                 .map(bundle -> beanFactory.getBean(SslBundles.class).getBundle(bundle))
                 .orElseGet(globalConfig::sslBundle);
 
-        return new HttpClientSettings(redirects, connectTimeout, readTimeout, sslBundle);
+        return HttpClientSettings.defaults()
+                .withRedirects(redirects)
+                .withConnectTimeout(connectTimeout)
+                .withReadTimeout(readTimeout)
+                .withSslBundle(sslBundle);
     }
 
     private boolean isLoadBalancerEnabled(HttpExchangeProperties.Channel channelConfig) {
