@@ -359,7 +359,7 @@ class ExchangeClientCreator {
     }
 
     private HttpExchangeProperties.ClientType getClientType(HttpExchangeProperties.Channel channel) {
-        var type = channel.getClientType() != null ? channel.getClientType() : getDefaultClientType();
+        var type = Optional.ofNullable(channel.getClientType()).orElseGet(ExchangeClientCreator::getDefaultClientType);
         return switch (type) {
             case REST_CLIENT -> {
                 if (!springBootStarterRestClientPresent) {
